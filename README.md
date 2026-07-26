@@ -1,5 +1,18 @@
 # 株主優待ダッシュボード
 
+## 株主優待の自動調査（OpenAI版）
+
+現在の自動調査には、Gemini版ではなく **OpenAI Responses API版** を使用します。GitHub Actions の
+「Discover shareholder benefits with OpenAI」は手動実行専用です。OpenAI APIの利用にはChatGPTの契約とは
+別に支払い設定とAPIキーが必要で、GitHub Secret `OPENAI_API_KEY` に保存します。初期モデルは
+`gpt-5.4-nano` で、必要な場合だけRepository Variable `OPENAI_MODEL` で変更できます。Web検索にはモデル料金とは
+別の料金が発生します。
+
+最初は `diagnostic_mode` で極洋（1301）1社だけを実行し、問題がなければ10社、100社の順に拡大してください。
+全自動の結果を無条件で信用せず、`data/verification-queue.json` の確認待ち結果を必ず目視確認してください。
+ChatGPTの契約情報やAPIキーはログ、JSON、Issue、コミットなどで公開しないでください。Gemini Workflowは履歴と
+手動での比較確認のために残していますが、現在はOpenAI版を使用し、自動スケジュールでは実行しません。
+
 日本株の株主優待について、必要株数・必要投資額・優待/配当/総合利回りを横断して比較する、静的なPWAです。優待情報は企業公式情報で確認済みの10社と廃止済み2社を収録しています。株価・配当はJ-Quants未設定のため参考用サンプルであり、投資判断には利用できません。
 
 ## 機能
@@ -70,9 +83,9 @@ python scripts/merge_benefit_universe.py
 
 このコマンドは既存コードを上書きせず `data/benefits.json` に新規候補だけを統合し、当月・翌月・翌々月、変更開示、その他の順で `data/verification-queue.json` を再生成します。公式ページで確認したレコードだけを `official_confirmed` に昇格し、確認URLと日付を保存してください。廃止時は `abolished` と最終基準日を保持します。
 
-## Geminiによる全上場会社の自動調査
+## Geminiによる全上場会社の自動調査（旧方式）
 
-`data/listed-companies.json` を実在する上場会社マスターとして読み込み、`scripts/discover_benefits_with_gemini.py` が Gemini Structured Outputs と Google Search grounding で100社ずつ調査します。現在は安全な試験入力として既存12社のみを収録しています。J-Quants契約後は同じ `code`、`name`、`market`、`sector`（可能なら `official_domain` も）のJSON配列を上場銘柄一覧から生成して差し替えられます。証券コードの連番や会社名の生成は行いません。
+この節は履歴・手動比較用に残した旧Gemini版の説明です。通常の調査には上記OpenAI版を使用してください。`data/listed-companies.json` を実在する上場会社マスターとして読み込み、`scripts/discover_benefits_with_gemini.py` が Gemini Structured Outputs と Google Search grounding で調査します。
 
 ### APIキーと手動実行
 
