@@ -39,6 +39,25 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         self.assertEqual(payload["tools"][0]["filters"]["allowed_domains"],
                          ["kyokuyo.co.jp"])
 
+    def test_schema_requires_benefit_tiers_and_storage_adds_compatibility_fields(self):
+        self.assertIn("benefit_tiers", discovery.SCHEMA["required"])
+        tier_schema = discovery.FIELDS["benefit_tiers"]
+        self.assertEqual(tier_schema["type"], "array")
+        item = self.item()
+        item.update({"benefit_title": "自社製品", "benefit_description": "贈呈",
+                     "annual_value_yen": 2500, "long_term_required": False,
+                     "conditions": "毎年7月贈呈予定",
+                     "benefit_tiers": [{"shares": 100, "maximum_shares": 299,
+                         "description": "2,500円相当の自社製品", "annual_value_yen": 2500}]})
+        stored = discovery.normalize_for_storage(item, {**self.company, "market": "プライム", "sector": "水産・農林業"})
+        self.assertEqual(stored["data_confidence"], "official_confirmed")
+        self.assertEqual(stored["market"], "プライム")
+        self.assertEqual(stored["industry"], "水産・農林業")
+        self.assertEqual(stored["minimum_shares"], 100)
+        self.assertEqual(stored["long_term_condition"], "なし")
+        self.assertEqual(stored["last_checked_at"], "2026-07-26")
+        self.assertNotIn("undefined", json.dumps(stored))
+
     def test_company_name_normalizes_legal_form_spaces_and_width(self):
         self.assertTrue(discovery.same_company_name("極洋", "株式会社 極洋"))
         self.assertTrue(discovery.same_company_name("ＡＢＣ １２３", "株式会社ABC123"))

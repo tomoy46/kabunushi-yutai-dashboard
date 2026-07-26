@@ -38,6 +38,17 @@ FIELDS = {
     "record_months": {"type": "array", "items": {"type": "integer"}},
     "record_date": {"type": ["string", "null"]}, "annual_occurrences": {"type": ["integer", "null"]},
     "minimum_shares": {"type": ["integer", "null"]}, "maximum_shares": {"type": ["integer", "null"]},
+    "benefit_tiers": {"type": "array", "items": {
+        "type": "object",
+        "properties": {
+            "shares": {"type": "integer"},
+            "maximum_shares": {"type": ["integer", "null"]},
+            "description": {"type": "string"},
+            "annual_value_yen": {"type": ["integer", "null"]},
+        },
+        "required": ["shares", "maximum_shares", "description", "annual_value_yen"],
+        "additionalProperties": False,
+    }},
     "benefit_title": {"type": ["string", "null"]}, "benefit_description": {"type": ["string", "null"]},
     "category": {"type": ["string", "null"]}, "annual_value_yen": {"type": ["integer", "null"]},
     "valuation_type": {"type": "string", "enum": ["official_amount", "not_calculated"]},
@@ -191,8 +202,50 @@ def company_prompt(company):
 検索語: {' / '.join(queries)}
 企業公式IR、JPX、TDnetだけを根拠にする。証券会社、まとめサイト、ブログ、SNSは根拠にしない。
 検索結果にないURLや値を作らない。必要株数、権利月・基準日、有効性が不明ならcandidateとする。
+株数ごとの全区分をbenefit_tiersへ必ず配列で記録し、1区分だけの場合も配列にする。
+minimum_sharesはbenefit_tiersの最小shares、annual_value_yenはその区分の年間価値と一致させる。
 割引率や利用額で価値が変動する優待はannual_value_yen=null、valuation_type=not_calculatedとする。
 evidence_textは根拠を200字以内で要約する。"""
+
+
+def normalize_for_storage(item, company):
+    """Add the dashboard's compatibility fields before persisting API output."""
+    item = dict(item)
+    tiers = item.get("benefit_tiers") if isinstance(item.get("benefit_tiers"), list) else []
+    tiers = [tier for tier in tiers if isinstance(tier, dict) and isinstance(tier.get("shares"), int)]
+    if not tiers and isinstance(item.get("minimum_shares"), int):
+        description = item.get("benefit_description") or item.get("benefit_title") or "優待内容未取得"
+        tiers = [{"shares": item["minimum_shares"], "maximum_shares": item.get("maximum_shares"),
+                  "description": description, "annual_value_yen": item.get("annual_value_yen")}]
+    tiers.sort(key=lambda tier: tier["shares"])
+    item["benefit_tiers"] = tiers
+    if tiers:
+        item["minimum_shares"] = tiers[0]["shares"]
+        item["annual_value_yen"] = tiers[0].get("annual_value_yen")
+    item["data_confidence"] = ("official_confirmed" if item.get("benefit_status") == "official_confirmed"
+                               else item.get("data_confidence") or item.get("benefit_status"))
+    title, description = item.get("benefit_title"), item.get("benefit_description")
+    summary = title or description or "優待内容未取得"
+    if title and description and description not in title:
+        summary = f"{title} {description}"
+    value = item.get("annual_value_yen")
+    if isinstance(value, int) and f"{value:,}" not in summary:
+        summary = f"{summary} {value:,}円相当"
+    item["benefit_summary"] = summary
+    item["last_checked_at"] = item.get("official_verified_at")
+    if item.get("long_term_required") is False:
+        item["long_term_condition"] = "なし"
+    elif item.get("long_term_required") is True:
+        months = item.get("holding_period_months")
+        item["long_term_condition"] = (f"継続保有{months}か月以上" if months else
+                                         item.get("conditions") or "長期保有条件あり")
+    else:
+        item["long_term_condition"] = None
+    item["notes"] = item.get("conditions") or item.get("change_or_abolition_note")
+    item["market"] = company.get("market") or None
+    item["sector"] = company.get("sector") or None
+    item["industry"] = company.get("industry") or company.get("sector") or None
+    return item
 
 
 def response_format():
@@ -614,6 +667,7 @@ def run(args):
                     diagnostic_stage("Official URL validation", "verification required",
                                      detail=",".join(reasons))
                 else: diagnostic_stage("Official URL validation", "success")
+            item = normalize_for_storage(item, company)
             totals["processed_companies"] += 1
             if reasons: totals["verification_required"] += 1
             else: totals["successes"] += 1
