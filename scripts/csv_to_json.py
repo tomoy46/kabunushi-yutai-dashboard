@@ -10,9 +10,9 @@ REQUIRED = {
     'data_confidence', 'annual_occurrences', 'change_or_abolition_note',
     'benefit_tiers_json'
 }
-STATUSES = {'active', 'scheduled', 'changed', 'abolished', 'unverified'}
-CONFIDENCE = {'official_confirmed', 'partially_confirmed', 'unverified'}
-NULLABLE = {'abolished_at', 'last_record_date'}
+STATUSES = {'active', 'scheduled', 'changed', 'abolished', 'unverified', 'official_confirmed', 'candidate'}
+CONFIDENCE = {'official_confirmed', 'partially_confirmed', 'unverified', 'candidate'}
+NULLABLE = {'abolished_at', 'last_record_date', 'official_verified_at', 'official_source_url'}
 
 def convert(source: Path, destination: Path):
     with source.open(encoding='utf-8-sig', newline='') as f:
