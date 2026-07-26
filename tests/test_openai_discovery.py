@@ -174,6 +174,79 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                 with patch.object(discovery, "urlopen", return_value=Response()):
                     self.assertEqual(discovery.fetch_official_page(url, company, metadata)[0], url)
 
+    def test_registered_source_html_ignores_name_variant_and_pdf_is_extracted(self):
+        html_url = "https://example.co.jp/ir/benefit/"
+        pdf_url = "https://example.co.jp/ir/benefit.pdf"
+        company = {"code": "7550", "name": "ゼンショーホールディングス",
+                   "official_domain": "example.co.jp"}
+        class Headers:
+            def __init__(self, value): self.value = value
+            def get(self, _key, default=""): return self.value or default
+        class Response:
+            status = 200
+            def __init__(self, url, body, content_type):
+                self.url, self.body, self.headers = url, body, Headers(content_type)
+            def geturl(self): return self.url
+            def read(self, _limit): return self.body
+            def __enter__(self): return self
+            def __exit__(self, *_args): pass
+        html = "<main>ブランド表記のみ 株主優待制度 100株</main>".encode()
+        with patch.object(discovery, "urlopen", return_value=Response(html_url, html, "text/html")):
+            self.assertIn("100株", discovery.fetch_official_page(
+                html_url, company, {}, registered=True)[1])
+        pdf = "ブランド表記のみ 株主優待制度 100株 3月".encode()
+        with patch.object(discovery, "urlopen", return_value=Response(pdf_url, pdf, "application/pdf")), \
+             patch.object(discovery.subprocess, "run", side_effect=FileNotFoundError):
+            self.assertIn("3月", discovery.fetch_official_page(
+                pdf_url, company, {}, registered=True)[1])
+
+    def test_registered_source_404_has_dedicated_outcome(self):
+        url = "https://example.co.jp/ir/benefit/"
+        company = {"code": "7550", "name": "ゼンショーホールディングス",
+                   "official_domain": "example.co.jp"}
+        error = discovery.HTTPError(url, 404, "not found", {}, None)
+        with patch.object(discovery, "urlopen", side_effect=error):
+            with self.assertRaisesRegex(discovery.OfficialSourceNotFound, "official_source_http_404"):
+                discovery.fetch_official_page(url, company, {}, registered=True)
+
+    def test_registered_sources_are_confirmed_without_web_search(self):
+        targets = [
+            ("7550", "ゼンショーホールディングス"), ("9861", "吉野家ホールディングス"),
+            ("8163", "SRSホールディングス"), ("7616", "コロワイド"), ("7412", "アトム"),
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            sources = json.loads((Path(__file__).parents[1] / "data/official-benefit-sources.json").read_text())
+            fixtures = {"listed-companies.json": [{"code": code, "name": name} for code, name in targets],
+                        "official-benefit-sources.json": sources, "company-domains.json": {},
+                        "benefits.json": [], "verification-queue.json": [], "research-log.json": [],
+                        "review-queue.json": [], "discovery-progress.json": {}, "openai-api-usage.json": []}
+            for name, value in fixtures.items():
+                (root / name).write_text(json.dumps(value), encoding="utf-8")
+            (root / "benefit-universe.csv").write_text("code\n", encoding="utf-8")
+            args = type("Args", (), {"diagnostic_mode": False, "security_codes": ",".join(x[0] for x in targets),
+                "batch_size": 5, "daily_limit": 20, "retry_failed": False, "official_only": False})()
+            extracted = {key: None for key in discovery.FIELDS}
+            extracted.update({"benefit_status": "official_confirmed", "record_months": [3, 9],
+                              "minimum_shares": 100, "benefit_description": "優待食事券",
+                              "benefit_tiers": [{"shares": 100, "maximum_shares": None,
+                                  "description": "優待食事券", "annual_value_yen": 2000}],
+                              "long_term_required": False, "confidence_score": 95,
+                              "valuation_type": "official_amount", "official_verified_at": "2026-07-26"})
+            response = {"output_text": json.dumps(extracted), "output": [], "usage": {}}
+            def fetched(url, _company, _sources, registered=False):
+                self.assertTrue(registered)
+                return url, "株主優待制度 100株 3月 9月 長期保有条件なし"
+            with patch.object(discovery, "DATA", root), patch.dict(os.environ, {"OPENAI_API_KEY": "mock"}), \
+                 patch.object(discovery, "fetch_official_page", side_effect=fetched), \
+                 patch.object(discovery, "request_response", return_value=response), \
+                 patch.object(discovery, "build_payload", side_effect=AssertionError("web search must not run")):
+                self.assertEqual(discovery.run(args), 0)
+            benefits = json.loads((root / "benefits.json").read_text())
+            self.assertEqual({item["code"] for item in benefits}, {code for code, _name in targets})
+            self.assertTrue(all(item["benefit_status"] == "official_confirmed" for item in benefits))
+            self.assertEqual(json.loads((root / "research-log.json").read_text()), [])
+
     def test_stale_candidate_falls_through_to_another_official_url(self):
         stale = "https://kyokuyo.co.jp/ir/old.pdf"
         current = "https://kyokuyo.co.jp/ir/current.pdf"
