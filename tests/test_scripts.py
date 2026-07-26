@@ -6,6 +6,7 @@ from csv_to_json import convert
 from market_data import update_market_data
 from merge_benefit_universe import merge
 from fetch_tdnet import extract,merge_queue
+from update_listed_companies_from_jpx import parse_workbook,update
 class Tests(unittest.TestCase):
  def test_previous_quote_retained_on_failure(self):
   class Broken:
@@ -47,6 +48,59 @@ class Tests(unittest.TestCase):
   self.assertEqual(sum(x['benefit_status']=='official_confirmed' for x in items),10)
   self.assertEqual(sum(x['benefit_status']=='abolished' for x in items),2)
   self.assertEqual(sum(x['benefit_status']=='candidate' for x in items),0)
+
+class JPXListedCompaniesTests(unittest.TestCase):
+ @staticmethod
+ def workbook(rows):
+  headings=['コード','銘柄名','市場・商品区分','33業種区分']
+  class Sheet:
+   ncols=len(headings);nrows=len(rows)+1
+   def cell_value(self,row,column):return (headings if row==0 else rows[row-1])[column]
+  class Book:
+   def sheet_by_index(self,index):return Sheet()
+  return Book()
+
+ def common_rows(self):
+  rows=[
+   [2593.0,'伊藤園','プライム（内国株式）','食料品'],
+   ['130A','英字コード株式会社','グロース（内国株式）','情報・通信業'],
+  ]
+  rows.extend([[float(code),f'普通株式会社{code}','スタンダード（内国株式）','サービス業'] for code in range(3000,5998)])
+  return rows
+
+ def test_class_share_is_excluded_while_common_and_alphanumeric_stocks_remain(self):
+  rows=self.common_rows()+[[25935.0,'伊藤園第1種優先株式','プライム（内国株式）','食料品']]
+  excluded=[]
+  previous=[{'code':'2593','official_domain':'itoen.co.jp'}]
+  fake_xlrd=type('Xlrd',(),{'open_workbook':lambda _self,_path:self.workbook(rows)})()
+  with patch.dict(sys.modules,{'xlrd':fake_xlrd}):
+   companies=parse_workbook(Path('fixture.xls'),previous,excluded)
+  by_code={company['code']:company for company in companies}
+  self.assertGreaterEqual(len(companies),3000)
+  self.assertEqual(len(companies),len(by_code))
+  self.assertIn('2593',by_code);self.assertEqual(by_code['2593']['official_domain'],'itoen.co.jp')
+  self.assertIn('130A',by_code)
+  self.assertNotIn('25935',by_code)
+  self.assertEqual(excluded,[{'code':'25935','name':'伊藤園第1種優先株式'}])
+
+ def test_invalid_presumed_common_stock_still_fails_validation(self):
+  rows=self.common_rows()+[[12345.0,'コード不正株式会社','プライム（内国株式）','サービス業']]
+  fake_xlrd=type('Xlrd',(),{'open_workbook':lambda _self,_path:self.workbook(rows)})()
+  with patch.dict(sys.modules,{'xlrd':fake_xlrd}),self.assertRaisesRegex(ValueError,"12345"):
+   parse_workbook(Path('fixture.xls'))
+
+ def test_download_or_validation_failure_does_not_replace_previous_master(self):
+  with tempfile.TemporaryDirectory() as directory:
+   output=Path(directory)/'listed-companies.json';progress=Path(directory)/'progress.json'
+   original='[{"code":"2593","official_domain":"itoen.co.jp"}]\n';output.write_text(original,encoding='utf-8')
+   with patch('update_listed_companies_from_jpx.download',side_effect=RuntimeError('download failed')),self.assertRaises(RuntimeError):
+    update(output=output,progress_path=progress)
+   self.assertEqual(output.read_text(encoding='utf-8'),original)
+   rows=self.common_rows()+[[12345.0,'コード不正株式会社','プライム（内国株式）','サービス業']]
+   fake_xlrd=type('Xlrd',(),{'open_workbook':lambda _self,_path:self.workbook(rows)})()
+   with patch.dict(sys.modules,{'xlrd':fake_xlrd}),self.assertRaises(ValueError):
+    update(output=output,source=Path('fixture.xls'),progress_path=progress)
+   self.assertEqual(output.read_text(encoding='utf-8'),original)
 
 if __name__=='__main__':unittest.main()
 
