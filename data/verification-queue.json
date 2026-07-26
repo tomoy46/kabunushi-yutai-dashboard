@@ -1,15 +1,5 @@
 [
   {
-    "code": "1301",
-    "name": "極洋",
-    "confidence_score": 0,
-    "result": "failed",
-    "error_reason": "HTTPError",
-    "verification_reasons": [
-      "fetch_failed"
-    ]
-  },
-  {
     "code": "130A",
     "name": "Ｖｅｒｉｔａｓ　Ｉｎ　Ｓｉｌｉｃｏ",
     "confidence_score": 0,
@@ -98,5 +88,34 @@
     "verification_reasons": [
       "fetch_failed"
     ]
+  },
+  {
+    "code": "1301",
+    "name": "株式会社 極洋",
+    "benefit_status": "candidate",
+    "record_months": [
+      3
+    ],
+    "record_date": null,
+    "annual_occurrences": null,
+    "minimum_shares": 100,
+    "maximum_shares": null,
+    "benefit_title": null,
+    "benefit_description": null,
+    "category": null,
+    "annual_value_yen": null,
+    "valuation_type": "not_calculated",
+    "long_term_required": null,
+    "holding_period_months": null,
+    "conditions": "株主優待制度は2025年3月31日を基準日として当社株主名簿に記載された100株以上保有の株主への進呈を最後に廃止。",
+    "official_source_url": "https://www.jpx.co.jp/corporate/investor-relations/shareholders/incentives/index.html",
+    "official_source_title": "株主優待 | 日本取引所グループ（JPX）- 株主優待制度の廃止に関するご案内",
+    "official_verified_at": "2026-07-26",
+    "abolished_at": null,
+    "last_record_date": "2025-03-31",
+    "change_or_abolition_note": "2025年3月31日を基準日として株主名簿に記載された100株以上保有の株主への進呈を最後に、株主優待制度を廃止。",
+    "confidence_score": 75,
+    "evidence_text": "JPXの「株主優待制度の廃止に関するご案内」にて、極洋は「2025年3月31日を基準日として当社株主名簿に記載された100株以上保有の株主さまへの進呈を最後に、株主優待制度を廃止」と記載。",
+    "error_reason": "company_identity_mismatch,official_source_validation_failed,low_confidence,current_program_not_confirmed"
   }
 ]

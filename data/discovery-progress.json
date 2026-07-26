@@ -1,5 +1,5 @@
 {
-  "next_index": 10,
+  "next_index": 11,
   "processed_codes": [
     "1301",
     "130A",
@@ -13,7 +13,6 @@
     "137A"
   ],
   "failed_codes": [
-    "1301",
     "130A",
     "1332",
     "1333",
@@ -24,7 +23,7 @@
     "1379",
     "137A"
   ],
-  "updated_at": "2026-07-26T04:07:09.788592+00:00",
+  "updated_at": "2026-07-26T07:28:52.719222+00:00",
   "total_companies": 3709,
   "uninvestigated_count": 3699,
   "status_counts": {
