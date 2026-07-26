@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """優待CSVを検証し、JSONへ変換する。"""
-import argparse, csv, json
+import argparse, csv, datetime as dt, json, re
 from pathlib import Path
+from urllib.parse import urlparse
 
 REQUIRED = {
     'code', 'name', 'market', 'industry', 'category', 'record_months',
@@ -23,6 +24,15 @@ def convert(source: Path, destination: Path):
     for row in rows:
         if row['benefit_status'] not in STATUSES or row['data_confidence'] not in CONFIDENCE:
             raise ValueError(f"{row['code']}: ステータスまたは確認レベルが不正です")
+        if row['benefit_status'] == 'candidate':
+            url = urlparse(row['official_source_url'])
+            if (not re.fullmatch(r'\d{4}', row['code']) or not row['name'].strip()
+                    or row['name'].startswith(('公式確認待ち銘柄', '名称未確認', '未確認'))
+                    or not row['market'].strip() or row['market'] == '未確認'
+                    or url.scheme != 'https' or not url.netloc or not row['record_months']):
+                raise ValueError(f"{row['code']}: 候補には正式会社名・市場・具体的URL・権利月が必要です")
+            try: dt.date.fromisoformat(row['official_verified_at'])
+            except ValueError: raise ValueError(f"{row['code']}: 候補には最終確認日が必要です") from None
         item = {k: (None if k in NULLABLE and not row[k] else row[k])
                 for k in REQUIRED - {'benefit_tiers_json', 'record_months', 'annual_occurrences'}}
         item['record_months'] = [int(x) for x in row['record_months'].split('|') if x]
