@@ -1,34 +1,13 @@
 import csv,json,tempfile,unittest,datetime as dt,io
 from unittest.mock import patch
 from urllib.error import HTTPError
-from urllib.parse import parse_qs,urlparse
 from pathlib import Path
 import sys;sys.path.insert(0,str(Path(__file__).parents[1]/'scripts'))
 from csv_to_json import convert
-from market_data import JQuantsProvider, update_market_data
 from merge_benefit_universe import merge
 from fetch_tdnet import extract,merge_queue
 from update_listed_companies_from_jpx import parse_workbook,update
 class Tests(unittest.TestCase):
- def test_jquants_provider_uses_latest_close(self):
-  response=io.BytesIO(b'{"data":[{"Date":"2026-07-24","C":123.5},{"Date":"2026-07-23","C":120}]}')
-  with patch('market_data.urlopen',return_value=response) as request:
-   quote=JQuantsProvider('secret',today=dt.date(2026,7,26)).fetch('1234')
-  self.assertEqual(quote.price,123.5);self.assertEqual(quote.price_at,'2026-07-24');self.assertEqual(quote.source,'jquants')
-  self.assertEqual(request.call_args.args[0].headers['X-api-key'],'secret')
- def test_jquants_free_plan_uses_delayed_window_and_actual_latest_trading_date(self):
-  # 84日前が日曜日でも、幅を持たせた期間から最新取引日を選ぶ。
-  response=io.BytesIO(b'{"data":[{"Date":"2026-05-01","C":101},{"Date":"2026-04-30","C":99}]}')
-  with patch('market_data.urlopen',return_value=response) as request:
-   quote=JQuantsProvider('secret',today=dt.date(2026,7,26)).fetch('1234')
-  params=parse_qs(urlparse(request.call_args.args[0].full_url).query)
-  self.assertEqual(params,{'code':['1234'],'from':['2026-04-19'],'to':['2026-05-03']})
-  self.assertEqual(quote.price,101.0)
-  self.assertEqual(quote.price_at,'2026-05-01')
- def test_previous_quote_retained_on_failure(self):
-  class Broken:
-   def fetch(self,code):raise RuntimeError('failure')
-  old={'1234':{'price':100}};new,errors=update_market_data(['1234'],Broken(),old);self.assertEqual(new,old);self.assertTrue(errors[0]['previous_data_retained'])
  def test_tdnet_keyword_and_deduplication(self):
   xml='<rss><channel><item><title>株主優待制度の変更</title><link>https://x</link></item><item><title>決算短信</title></item></channel></rss>'.encode();found=extract(xml);self.assertEqual(len(found),1);self.assertEqual(len(merge_queue(found,found)),1)
  def test_benefit_master_schema_and_kddi_orix(self):

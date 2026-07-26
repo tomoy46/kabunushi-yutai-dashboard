@@ -1,55 +1,55 @@
-const test=require('node:test'),assert=require('node:assert/strict');const a=require('../app.js');
-const base={code:'1',name:'テスト会社',category:'金券',record_months:[3],long_term_condition:'',benefit_status:'official_confirmed',data_confidence:'official_confirmed',benefit_tiers:[{shares:100,description:'商品券',annual_value_yen:3000}],sample_price:1000,sample_forecast_dividend:20};
-test('必要投資額と各利回り',()=>{assert.equal(a.calcInvestment(1000,100),100000);assert.equal(a.calcBenefitYield(3000,100000),3);assert.equal(a.calcDividendYield(20,1000),2);assert.equal(a.calcTotalYield(3,2),5)});
-test('換算対象外',()=>{assert.equal(a.calcBenefitYield(null,100000),null);assert.equal(a.calcTotalYield(null,2),null)});
-test('検索とフィルター',()=>{const x=a.enrich(base);assert.equal(a.filterBenefits([x],{search:'商品券',month:'3',category:'金券',maxInvestment:'100000',hundredOnly:true,longTermOnly:false,favoritesOnly:false,favorites:[]}).length,1);assert.equal(a.filterBenefits([x],{search:'なし',month:'',category:'',maxInvestment:'',hundredOnly:false,longTermOnly:false,favoritesOnly:false,favorites:[]}).length,0)});
-test('並び替え',()=>{const x=a.enrich(base),y={...x,code:'2',totalYield:10};assert.equal(a.sortBenefits([x,y],'total-desc')[0].code,'2')});
-test('複数区分とお気に入りと空データ',()=>{const x=a.enrich({...base,benefit_tiers:[...base.benefit_tiers,{shares:500,description:'追加',annual_value_yen:5000}]});assert.equal(x.benefit_tiers.length,2);assert.deepEqual(a.filterBenefits([],{search:'',month:'',category:'',maxInvestment:'',hundredOnly:false,longTermOnly:false,favoritesOnly:false,favorites:[]}),[]);assert.equal(a.filterBenefits([x],{search:'',month:'',category:'',maxInvestment:'',hundredOnly:false,longTermOnly:false,favoritesOnly:true,favorites:['1']}).length,1)});
-test('廃止済み銘柄は利回りランキング対象外',()=>{const active=a.enrich(base),abolished=a.enrich({...base,code:'2',benefit_status:'abolished'});assert.equal(abolished.rankingEligible,false);assert.equal(abolished.benefitYield,null);assert.equal(abolished.totalYield,null);assert.equal(a.sortBenefits([abolished,active],'dividend-desc')[0].code,'1')});
-test('未確認銘柄は利回りランキング対象外',()=>{const active=a.enrich(base),unverified=a.enrich({...base,code:'3',benefit_status:'unverified'});assert.equal(unverified.rankingEligible,false);assert.equal(unverified.totalYield,null);assert.equal(a.sortBenefits([unverified,active],'total-desc')[0].code,'1')});
-test('廃止済み表示フィルター',()=>{const abolished=a.enrich({...base,benefit_status:'abolished'}),filters={search:'',month:'',category:'',maxInvestment:'',hundredOnly:false,longTermOnly:false,favoritesOnly:false,favorites:[],showAbolished:false};assert.equal(a.filterBenefits([abolished],filters).length,0);assert.equal(a.filterBenefits([abolished],{...filters,showAbolished:true}).length,1)});
-test('候補はランキング対象外で初期表示から除外',()=>{const confirmed=a.enrich({...base,benefit_status:'official_confirmed',data_confidence:'official_confirmed'}),candidate=a.enrich({...base,code:'4',benefit_status:'candidate',data_confidence:'candidate',benefit_tiers:[]});assert.equal(candidate.rankingEligible,false);assert.equal(candidate.investment,null);const filters={search:'',month:'',category:'',maxInvestment:'',hundredOnly:false,longTermOnly:false,favoritesOnly:false,favorites:[],showAbolished:true,showCandidates:false};assert.deepEqual(a.filterBenefits([candidate,confirmed],filters).map(x=>x.code),['1']);assert.deepEqual(a.filterBenefits([candidate,confirmed],{...filters,showCandidates:true}).map(x=>x.code),['4','1'])});
-test('新形式の極洋を一覧・詳細用に正規化する',()=>{const raw={code:'1301',name:'極洋',benefit_status:'official_confirmed',benefit_title:'自社製品',benefit_description:'保有株式数に応じて贈呈',annual_value_yen:2500,official_verified_at:'2026-07-26',record_months:[3],long_term_required:false,benefit_tiers:[{shares:300,maximum_shares:null,description:'6,000円相当の自社製品',annual_value_yen:6000},{shares:100,maximum_shares:299,description:'2,500円相当の自社製品',annual_value_yen:2500}]};const x=a.normalizeBenefitRecord(raw,{market:'プライム',sector:'水産・農林業'});assert.equal(x.market,'プライム');assert.equal(x.industry,'水産・農林業');assert.equal(x.minimum_shares,100);assert.equal(x.annual_value_yen,2500);assert.equal(x.last_checked_at,'2026-07-26');assert.equal(x.long_term_condition,'なし');assert.deepEqual(x.benefit_tiers.map(t=>t.shares),[100,300]);assert.equal(x.benefit_tiers[1].annual_value_yen,6000);assert.doesNotMatch(JSON.stringify(x),/undefined|NaN/)});
-test('旧形式10社と欠損値を安全に正規化する',()=>{for(let i=0;i<10;i++){const x=a.normalizeBenefitRecord({...base,code:String(i)});assert.equal(x.minimum_shares,100);assert.equal(x.benefit_summary,'優待内容未取得');assert.equal(a.enrich(x).tier.description,'商品券')}const missing=a.normalizeBenefitRecord({code:'9',name:null,market:'undefined',sector:null,industry:'NaN',benefit_tiers:[]});assert.equal(missing.market,'市場未取得');assert.equal(missing.industry,'業種未取得');assert.equal(missing.benefit_summary,'優待内容未取得')});
-test('株価欠損は優待データと分離する',()=>{const x=a.enrich(a.normalizeBenefitRecord({...base,sample_price:null}));assert.equal(x.price,null);assert.equal(x.investment,null);assert.equal(x.tier.shares,100);assert.equal(x.tier.description,'商品券')});
-test('不正な値では利回りを計算しない',()=>{
-  assert.equal(a.calcBenefitYield(2500,null),null);
-  assert.equal(a.calcBenefitYield(2500,0),null);
-  assert.equal(a.calcBenefitYield(2500,250000),1);
-  assert.equal(a.calcBenefitYield(-1,250000),null);
-  assert.equal(a.calcBenefitYield(Infinity,250000),null);
-  assert.equal(a.calcDividendYield(20,null),null);
-  assert.equal(a.calcDividendYield(20,0),null);
-  assert.equal(a.calcDividendYield(Infinity,1000),null);
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const app = require('../app.js');
+const base = {code:'1', name:'テスト会社', category:'金券', record_months:[3], long_term_condition:'なし', benefit_status:'official_confirmed', data_confidence:'official_confirmed', official_source_url:'https://example.com/benefit', benefit_tiers:[{shares:100, description:'商品券', annual_value_yen:3000}]};
+const filters = {search:'', month:'', category:'', hundredOnly:false, longTermOnly:false, favoritesOnly:false, favorites:[], showAbolished:false, showCandidates:false};
+
+test('優待情報を一覧用に正規化する', () => {
+  const x = app.normalizeBenefitRecord(base, {market:'プライム', sector:'小売業'});
+  assert.equal(x.market, 'プライム');
+  assert.equal(x.industry, '小売業');
+  assert.equal(x.tier.shares, 100);
+  assert.equal(x.tier.description, '商品券');
+  assert.equal(x.official_source_url, 'https://example.com/benefit');
+  assert.equal(x.long_term_condition, 'なし');
 });
-test('総合利回りに非有限数を採用しない',()=>{
-  assert.equal(a.calcTotalYield(null,2),null);
-  assert.equal(a.calcTotalYield(Infinity,2),null);
-  assert.equal(a.calcTotalYield(NaN,2),null);
-  assert.equal(a.calcTotalYield(1,null),1);
-  assert.equal(a.calcTotalYield(1,Infinity),1);
+
+test('検索と優待条件フィルター', () => {
+  const x = app.normalizeBenefitRecord(base);
+  assert.equal(app.filterBenefits([x], {...filters, search:'商品券', month:'3', category:'金券', hundredOnly:true}).length, 1);
+  assert.equal(app.filterBenefits([x], {...filters, search:'なし'}).length, 0);
+  assert.equal(app.filterBenefits([{...x, long_term_condition:'1年以上'}], {...filters, longTermOnly:true}).length, 1);
 });
-test('パーセント表示は有限数だけを表示する',()=>{
-  assert.equal(a.pct(null),'算定対象外');
-  assert.equal(a.pct(undefined),'算定対象外');
-  assert.equal(a.pct(Infinity),'算定対象外');
-  assert.equal(a.pct(-Infinity),'算定対象外');
-  assert.equal(a.pct(NaN),'算定対象外');
-  assert.equal(a.pct(1),'1.00%');
+
+test('お気に入り、廃止済み、候補の表示を切り替える', () => {
+  const active = app.normalizeBenefitRecord(base);
+  const abolished = app.normalizeBenefitRecord({...base, code:'2', benefit_status:'abolished'});
+  const candidate = app.normalizeBenefitRecord({...base, code:'3', benefit_status:'candidate'});
+  assert.deepEqual(app.filterBenefits([active, abolished, candidate], filters).map(x => x.code), ['1']);
+  assert.deepEqual(app.filterBenefits([active, abolished, candidate], {...filters, showAbolished:true, showCandidates:true}).map(x => x.code), ['1','2','3']);
+  assert.deepEqual(app.filterBenefits([active], {...filters, favoritesOnly:true, favorites:['1']}).map(x => x.code), ['1']);
 });
-test('平均利回りから非有限数を除外する',()=>{
-  assert.equal(a.averageTotalYield([{totalYield:1},{totalYield:3},{totalYield:Infinity},{totalYield:NaN},{totalYield:null}]),2);
-  assert.equal(a.averageTotalYield([{totalYield:Infinity},{totalYield:NaN},{totalYield:null}]),null);
+
+test('証券コード順と銘柄名順に並べる', () => {
+  const a = app.normalizeBenefitRecord({...base, code:'20', name:'イ社'});
+  const b = app.normalizeBenefitRecord({...base, code:'3', name:'ア社'});
+  assert.deepEqual(app.sortBenefits([a,b], 'code-asc').map(x => x.code), ['3','20']);
+  assert.deepEqual(app.sortBenefits([a,b], 'name-asc').map(x => x.code), ['3','20']);
 });
-test('株価未取得の極洋には Infinity を表示しない',()=>{
-  const raw={...base,code:'1301',name:'極洋',sample_price:null,annual_value_yen:2500,benefit_tiers:[{shares:100,description:'2,500円相当の自社製品',annual_value_yen:2500}]};
-  const x=a.enrich(a.normalizeBenefitRecord(raw));
-  const displayed=[a.pct(x.benefitYield),x.dividendYield==null?'—':a.pct(x.dividendYield),a.pct(x.totalYield)];
-  assert.deepEqual(displayed,['算定対象外','—','算定対象外']);
-  assert.doesNotMatch(displayed.join(' '),/Infinity/);
+
+test('新形式の極洋と複数の優待区分を保持する', () => {
+  const raw = {code:'1301', name:'極洋', benefit_status:'official_confirmed', benefit_title:'自社製品', annual_value_yen:2500, official_verified_at:'2026-07-26', official_source_url:'https://www.kyokuyo.co.jp/ir/concept/', record_months:[3], long_term_required:false, benefit_tiers:[{shares:300, maximum_shares:null, description:'6,000円相当の自社製品', annual_value_yen:6000},{shares:100, maximum_shares:299, description:'2,500円相当の自社製品', annual_value_yen:2500}]};
+  const x = app.normalizeBenefitRecord(raw, {market:'プライム', sector:'水産・農林業'});
+  assert.equal(x.minimum_shares, 100);
+  assert.equal(x.last_checked_at, '2026-07-26');
+  assert.deepEqual(x.benefit_tiers.map(t => t.shares), [100,300]);
+  assert.equal(x.official_source_url, 'https://www.kyokuyo.co.jp/ir/concept/');
 });
-test('利回り順は非有限数を算定可能な銘柄より下にする',()=>{
-  const valid={...a.enrich(base),code:'valid',totalYield:5};
-  const invalid=[Infinity,-Infinity,NaN,null].map((totalYield,index)=>({...valid,code:`invalid-${index}`,totalYield}));
-  assert.equal(a.sortBenefits([...invalid,valid],'total-desc')[0].code,'valid');
+
+test('欠損値を安全に正規化する', () => {
+  const x = app.normalizeBenefitRecord({code:'9', name:null, market:'undefined', sector:null, industry:'NaN', benefit_tiers:[]});
+  assert.equal(x.name, '名称未取得');
+  assert.equal(x.market, '市場未取得');
+  assert.equal(x.industry, '業種未取得');
+  assert.equal(x.benefit_summary, '優待内容未取得');
 });

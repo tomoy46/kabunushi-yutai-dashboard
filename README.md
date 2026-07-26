@@ -20,16 +20,16 @@ OpenAI版は検索付きリクエストに `max_tool_calls=1` を指定します
 Usage画面と `responses_with_web_search` を使用してください。診断モードはこれらの件数と安全なaction種別だけを
 表示し、検索語、URL、検索結果本文は表示せず、データファイルも更新しません。
 
-日本株の株主優待について、必要株数・必要投資額・優待/配当/総合利回りを横断して比較する、静的なPWAです。優待情報は企業公式情報で確認済みの10社と廃止済み2社を収録しています。株価はJ-Quants APIから定期取得してCloudflare Workers KVに保存し、Pages Functions経由で表示します。投資判断には利用できません。
+日本株の株主優待について、優待内容・必要株数・権利月・長期保有条件・公式確認状態を比較する静的なPWAです。既存の株主優待データ13社（極洋を含む）を収録しています。株価情報は表示せず、投資判断には利用できません。
 
 ## 機能
 
-- 証券コード・銘柄名・優待内容の検索、権利月・カテゴリー・投資額・100株・長期条件の絞り込み
-- 利回り/投資額の並べ替え、端末内 `localStorage` のお気に入り、ライト/ダークテーマ
+- 証券コード・銘柄名・優待内容の検索、権利月・カテゴリー・100株・長期条件の絞り込み
+- 証券コード/銘柄名の並べ替え、端末内 `localStorage` のお気に入り、ライト/ダークテーマ
 - PCの表、スマートフォンのカード、各社の全 `benefit_tiers` を示す詳細ダイアログ
 - インストール可能なmanifest、Service Workerによるオフラインキャッシュ
-- 金額換算できない割引券は金額を推定せず「算定対象外」、配当予想なしは「データなし」
-- 制度変更・廃止・公式確認状況の表示、廃止済み銘柄フィルター（廃止済み・未確認は利回りランキング対象外）
+- 優待区分ごとの必要株数と内容、権利月、長期保有条件、公式URLの表示
+- 制度変更・廃止・公式確認状況の表示、廃止済み銘柄フィルター
 
 ## ローカル実行とテスト
 
@@ -46,41 +46,25 @@ npm run serve
 | ファイル | 用途 |
 |---|---|
 | `data/benefits.csv` / `.json` | 手動確認済みの優待マスター |
-| Workers KV `market-data` | 株価、取得日、データ源（リポジトリには保存しません） |
 | `data/update-status.json` | 更新処理の結果 |
 | `data/review-queue.json` | TDnetから検出した人手確認待ち候補 |
 
 ```bash
 python scripts/csv_to_json.py
-JQUANTS_API_KEY=... python scripts/update_market_data.py --output /tmp/market-data.json
 python scripts/fetch_tdnet.py --feed-url 'TDnetのRSS/XML URL'
 ```
 
-`market_data.py` の `JQuantsProvider` はJ-Quants API v2から各銘柄の直近終値を取得します。WorkflowはKVの直前値を読み、取得失敗した銘柄ではその値を保持したうえで、Cloudflare APIを使ってKVキー `market-data` を更新します。TDnet処理はタイトルを指定キーワードで抽出し、URL重複を除いてレビューキューに追加するだけで、優待マスターを変更しません。定期処理は平日09:15 JST（00:15 UTC）です。
+TDnet処理はタイトルを指定キーワードで抽出し、URL重複を除いてレビューキューに追加するだけで、優待マスターを変更しません。優待データ更新の定期処理は平日09:15 JST（00:15 UTC）です。
 
-## Cloudflare Pages公開と設定
+## 公開構成
 
-1. CloudflareでWorkers KV namespaceを作成し、Pagesプロジェクトの **Settings → Bindings** でKV namespace bindingを追加します。変数名は必ず `MARKET_DATA` とし、PreviewとProductionの両環境を対象にします。
-2. GitHub Actions Secretsに `JQUANTS_API_KEY` と、対象KVへの読み書き権限を持つ `CLOUDFLARE_API_TOKEN` を登録します。
-3. GitHub Actions Variablesに `CLOUDFLARE_ACCOUNT_ID` と `CLOUDFLARE_KV_NAMESPACE_ID` を登録します。
-4. Cloudflare Pagesをこのリポジトリへ接続します。静的ファイルに加えて `functions/api/market-data.js` がデプロイされ、`/api/market-data` からbinding先のKVキー `market-data` を返します。
-5. `Update benefit and market data` workflowを実行し、KVへ初回データを保存します。株価JSONは一時ファイルだけに生成され、Gitにはコミットされません。
-
-ローカルの単純なHTTPサーバーにはPages FunctionsとKV bindingがないため、株価欄には「株価データ取得不可」と表示されます。Functions込みの確認にはWranglerでKV bindingを設定してください。
+静的ファイルだけで公開できます。Cloudflare Pagesで公開する場合もWorkers KVやPages Functionsのbindingは不要です。GitHub Actionsの優待データ更新処理にも外部の株価APIやCloudflareの認証情報は使用しません。
 
 ## 制限・未実装
 
 - TDnetはフィードURLを固定していません。提供形式に応じた運用設定が必要で、PDF本文解析や優待マスターへの自動反映は意図的に行いません。
 - SVGアイコンのみです。一部PWAストア向けにはPNGアイコン追加が必要な場合があります。
 - 静的アプリのため、お気に入り・テーマはブラウザ間で同期されません。オフライン時は最後に正常取得したキャッシュを表示します。
-- J-Quantsの日足APIからは予想配当を取得しないため、配当データがない場合は「データなし」と表示します。
-
-## 計算
-
-- 必要投資額 = 株価 × 必要株数
-- 優待利回り = 年間優待価値 ÷ 必要投資額 × 100
-- 配当利回り = 1株当たり予想年間配当 ÷ 株価 × 100
-- 総合利回り = 優待利回り + 配当利回り
 
 ## 優待候補台帳と公式確認フロー
 
@@ -118,7 +102,7 @@ GEMINI_API_KEY='...' python scripts/discover_benefits_with_gemini.py --diagnosti
 
 ### 現在の制限
 
-- このリポジトリには全上場会社マスターを同梱せず、既存の実在12社を試験入力にしています。全社走査にはJ-Quantsの上場銘柄一覧、または同形式の信頼できる実在会社マスターの投入が必要です。
-- J-Quants未設定でも、入力済み会社のGemini調査、公式URL検証、再開、キュー表示、利用量記録は動作します。株価・配当の実データ更新は行いません。
+- このリポジトリには全上場会社マスターを同梱せず、既存の実在13社を試験入力にしています。全社走査には同形式の信頼できる実在会社マスターの投入が必要です。
+- 入力済み会社のGemini調査、公式URL検証、再開、キュー表示、利用量記録が動作します。
 - TDnetのキーワード検出は既存の `fetch_tdnet.py` が確認キューを作るところまでです。TDnet API/フィードの恒久的な取得先や、検出銘柄を自動的に最優先する統合は未実装です。
 - Google Search groundingや企業サイト側のアクセス制限により、取得不能・PDF解析不能になる場合は人手確認が必要です。APIキーがない開発環境では実API試験は実施できません。
