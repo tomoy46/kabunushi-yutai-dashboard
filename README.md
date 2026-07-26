@@ -63,9 +63,11 @@ TDnet処理はタイトルを指定キーワードで抽出し、URL重複を除
 
 ```bash
 python scripts/add_companies.py 7550 9861 8163
+python scripts/add_companies.py --from 1301 --to 1999
 ```
 
-存在しないコードや4桁でない値は推測せずエラーにし、既存の優待データおよび登録済みコードは変更しません。
+範囲指定では、両端を含む範囲のうち上場会社マスターに存在する4桁のコードだけを追加します。
+存在しない個別指定コードや4桁でない値は推測せずエラーにし、既存の優待データおよび登録済みコードは変更しません。
 追加をコミットしてから Actions の **Discover shareholder benefits with OpenAI** を手動実行してください。
 `batch_size`（1回の調査社数）の初期値は5社で、必要に応じて実行画面で変更できます。追加した確認待ち銘柄が
 優先して選ばれ、公式情報を確認できた結果だけが `data/benefits.csv` と `data/benefits.json` に追加されます。
