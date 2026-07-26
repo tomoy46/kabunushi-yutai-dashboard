@@ -19,6 +19,8 @@ class Quote:
 
 class JQuantsProvider:
     API_URL = "https://api.jquants.com/v2/equities/bars/daily"
+    FREE_PLAN_DELAY_DAYS = 84
+    SEARCH_WINDOW_DAYS = 14
 
     def __init__(self, api_key, today=None):
         if not api_key:
@@ -27,8 +29,14 @@ class JQuantsProvider:
         self.today = today or date.today()
 
     def fetch(self, code):
-        # 休場日を含めて十分な幅を持たせ、返却された最新の終値を使う。
-        query = urlencode({"code": str(code), "from": self.today - timedelta(days=14), "to": self.today})
+        # Freeプランの日足は12週間遅延する。遅延後の基準日から過去に幅を
+        # 持たせることで、土日祝や休場日でも直近取引日の終値を取得する。
+        reference_date = self.today - timedelta(days=self.FREE_PLAN_DELAY_DAYS)
+        query = urlencode({
+            "code": str(code),
+            "from": reference_date - timedelta(days=self.SEARCH_WINDOW_DAYS),
+            "to": reference_date,
+        })
         request = Request(f"{self.API_URL}?{query}", headers={"x-api-key": self.api_key})
         with urlopen(request, timeout=30) as response:
             payload = json.load(response)
