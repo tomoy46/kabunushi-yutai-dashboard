@@ -29,13 +29,13 @@ class Tests(unittest.TestCase):
   with tempfile.TemporaryDirectory() as directory:
    out=Path(directory)/'out.json'; queue=Path(directory)/'queue.json'
    items,q=merge(Path('data/benefits.json'),Path('data/benefit-universe.csv'),out,queue)
-   self.assertEqual(len(items),12); self.assertEqual(len(items),len({x['code'] for x in items})); self.assertEqual(q,[])
+   self.assertEqual(len(items),13); self.assertEqual(len(items),len({x['code'] for x in items})); self.assertEqual(q,[])
    self.assertEqual(next(x for x in items if x['code']=='8267')['data_confidence'],'official_confirmed')
    self.assertTrue(all(x['benefit_status']=='candidate' for x in q))
 
  def test_candidate_requires_real_company_source_month_and_check_date(self):
   fields=['code','name','market','sector','benefit_status','record_months','source_hint','last_checked_at']
-  bad={'code':'1301','name':'公式確認待ち銘柄（1301）','market':'未確認','sector':'未確認','benefit_status':'candidate','record_months':'8','source_hint':'企業公式IRページを確認','last_checked_at':''}
+  bad={'code':'1302','name':'公式確認待ち銘柄（1302）','market':'未確認','sector':'未確認','benefit_status':'candidate','record_months':'8','source_hint':'企業公式IRページを確認','last_checked_at':''}
   with tempfile.TemporaryDirectory() as directory:
    universe=Path(directory)/'universe.csv'
    with universe.open('w',encoding='utf-8',newline='') as f:
@@ -46,9 +46,22 @@ class Tests(unittest.TestCase):
  def test_no_dummy_candidates_and_status_counts_are_preserved(self):
   items=json.loads(Path('data/benefits.json').read_text())
   self.assertFalse(any(x['name'].startswith('公式確認待ち銘柄') for x in items))
-  self.assertEqual(sum(x['benefit_status']=='official_confirmed' for x in items),10)
+  self.assertEqual(sum(x['benefit_status']=='official_confirmed' for x in items),11)
   self.assertEqual(sum(x['benefit_status']=='abolished' for x in items),2)
   self.assertEqual(sum(x['benefit_status']=='candidate' for x in items),0)
+
+ def test_kyokuyo_is_confirmed_and_removed_only_from_verification_queue(self):
+  items=json.loads(Path('data/benefits.json').read_text())
+  kyokuyo=next(x for x in items if x['code']=='1301')
+  self.assertEqual(kyokuyo['benefit_status'],'official_confirmed')
+  self.assertEqual(kyokuyo['official_source_url'],'https://www.kyokuyo.co.jp/ir/concept/')
+  self.assertGreaterEqual(kyokuyo['confidence_score'],90)
+  self.assertEqual(kyokuyo['annual_value_yen'],2500)
+  queue=json.loads(Path('data/verification-queue.json').read_text())
+  self.assertFalse(any(x['code']=='1301' for x in queue))
+  self.assertEqual(len(queue),9)
+  progress=json.loads(Path('data/discovery-progress.json').read_text())
+  self.assertNotIn('1301',progress['processed_codes'])
 
 class JPXListedCompaniesTests(unittest.TestCase):
  @staticmethod

@@ -18,7 +18,7 @@ import time
 import unicodedata
 from pathlib import Path
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -51,6 +51,10 @@ FIELDS = {
 }
 SCHEMA = {"type": "object", "properties": FIELDS, "required": list(FIELDS), "additionalProperties": False}
 BENEFIT_WORDS = ("株主優待", "優待制度", "株主優待制度")
+TRACKING_QUERY_KEYS = {"fbclid", "gclid", "yclid", "mc_cid", "mc_eid"}
+BROWSER_USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                      "AppleWebKit/537.36 (KHTML, like Gecko) "
+                      "Chrome/124.0.0.0 Safari/537.36")
 REEXTRACT_REASONS = {"record_date_unknown", "minimum_shares_unknown", "low_confidence", "current_program_not_confirmed"}
 
 
@@ -115,9 +119,15 @@ def canonical_url(value):
         parsed = urlparse(value)
         if parsed.scheme != "https" or not parsed.hostname:
             return None
-        host = parsed.hostname.lower().removeprefix("www.")
+        host = parsed.hostname.lower()
         port = f":{parsed.port}" if parsed.port and parsed.port != 443 else ""
-        return urlunparse(("https", host + port, parsed.path or "/", "", parsed.query, ""))
+        path = parsed.path or "/"
+        # Directory pages compare consistently while file URLs retain their form.
+        if not path.endswith("/") and not re.search(r"/[^/]+\.[A-Za-z0-9]{1,8}$", path):
+            path += "/"
+        query = urlencode([(key, value) for key, value in parse_qsl(parsed.query, keep_blank_values=True)
+                           if not key.lower().startswith("utm_") and key.lower() not in TRACKING_QUERY_KEYS])
+        return urlunparse(("https", host + port, path, "", query, ""))
     except (TypeError, ValueError):
         return None
 
@@ -127,8 +137,24 @@ def hostname(value):
     return urlparse(normalized).hostname if normalized else None
 
 
+def normalized_host(value):
+    """Return a host identity where the conventional ``www`` alias is ignored."""
+    host = hostname(value) if "://" in str(value or "") else str(value or "").lower()
+    return host.removeprefix("www.") if host else None
+
+
+def url_identity(value):
+    """Build a comparison key without changing the host spelling we persist."""
+    normalized = canonical_url(value)
+    if not normalized:
+        return None
+    parsed = urlparse(normalized)
+    return (normalized_host(normalized), parsed.path.rstrip("/") or "/", parsed.query)
+
+
 def is_subdomain(host, parent):
-    return bool(host and (host == parent or host.endswith("." + parent)))
+    host, parent = normalized_host(host), normalized_host(parent)
+    return bool(host and parent and (host == parent or host.endswith("." + parent)))
 
 
 def normalize_company_name(value):
@@ -317,21 +343,29 @@ def page_text(body):
             continue
     else:
         decoded = body.decode("utf-8", "ignore")
+    # Meta values are not text nodes, but are important corporate identity
+    # evidence (description, og:title and og:site_name).
+    meta = " ".join(match.group(1) for tag in re.findall(r"(?is)<meta\b[^>]*>", decoded)
+                    if (match := re.search(r'''(?is)\bcontent\s*=\s*["']([^"']*)["']''', tag)))
     decoded = re.sub(r"(?is)<(script|style).*?>.*?</\1>", " ", decoded)
+    decoded = meta + " " + decoded
     return re.sub(r"\s+", " ", re.sub(r"(?s)<[^>]+>", " ", decoded)).strip()
 
 
 def fetch_official_page(url, company, source_urls):
     normalized = canonical_url(url)
-    if normalized not in source_urls or not allowed_url(normalized, company.get("official_domain")):
+    if not any(url_identity(normalized) == url_identity(source) for source in source_urls):
+        raise ValueError("source_url_not_in_search_results")
+    if not allowed_url(normalized, company.get("official_domain")):
         raise ValueError("source_url_not_allowed")
-    request = Request(normalized, headers={"User-Agent": "kabunushi-yutai-dashboard/1.0 (source verification)"})
+    request = Request(normalized, headers={"User-Agent": BROWSER_USER_AGENT,
+                                           "Accept": "text/html,application/xhtml+xml"})
     with urlopen(request, timeout=25) as response:
-        if response.status != 200: raise ValueError("source_http_not_200")
+        if response.status != 200: raise ValueError(f"HTTP_status_{response.status}")
         final = canonical_url(response.geturl())
         expected = company.get("official_domain")
         if not final or (expected and not is_subdomain(hostname(final), expected)):
-            raise ValueError("source_redirected_outside_official_domain")
+            raise ValueError(f"redirect_host_not_official_domain:{hostname(final) or 'invalid'}")
         if not expected and hostname(final) != hostname(normalized):
             raise ValueError("source_redirected_outside_candidate_domain")
         body = response.read(2_000_000)
@@ -376,7 +410,10 @@ def select_verified_source(item, company, sources, page_fetcher=None):
         try:
             result = page_fetcher(url, company, set(sources))
             return result if isinstance(result, tuple) else (result, "")
-        except Exception:
+        except Exception as error:
+            # The exception values produced by fetch_official_page are bounded
+            # reason codes and never contain the URL or response body.
+            print(f"Official source rejected: {safe_message(error)}", file=sys.stderr)
             continue
     return None, ""
 
@@ -390,7 +427,7 @@ def validate(item, company, sources, fetcher=None):
     url, _ = select_verified_source(item, company, sources, fetcher)
     if url:
         item["official_source_url"] = url
-    elif not original or original not in sources:
+    elif not original or not any(url_identity(original) == url_identity(source) for source in sources):
         reasons.append("source_not_in_search_results")
     elif not allowed_url(original, company.get("official_domain")):
         reasons.append("source_domain_not_allowed")

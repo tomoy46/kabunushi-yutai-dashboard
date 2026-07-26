@@ -44,6 +44,14 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         self.assertTrue(discovery.same_company_name("ＡＢＣ １２３", "株式会社ABC123"))
         self.assertFalse(discovery.same_company_name("極洋", "日本取引所グループ"))
 
+    def test_url_normalization_removes_tracking_and_fragment(self):
+        url = "https://www.kyokuyo.co.jp/ir/concept?utm_source=test&gclid=secret#benefit"
+        self.assertEqual(discovery.canonical_url(url), "https://www.kyokuyo.co.jp/ir/concept/")
+
+    def test_www_and_trailing_slash_are_the_same_url_identity(self):
+        self.assertEqual(discovery.url_identity("https://kyokuyo.co.jp/ir/concept"),
+                         discovery.url_identity("https://www.kyokuyo.co.jp/ir/concept/"))
+
     def test_api_error_diagnostic_fields_are_allowlisted_and_redacted(self):
         secret = "sk-this-is-a-secret-value"
         error = discovery.APIError(400, f"bad value {secret}", error_type="invalid_request_error",
@@ -130,6 +138,26 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         response.read = lambda _limit: "株式会社 極洋 証券コード1301 株主優待制度".encode()
         with patch.object(discovery, "urlopen", return_value=response):
             self.assertEqual(discovery.fetch_official_page(url, company, {url})[0], url)
+
+    def test_registered_official_domain_accepts_title_identity_without_code(self):
+        requested = "https://www.kyokuyo.co.jp/ir/concept/"
+        search_url = "https://kyokuyo.co.jp/ir/concept?utm_source=search"
+        html = "<html><head><title>株主優待 | 株式会社 極洋</title></head><body>株主優待</body></html>"
+        class Response:
+            status = 200
+            def geturl(self): return requested
+            def read(self, _limit): return html.encode()
+            def __enter__(self): return self
+            def __exit__(self, *_args): pass
+        with patch.object(discovery, "urlopen", return_value=Response()) as opener:
+            final, _ = discovery.fetch_official_page(requested, self.company, {search_url})
+        self.assertEqual(final, requested)
+        self.assertIn("Mozilla/5.0", opener.call_args.args[0].headers["User-agent"])
+
+    def test_meta_identity_is_searchable(self):
+        html = '<meta property="og:site_name" content="株式会社 極洋"><main>株主優待</main>'
+        text = discovery.page_text(html.encode())
+        self.assertIn("株式会社 極洋", text)
 
     def test_jpx_own_ir_page_is_never_company_disclosure(self):
         url = "https://jpx.co.jp/corporate/investor-relations/shareholders/incentives/index.html"
