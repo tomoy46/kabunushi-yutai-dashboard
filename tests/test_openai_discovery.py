@@ -3,6 +3,8 @@ import json
 import os
 import tempfile
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
@@ -29,11 +31,34 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         self.assertEqual(payload["tools"][0]["type"], "web_search")
         self.assertEqual(payload["tools"][0]["search_context_size"], "low")
         self.assertEqual(payload["max_tool_calls"], 1)
+        self.assertEqual(payload["reasoning"]["effort"], "none")
+        self.assertEqual(payload["include"], ["web_search_call.action.sources"])
         self.assertFalse(payload["store"])
         self.assertTrue(payload["text"]["format"]["strict"])
         self.assertEqual(payload["text"]["format"]["type"], "json_schema")
         self.assertEqual(payload["tools"][0]["filters"]["allowed_domains"],
                          ["kyokuyo.co.jp", "jpx.co.jp", "tdnet.info"])
+
+    def test_api_error_diagnostic_fields_are_allowlisted_and_redacted(self):
+        secret = "sk-this-is-a-secret-value"
+        error = discovery.APIError(400, f"bad value {secret}", error_type="invalid_request_error",
+                                   code="unsupported_parameter", param="reasoning.effort",
+                                   request_id="req_123")
+        output = "\n".join(discovery.safe_error_lines(error, secret))
+        self.assertIn("HTTP status: 400", output)
+        self.assertIn("Error type: invalid_request_error", output)
+        self.assertIn("Error code: unsupported_parameter", output)
+        self.assertIn("Error param: reasoning.effort", output)
+        self.assertIn("Request ID: req_123", output)
+        self.assertNotIn(secret, output)
+        self.assertIn("[REDACTED]", output)
+
+    def test_non_api_exception_is_bounded_and_redacted(self):
+        secret = "sk-another-secret-value"
+        output = "\n".join(discovery.safe_error_lines(ValueError(secret + "x" * 600), secret))
+        self.assertIn("Exception type: ValueError", output)
+        self.assertNotIn(secret, output)
+        self.assertLessEqual(len(output.split("Error message: ", 1)[1]), 500)
 
     def test_only_returned_search_urls_are_accepted(self):
         item, reasons = discovery.validate(self.item(), self.company, {}, fetcher=lambda *x: x[0])
@@ -85,6 +110,31 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                  patch.object(discovery, "fetch_and_validate", return_value=self.item()["official_source_url"]):
                 discovery.run(args)
             self.assertEqual(before, {p.name: p.read_bytes() for p in root.iterdir()})
+
+    def test_diagnostic_failure_prints_safe_error_and_final_summary(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for name, value in {"listed-companies.json": [self.company], "company-domains.json": {},
+                    "benefits.json": [], "verification-queue.json": [],
+                    "discovery-progress.json": {"next_index": 0}, "openai-api-usage.json": []}.items():
+                (root/name).write_text(json.dumps(value), encoding="utf-8")
+            args = type("Args", (), {"diagnostic_mode": True, "batch_size": 10, "daily_limit": 20,
+                "start_code": None, "end_code": None, "retry_failed": False, "official_only": False})()
+            secret = "sk-diagnostic-secret"
+            failure = discovery.APIError(400, f"unsupported {secret}", "invalid_request_error",
+                                         "unsupported_parameter", "reasoning.effort", "req_test")
+            output = StringIO()
+            with patch.object(discovery, "DATA", root), patch.dict(os.environ, {"OPENAI_API_KEY": secret}), \
+                 patch.object(discovery, "request_response", side_effect=failure), redirect_stdout(output):
+                result = discovery.run(args)
+            text = output.getvalue()
+            self.assertEqual(result, 1)
+            self.assertIn("Plain Responses API: failure", text)
+            self.assertIn("HTTP status: 400", text)
+            self.assertIn("Diagnostic result: failure", text)
+            self.assertIn("Failed stage: plain", text)
+            self.assertIn("Responses API calls: 2", text)
+            self.assertNotIn(secret, text)
 
     def test_api_key_is_not_in_error_or_payload_files_and_gemini_not_required(self):
         self.assertNotIn("GEMINI_API_KEY", Path(discovery.__file__).read_text())

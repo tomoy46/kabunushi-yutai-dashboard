@@ -50,11 +50,47 @@ FIELDS = {
 SCHEMA = {"type": "object", "properties": FIELDS, "required": list(FIELDS), "additionalProperties": False}
 
 
+def safe_message(value, key=None):
+    """Return a log-safe, bounded exception message."""
+    message = str(value or "")
+    if key:
+        message = message.replace(key, "[REDACTED]")
+    # API keys have a recognizable prefix. Redact one even when it is not the
+    # exact key supplied to this process (for example, a server echo).
+    message = re.sub(r"sk-[A-Za-z0-9_-]{8,}", "[REDACTED]", message)
+    return message[:500]
+
+
 class APIError(Exception):
-    def __init__(self, status, message):
+    def __init__(self, status, message, error_type=None, code=None, param=None, request_id=None):
         self.status = status
-        self.message = message[:300]
+        self.error_type = error_type
+        self.code = code
+        self.param = param
+        self.request_id = request_id
+        self.message = safe_message(message)
         super().__init__(f"Responses API HTTP {status}: {self.message}")
+
+
+def safe_error_lines(error, key=None):
+    """Format only the allow-listed API error fields for diagnostic output."""
+    if isinstance(error, APIError):
+        fields = (
+            ("HTTP status", error.status), ("Error type", error.error_type),
+            ("Error code", error.code), ("Error param", error.param),
+            ("Error message", safe_message(error.message, key)),
+            ("Request ID", error.request_id),
+        )
+        return [f"{label}: {value}" for label, value in fields if value not in (None, "")]
+    return [f"Exception type: {type(error).__name__}",
+            f"Error message: {safe_message(error, key)}"]
+
+
+def diagnostic_stage(label, state, error=None, key=None, detail=None):
+    print(f"{label}: {state}" + (f" ({detail})" if detail else ""))
+    if error:
+        for line in safe_error_lines(error, key):
+            print(line)
 
 
 def load(path, default):
@@ -142,17 +178,28 @@ def request_response(payload, key, max_retries=3):
             with urlopen(request, timeout=120) as response:
                 return json.loads(response.read())
         except HTTPError as error:
+            detail = {}
             try:
-                detail = json.loads(error.read().decode("utf-8", "replace")).get("error", {})
-                message = str(detail.get("message", error.reason)).replace(key, "[REDACTED]")
-            except (ValueError, AttributeError):
-                message = str(error.reason)
-            api_error = APIError(error.code, message)
+                parsed = json.loads(error.read().decode("utf-8", "replace"))
+                if isinstance(parsed, dict) and isinstance(parsed.get("error"), dict):
+                    detail = parsed["error"]
+            except (ValueError, AttributeError, TypeError):
+                pass
+            headers = getattr(error, "headers", None)
+            request_id = None
+            if headers:
+                request_id = headers.get("x-request-id") or headers.get("request-id")
+            api_error = APIError(
+                error.code, safe_message(detail.get("message", error.reason), key),
+                error_type=detail.get("type"), code=detail.get("code"),
+                param=detail.get("param"), request_id=request_id,
+            )
             if error.code in (401, 403, 404, 429) or error.code not in (500, 502, 503, 504) or attempt == max_retries - 1:
                 raise api_error from None
         except (URLError, socket.timeout) as error:
             if attempt == max_retries - 1:
-                raise APIError(0, str(error.reason if isinstance(error, URLError) else error)) from None
+                message = error.reason if isinstance(error, URLError) else error
+                raise APIError(0, safe_message(message, key)) from None
         time.sleep(2 ** attempt + random.random())
 
 
@@ -262,6 +309,11 @@ def choose(companies, args, progress, benefits):
 def run(args):
     key = os.environ.get("OPENAI_API_KEY")
     if not key:
+        if args.diagnostic_mode:
+            diagnostic_stage("API key check", "start")
+            diagnostic_stage("API key check", "failure", ValueError("OPENAI_API_KEY is not set"))
+            print("Diagnostic result: failure\nFailed stage: plain\nResponses API calls: 0\nWeb search calls: 0\nInput tokens: 0\nOutput tokens: 0")
+            return 1
         print("OPENAI_API_KEY is required", file=sys.stderr); return 2
     model = os.environ.get("OPENAI_MODEL") or DEFAULT_MODEL
     companies = load(DATA / "listed-companies.json", [])
@@ -277,37 +329,71 @@ def run(args):
     totals = {"processed_companies": 0, "responses_api_calls": 0, "web_search_calls": 0,
               "input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0,
               "successes": 0, "verification_required": 0, "failures": 0}
-    errors=[]; started=time.monotonic()
-    plain_success = True
+    errors=[]; started=time.monotonic(); failed_stage = None
     if args.diagnostic_mode:
+        print(f"OpenAI model: {model}")
+        diagnostic_stage("API key check", "start")
+        diagnostic_stage("API key check", "success")
+        diagnostic_stage("Plain Responses API", "start")
         try:
             plain = {"model": model, "input": "OKとだけ回答してください。", "store": False,
                      "reasoning": {"effort": "none"}}
             totals["responses_api_calls"] += 1; plain_response = request_response(plain, key)
             for key_name, value in usage(plain_response).items(): totals[key_name] += value
-        except Exception:
-            plain_success = False
+            diagnostic_stage("Plain Responses API", "success")
+        except Exception as error:
+            failed_stage = "plain"
+            diagnostic_stage("Plain Responses API", "failure", error, key)
     for company in selected:
         before_progress = json.loads(json.dumps(progress))
+        active_label = "Web search + Structured Outputs"
+        active_failed_stage = "web_search"
+        failure_logged = False
         try:
+            if args.diagnostic_mode: diagnostic_stage("Web search + Structured Outputs", "start")
             totals["responses_api_calls"] += 1; response = request_response(build_payload(company, model), key)
             totals["web_search_calls"] += web_search_calls(response)
-            sources = search_sources(response); raw = output_text(response)
-            try: item = json.loads(raw)
+            raw = output_text(response)
+            if args.diagnostic_mode: diagnostic_stage("Web search + Structured Outputs", "success")
+            try:
+                item = json.loads(raw)
+                if args.diagnostic_mode:
+                    diagnostic_stage("Fallback structured output", "start")
+                    diagnostic_stage("Fallback structured output", "success", detail="not required")
             except (ValueError, TypeError):
                 # Compatibility fallback: it contains no search tool, so search still ran only once.
+                if args.diagnostic_mode: diagnostic_stage("Fallback structured output", "start")
                 totals["responses_api_calls"] += 1
-                response2 = request_response(structured_without_search(company, raw, model), key)
-                item = json.loads(output_text(response2))
+                try:
+                    response2 = request_response(structured_without_search(company, raw, model), key)
+                    item = json.loads(output_text(response2))
+                except Exception as error:
+                    if args.diagnostic_mode:
+                        failed_stage = failed_stage or "structured_output"
+                        diagnostic_stage("Fallback structured output", "failure", error, key)
+                        failure_logged = True
+                    raise
                 for key_name, value in usage(response2).items(): totals[key_name] += value
+                if args.diagnostic_mode: diagnostic_stage("Fallback structured output", "success")
             for key_name, value in usage(response).items(): totals[key_name] += value
             if totals["web_search_calls"] > totals["processed_companies"] + 1: raise ValueError("more_than_one_search_call")
+            active_label = "Search source extraction"
+            if args.diagnostic_mode: diagnostic_stage(active_label, "start")
+            sources = search_sources(response)
+            if args.diagnostic_mode: diagnostic_stage(active_label, "success", detail=f"{len(sources)} sources")
+            active_label = "Official URL validation"
+            active_failed_stage = "official_validation"
+            if args.diagnostic_mode: diagnostic_stage(active_label, "start")
             item, reasons = validate(item, company, sources)
+            if args.diagnostic_mode:
+                if reasons:
+                    failed_stage = failed_stage or "official_validation"
+                    diagnostic_stage("Official URL validation", "failure", ValueError(",".join(reasons)), key)
+                else: diagnostic_stage("Official URL validation", "success")
             totals["processed_companies"] += 1
             if reasons: totals["verification_required"] += 1
             else: totals["successes"] += 1
             if args.diagnostic_mode:
-                print(f"OpenAI model: {model}\nPlain Responses API: {'success' if plain_success else 'failure'}\nWeb search: success\nWeb search calls: {web_search_calls(response)}\nSearch sources: {len(sources)}\nStructured output: success\nOfficial source validation: {'failure' if reasons else 'success'}\nInput tokens: {totals['input_tokens']}\nOutput tokens: {totals['output_tokens']}")
                 continue
             if reasons: queue = [x for x in queue if x.get("code") != company["code"]] + [item]
             else: benefits.append(item)
@@ -317,16 +403,31 @@ def run(args):
             progress["updated_at"] = dt.datetime.now(dt.timezone.utc).isoformat()
             atomic(DATA / "benefits.json", benefits); atomic(DATA / "verification-queue.json", queue); atomic(DATA / "discovery-progress.json", progress)
         except APIError as error:
+            if args.diagnostic_mode and not failure_logged:
+                failed_stage = failed_stage or active_failed_stage
+                diagnostic_stage(active_label, "failure", error, key)
             if error.status == 429:
                 progress = before_progress; errors.append({"code": company["code"], "status": 429, "error": error.message}); break
             totals["failures"] += 1; errors.append({"code": company["code"], "status": error.status, "error": error.message})
             if error.status in (401, 403, 404): break
         except Exception as error:
+            if args.diagnostic_mode and not failure_logged:
+                failed_stage = failed_stage or active_failed_stage
+                diagnostic_stage(active_label, "failure", error, key)
             totals["failures"] += 1; errors.append({"code": company["code"], "error": str(error)[:300]})
     if not args.diagnostic_mode:
         record = {"executed_at": dt.datetime.now(dt.timezone.utc).isoformat(), "model": model,
                   "diagnostic_mode": False, **totals, "duration_seconds": round(time.monotonic()-started, 3), "errors": errors}
         usage_log=load(DATA / "openai-api-usage.json", []); usage_log.append(record); atomic(DATA / "openai-api-usage.json", usage_log)
+    if args.diagnostic_mode:
+        result = "failure" if failed_stage else "success"
+        print(f"Diagnostic result: {result}")
+        print(f"Failed stage: {failed_stage or 'none'}")
+        print(f"Responses API calls: {totals['responses_api_calls']}")
+        print(f"Web search calls: {totals['web_search_calls']}")
+        print(f"Input tokens: {totals['input_tokens']}")
+        print(f"Output tokens: {totals['output_tokens']}")
+        return 1 if failed_stage else 0
     return 1 if totals["failures"] else 0
 
 
