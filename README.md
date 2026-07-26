@@ -59,3 +59,13 @@ python scripts/fetch_tdnet.py --feed-url 'TDnetのRSS/XML URL'
 - 優待利回り = 年間優待価値 ÷ 必要投資額 × 100
 - 配当利回り = 1株当たり予想年間配当 ÷ 株価 × 100
 - 総合利回り = 優待利回り + 配当利回り
+
+## 優待候補台帳と公式確認フロー
+
+`data/benefit-universe.csv` は大量登録用の候補台帳です。候補は、企業公式IRで制度の実施と条件を確認するまで `candidate`（公式確認未完了）のままとし、利回り計算・ランキングから除外します。空欄は推測で補完しません。
+
+```bash
+python scripts/merge_benefit_universe.py
+```
+
+このコマンドは既存コードを上書きせず `data/benefits.json` に新規候補だけを統合し、当月・翌月・翌々月、変更開示、その他の順で `data/verification-queue.json` を再生成します。公式ページで確認したレコードだけを `official_confirmed` に昇格し、確認URLと日付を保存してください。廃止時は `abolished` と最終基準日を保持します。
