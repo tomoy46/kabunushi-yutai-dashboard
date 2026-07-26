@@ -1,0 +1,43 @@
+name: Discover shareholder benefits with OpenAI
+on:
+  workflow_dispatch:
+    inputs:
+      batch_size: {description: 'Companies per run', default: '10', type: string}
+      daily_limit: {description: 'Maximum companies per run', default: '20', type: string}
+      start_code: {description: 'Optional first security code', required: false, type: string}
+      end_code: {description: 'Optional last security code', required: false, type: string}
+      retry_failed: {description: 'Retry failed companies', default: false, type: boolean}
+      official_only: {description: 'Only register fully official results', default: true, type: boolean}
+      diagnostic_mode: {description: 'Diagnose code 1301 without changing data', default: true, type: boolean}
+permissions: {contents: write}
+concurrency: {group: openai-benefit-discovery, cancel-in-progress: false}
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Discover from official sources
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+        run: >-
+          python scripts/discover_benefits_with_openai.py
+          --batch-size '${{ inputs.batch_size }}'
+          --daily-limit '${{ inputs.daily_limit }}'
+          ${{ inputs.start_code && format('--start-code {0}', inputs.start_code) || '' }}
+          ${{ inputs.end_code && format('--end-code {0}', inputs.end_code) || '' }}
+          ${{ inputs.retry_failed && '--retry-failed' || '' }}
+          ${{ inputs.official_only && '--official-only' || '' }}
+          ${{ inputs.diagnostic_mode && '--diagnostic-mode' || '' }}
+      - run: npm test
+      - name: Commit verified results
+        if: ${{ success() && !inputs.diagnostic_mode }}
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add data/benefits.json data/verification-queue.json data/discovery-progress.json data/openai-api-usage.json
+          git diff --cached --quiet || git commit -m "chore: update OpenAI benefit discovery"
+          git push

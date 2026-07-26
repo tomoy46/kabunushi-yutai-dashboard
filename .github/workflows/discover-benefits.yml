@@ -1,4 +1,4 @@
-name: Discover shareholder benefits with Gemini
+name: Discover shareholder benefits with Gemini (legacy, manual only)
 on:
   workflow_dispatch:
     inputs:
