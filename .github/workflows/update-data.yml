@@ -1,4 +1,4 @@
-name: Update sample data
+name: Update benefit and market data
 on:
   schedule: [{cron: '15 0 * * 1-5'}]
   workflow_dispatch:
@@ -10,13 +10,40 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
-      - run: python scripts/csv_to_json.py && python scripts/update_market_data.py
+      - run: python scripts/csv_to_json.py
         env: {TZ: Asia/Tokyo}
+      - name: Read current market data from Workers KV
+        continue-on-error: true
+        run: |
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/storage/kv/namespaces/$CLOUDFLARE_KV_NAMESPACE_ID/values/market-data" \
+            --output "$RUNNER_TEMP/previous-market-data.json"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_KV_NAMESPACE_ID: ${{ vars.CLOUDFLARE_KV_NAMESPACE_ID }}
+      - name: Fetch market data from J-Quants
+        run: python scripts/update_market_data.py --previous "$RUNNER_TEMP/previous-market-data.json" --output "$RUNNER_TEMP/market-data.json"
+        env:
+          JQUANTS_API_KEY: ${{ secrets.JQUANTS_API_KEY }}
+          TZ: Asia/Tokyo
+      - name: Write market-data to Workers KV
+        run: |
+          curl --fail --silent --show-error --request PUT \
+            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data-binary "@$RUNNER_TEMP/market-data.json" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/storage/kv/namespaces/$CLOUDFLARE_KV_NAMESPACE_ID/values/market-data"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_KV_NAMESPACE_ID: ${{ vars.CLOUDFLARE_KV_NAMESPACE_ID }}
       - run: python -m unittest discover -s tests -p 'test_*.py'
       - name: Commit updated data
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add data/
+          git add data/ ':!data/market-data.json'
           git diff --cached --quiet || git commit -m "chore: update shareholder benefit data"
           git push
