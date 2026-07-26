@@ -7,5 +7,26 @@
     "verification_required": 0,
     "failures": 10,
     "duration_seconds": 36.35
+  },
+  {
+    "executed_at": "2026-07-26T04:29:13.169749+00:00",
+    "diagnostic_mode": true,
+    "diagnostic_result": null,
+    "processed_companies": 1,
+    "gemini_api_calls": 1,
+    "successes": 0,
+    "verification_required": 0,
+    "failures": 1,
+    "errors": [
+      {
+        "code": "1301",
+        "name": "極洋",
+        "stage": "search",
+        "http_status": 404,
+        "api_error_status": "NOT_FOUND",
+        "api_error_message": "This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use a newer model for the latest features and improvements."
+      }
+    ],
+    "duration_seconds": 0.19
   }
 ]
