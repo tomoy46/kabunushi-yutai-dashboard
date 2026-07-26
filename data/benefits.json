@@ -1,182 +1,68 @@
 [
   {
-    "name": "キリンホールディングス",
-    "last_record_date": null,
-    "change_or_abolition_note": "2024年12月末基準から継続保有期間に応じる制度へ変更",
-    "abolished_at": null,
-    "code": "2503",
-    "category": "商品",
-    "data_confidence": "official_confirmed",
     "market": "プライム",
-    "long_term_condition": "継続保有1年以上",
-    "official_verified_at": "2026-07-26",
-    "benefit_status": "official_confirmed",
-    "industry": "食料品",
-    "official_source_url": "https://www.kirinholdings.com/jp/investors/stock/benefit/",
-    "record_months": [
-      12
-    ],
-    "annual_occurrences": 1,
-    "benefit_tiers": [
-      {
-        "shares": 100,
-        "description": "自社商品等 500円相当（1年以上3年未満）",
-        "annual_value_yen": 500
-      },
-      {
-        "shares": 100,
-        "description": "自社商品等 2,000円相当（3年以上）",
-        "annual_value_yen": 2000
-      },
-      {
-        "shares": 1000,
-        "description": "自社商品等 1,000円相当（1年以上3年未満）",
-        "annual_value_yen": 1000
-      },
-      {
-        "shares": 1000,
-        "description": "自社商品等 4,000円相当（3年以上）",
-        "annual_value_yen": 4000
-      }
-    ],
-    "sector": "食料品",
-    "minimum_shares": 100,
-    "benefit_summary": "自社商品等 500円相当（1年以上3年未満）",
-    "long_term_required": true,
-    "last_checked_at": "2026-07-26",
-    "notes": "2024年12月末基準から継続保有期間に応じる制度へ変更"
-  },
-  {
-    "name": "日本マクドナルドホールディングス",
-    "last_record_date": null,
-    "change_or_abolition_note": "変更・廃止予定の公式発表なし",
     "abolished_at": null,
-    "code": "2702",
-    "category": "食事券",
-    "data_confidence": "official_confirmed",
-    "market": "スタンダード",
-    "long_term_condition": "継続保有1年以上",
+    "last_record_date": null,
     "official_verified_at": "2026-07-26",
-    "benefit_status": "official_confirmed",
+    "category": "買い物",
+    "name": "イオン",
+    "change_or_abolition_note": "2025年9月1日の株式分割に伴い区分変更",
+    "long_term_condition": "なし",
     "industry": "小売業",
-    "official_source_url": "https://www.mcd-holdings.co.jp/ir/individual/shareholder_benefits/",
+    "official_source_url": "https://www.aeon.info/ir/stock/benefit/",
+    "code": "8267",
+    "benefit_status": "official_confirmed",
+    "data_confidence": "official_confirmed",
     "record_months": [
-      6,
-      12
+      2,
+      8
     ],
     "annual_occurrences": 2,
     "benefit_tiers": [
       {
         "shares": 100,
-        "description": "優待食事券 1冊（年2回）",
+        "description": "オーナーズカード：買物金額の1%還元",
+        "annual_value_yen": null
+      },
+      {
+        "shares": 200,
+        "description": "オーナーズカード：買物金額の2%還元",
         "annual_value_yen": null
       },
       {
         "shares": 300,
-        "description": "優待食事券 3冊（年2回）",
+        "description": "オーナーズカード：買物金額の3%還元",
         "annual_value_yen": null
       },
       {
-        "shares": 500,
-        "description": "優待食事券 5冊（年2回）",
+        "shares": 1500,
+        "description": "オーナーズカード：買物金額の4%還元",
         "annual_value_yen": null
-      }
-    ],
-    "sector": "小売業",
-    "minimum_shares": 100,
-    "benefit_summary": "優待食事券 1冊（年2回）",
-    "long_term_required": true,
-    "last_checked_at": "2026-07-26",
-    "notes": "変更・廃止予定の公式発表なし"
-  },
-  {
-    "name": "日本たばこ産業",
-    "last_record_date": "2022-12-31",
-    "change_or_abolition_note": "2022年12月31日基準の対象者への贈呈をもって廃止",
-    "abolished_at": "2022-12-31",
-    "code": "2914",
-    "category": "商品",
-    "data_confidence": "official_confirmed",
-    "market": "プライム",
-    "long_term_condition": "廃止済み",
-    "official_verified_at": "2026-07-26",
-    "benefit_status": "abolished",
-    "industry": "食料品",
-    "official_source_url": "https://www.jti.co.jp/investors/stock/privilege/index.html",
-    "record_months": [
-      12
-    ],
-    "annual_occurrences": 0,
-    "benefit_tiers": [
+      },
       {
-        "shares": 100,
-        "description": "株主優待制度は廃止済み",
+        "shares": 3000,
+        "description": "オーナーズカード：買物金額の5%還元",
         "annual_value_yen": null
       }
     ],
-    "sector": "食料品",
+    "confidence_score": 95,
     "minimum_shares": 100,
-    "benefit_summary": "株主優待制度は廃止済み",
-    "long_term_required": true,
-    "last_checked_at": "2026-07-26",
-    "notes": "2022年12月31日基準の対象者への贈呈をもって廃止"
+    "annual_value_yen": null
   },
   {
-    "name": "ドトール・日レスホールディングス",
-    "last_record_date": null,
-    "change_or_abolition_note": "変更・廃止予定の公式発表なし",
+    "market": "プライム",
     "abolished_at": null,
-    "code": "3087",
-    "category": "食事券",
-    "data_confidence": "official_confirmed",
-    "market": "プライム",
-    "long_term_condition": "なし",
+    "last_record_date": null,
     "official_verified_at": "2026-07-26",
-    "benefit_status": "official_confirmed",
-    "industry": "小売業",
-    "official_source_url": "https://www.dnh.co.jp/html/ir/stock.html",
-    "record_months": [
-      2
-    ],
-    "annual_occurrences": 1,
-    "benefit_tiers": [
-      {
-        "shares": 100,
-        "description": "株主優待カード 1,000円分",
-        "annual_value_yen": 1000
-      },
-      {
-        "shares": 300,
-        "description": "株主優待カード 3,000円分",
-        "annual_value_yen": 3000
-      },
-      {
-        "shares": 500,
-        "description": "株主優待カード 5,000円分",
-        "annual_value_yen": 5000
-      }
-    ],
-    "sector": "小売業",
-    "minimum_shares": 100,
-    "benefit_summary": "株主優待カード 1,000円分",
-    "long_term_required": false,
-    "last_checked_at": "2026-07-26",
-    "notes": "変更・廃止予定の公式発表なし"
-  },
-  {
+    "category": "食事券",
     "name": "すかいらーくホールディングス",
-    "last_record_date": null,
     "change_or_abolition_note": "変更・廃止予定の公式発表なし",
-    "abolished_at": null,
-    "code": "3197",
-    "category": "食事券",
-    "data_confidence": "official_confirmed",
-    "market": "プライム",
     "long_term_condition": "なし",
-    "official_verified_at": "2026-07-26",
-    "benefit_status": "official_confirmed",
     "industry": "小売業",
     "official_source_url": "https://corp.skylark.co.jp/ir/stock/incentive/",
+    "code": "3197",
+    "benefit_status": "official_confirmed",
+    "data_confidence": "official_confirmed",
     "record_months": [
       6,
       12
@@ -204,27 +90,156 @@
         "annual_value_yen": 34000
       }
     ],
-    "sector": "小売業",
+    "confidence_score": 95,
     "minimum_shares": 100,
-    "benefit_summary": "株主優待カード 年間4,000円分",
-    "long_term_required": false,
-    "last_checked_at": "2026-07-26",
-    "notes": "変更・廃止予定の公式発表なし"
+    "annual_value_yen": 4000
   },
   {
-    "name": "オリエンタルランド",
-    "last_record_date": null,
-    "change_or_abolition_note": "変更・廃止予定の公式発表なし",
+    "market": "スタンダード",
     "abolished_at": null,
-    "code": "4661",
-    "category": "レジャー",
-    "data_confidence": "official_confirmed",
-    "market": "プライム",
-    "long_term_condition": "通常制度は500株以上。100株以上を3年以上継続保有する株主向け長期保有制度あり",
+    "last_record_date": null,
     "official_verified_at": "2026-07-26",
+    "category": "食事券",
+    "name": "日本マクドナルドホールディングス",
+    "change_or_abolition_note": "変更・廃止予定の公式発表なし",
+    "long_term_condition": "継続保有1年以上",
+    "industry": "小売業",
+    "official_source_url": "https://www.mcd-holdings.co.jp/ir/individual/shareholder_benefits/",
+    "code": "2702",
     "benefit_status": "official_confirmed",
+    "data_confidence": "official_confirmed",
+    "record_months": [
+      6,
+      12
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "優待食事券 1冊（年2回）",
+        "annual_value_yen": null
+      },
+      {
+        "shares": 300,
+        "description": "優待食事券 3冊（年2回）",
+        "annual_value_yen": null
+      },
+      {
+        "shares": 500,
+        "description": "優待食事券 5冊（年2回）",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "market": "プライム",
+    "abolished_at": "2022-12-31",
+    "last_record_date": "2022-12-31",
+    "official_verified_at": "2026-07-26",
+    "category": "商品",
+    "name": "日本たばこ産業",
+    "change_or_abolition_note": "2022年12月31日基準の対象者への贈呈をもって廃止",
+    "long_term_condition": "廃止済み",
+    "industry": "食料品",
+    "official_source_url": "https://www.jti.co.jp/investors/stock/privilege/index.html",
+    "code": "2914",
+    "benefit_status": "abolished",
+    "data_confidence": "official_confirmed",
+    "record_months": [
+      12
+    ],
+    "annual_occurrences": 0,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "株主優待制度は廃止済み",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "market": "プライム",
+    "abolished_at": "2024-03-31",
+    "last_record_date": "2024-03-31",
+    "official_verified_at": "2026-07-26",
+    "category": "廃止済み",
+    "name": "オリックス",
+    "change_or_abolition_note": "2024年3月31日基準の対象者への贈呈をもって廃止",
+    "long_term_condition": "廃止済み",
+    "industry": "その他金融業",
+    "official_source_url": "https://www.orix.co.jp/grp/company/newsroom/newsrelease/220511_ORIXG.html",
+    "code": "8591",
+    "benefit_status": "abolished",
+    "data_confidence": "official_confirmed",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 0,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "株主優待制度は廃止済み",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "market": "プライム",
+    "abolished_at": null,
+    "last_record_date": null,
+    "official_verified_at": "2026-07-26",
+    "category": "デジタルギフト",
+    "name": "KDDI",
+    "change_or_abolition_note": "2026年度から200株以上・1年以上へ条件変更",
+    "long_term_condition": "継続保有1年以上",
+    "industry": "情報・通信業",
+    "official_source_url": "https://www.kddi.com/corporate/ir/individual/stockholder/",
+    "code": "9433",
+    "benefit_status": "official_confirmed",
+    "data_confidence": "official_confirmed",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 200,
+        "description": "Pontaポイント等 2,000円相当（1年以上5年未満）",
+        "annual_value_yen": 2000
+      },
+      {
+        "shares": 200,
+        "description": "Pontaポイント等 3,000円相当（5年以上）",
+        "annual_value_yen": 3000
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 200,
+    "annual_value_yen": 2000
+  },
+  {
+    "market": "プライム",
+    "abolished_at": null,
+    "last_record_date": null,
+    "official_verified_at": "2026-07-26",
+    "category": "レジャー",
+    "name": "オリエンタルランド",
+    "change_or_abolition_note": "変更・廃止予定の公式発表なし",
+    "long_term_condition": "通常制度は500株以上。100株以上を3年以上継続保有する株主向け長期保有制度あり",
     "industry": "サービス業",
     "official_source_url": "https://www.olc.co.jp/ja/ir/benefit.html",
+    "code": "4661",
+    "benefit_status": "official_confirmed",
+    "data_confidence": "official_confirmed",
     "record_months": [
       3,
       9
@@ -272,27 +287,192 @@
         "annual_value_yen": null
       }
     ],
-    "sector": "サービス業",
-    "minimum_shares": 100,
-    "benefit_summary": "東京ディズニーランドまたは東京ディズニーシーで利用可能な株主用パスポート（9月末：1枚）",
-    "long_term_required": true,
-    "last_checked_at": "2026-07-26",
-    "notes": "変更・廃止予定の公式発表なし"
+    "confidence_score": 95,
+    "minimum_shares": 500,
+    "annual_value_yen": null
   },
   {
-    "name": "サンリオ",
-    "last_record_date": null,
-    "change_or_abolition_note": "変更・廃止予定の公式発表なし",
-    "abolished_at": null,
-    "code": "8136",
-    "category": "レジャー",
-    "data_confidence": "official_confirmed",
     "market": "プライム",
-    "long_term_condition": "なし",
+    "abolished_at": null,
+    "last_record_date": null,
     "official_verified_at": "2026-07-26",
+    "category": "割引券",
+    "name": "日本航空",
+    "change_or_abolition_note": "変更・廃止予定の公式発表なし",
+    "long_term_condition": "なし（長期保有株主への追加発行あり）",
+    "industry": "空運業",
+    "official_source_url": "https://www.jal.com/ja/investor/individual/guidance/",
+    "code": "9201",
     "benefit_status": "official_confirmed",
+    "data_confidence": "official_confirmed",
+    "record_months": [
+      3,
+      9
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "国内線株主割引券（3月末：1枚）ほか",
+        "annual_value_yen": null
+      },
+      {
+        "shares": 200,
+        "description": "国内線株主割引券（3月末：1枚、9月末：1枚）ほか",
+        "annual_value_yen": null
+      },
+      {
+        "shares": 300,
+        "description": "国内線株主割引券（3月末：2枚、9月末：1枚）ほか",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "market": "プライム",
+    "abolished_at": null,
+    "last_record_date": null,
+    "official_verified_at": "2026-07-26",
+    "category": "映画",
+    "name": "東宝",
+    "change_or_abolition_note": "変更・廃止予定の公式発表なし",
+    "long_term_condition": "なし",
+    "industry": "情報・通信業",
+    "official_source_url": "https://www.toho.co.jp/company/ir/stock/bond.html",
+    "code": "9602",
+    "benefit_status": "official_confirmed",
+    "data_confidence": "official_confirmed",
+    "record_months": [
+      2,
+      8
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "映画株主ご招待券 年間2枚",
+        "annual_value_yen": null
+      },
+      {
+        "shares": 500,
+        "description": "映画株主ご招待券 年間6枚",
+        "annual_value_yen": null
+      },
+      {
+        "shares": 1000,
+        "description": "映画株主ご招待券 年間10枚",
+        "annual_value_yen": null
+      },
+      {
+        "shares": 2000,
+        "description": "映画株主ご招待券 年間20枚",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "market": "プライム",
+    "abolished_at": null,
+    "last_record_date": null,
+    "official_verified_at": "2026-07-26",
+    "category": "商品",
+    "name": "キリンホールディングス",
+    "change_or_abolition_note": "2024年12月末基準から継続保有期間に応じる制度へ変更",
+    "long_term_condition": "継続保有1年以上",
+    "industry": "食料品",
+    "official_source_url": "https://www.kirinholdings.com/jp/investors/stock/benefit/",
+    "code": "2503",
+    "benefit_status": "official_confirmed",
+    "data_confidence": "official_confirmed",
+    "record_months": [
+      12
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "自社商品等 500円相当（1年以上3年未満）",
+        "annual_value_yen": 500
+      },
+      {
+        "shares": 100,
+        "description": "自社商品等 2,000円相当（3年以上）",
+        "annual_value_yen": 2000
+      },
+      {
+        "shares": 1000,
+        "description": "自社商品等 1,000円相当（1年以上3年未満）",
+        "annual_value_yen": 1000
+      },
+      {
+        "shares": 1000,
+        "description": "自社商品等 4,000円相当（3年以上）",
+        "annual_value_yen": 4000
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": 500
+  },
+  {
+    "market": "プライム",
+    "abolished_at": null,
+    "last_record_date": null,
+    "official_verified_at": "2026-07-26",
+    "category": "食事券",
+    "name": "ドトール・日レスホールディングス",
+    "change_or_abolition_note": "変更・廃止予定の公式発表なし",
+    "long_term_condition": "なし",
+    "industry": "小売業",
+    "official_source_url": "https://www.dnh.co.jp/html/ir/stock.html",
+    "code": "3087",
+    "benefit_status": "official_confirmed",
+    "data_confidence": "official_confirmed",
+    "record_months": [
+      2
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "株主優待カード 1,000円分",
+        "annual_value_yen": 1000
+      },
+      {
+        "shares": 300,
+        "description": "株主優待カード 3,000円分",
+        "annual_value_yen": 3000
+      },
+      {
+        "shares": 500,
+        "description": "株主優待カード 5,000円分",
+        "annual_value_yen": 5000
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": 1000
+  },
+  {
+    "market": "プライム",
+    "abolished_at": null,
+    "last_record_date": null,
+    "official_verified_at": "2026-07-26",
+    "category": "レジャー",
+    "name": "サンリオ",
+    "change_or_abolition_note": "変更・廃止予定の公式発表なし",
+    "long_term_condition": "なし",
     "industry": "卸売業",
     "official_source_url": "https://corporate.sanrio.co.jp/ir/stock/benefit/",
+    "code": "8136",
+    "benefit_status": "official_confirmed",
+    "data_confidence": "official_confirmed",
     "record_months": [
       3,
       9
@@ -325,256 +505,28 @@
         "annual_value_yen": null
       }
     ],
-    "sector": "卸売業",
-    "minimum_shares": 100,
-    "benefit_summary": "テーマパーク共通優待券 年間2枚＋株主優待券 年間2,000円分",
-    "long_term_required": false,
-    "last_checked_at": "2026-07-26",
-    "notes": "変更・廃止予定の公式発表なし"
-  },
-  {
-    "name": "イオン",
-    "last_record_date": null,
-    "change_or_abolition_note": "2025年9月1日の株式分割に伴い区分変更",
-    "abolished_at": null,
-    "code": "8267",
-    "category": "買い物",
-    "data_confidence": "official_confirmed",
-    "market": "プライム",
-    "long_term_condition": "なし",
-    "official_verified_at": "2026-07-26",
-    "benefit_status": "official_confirmed",
-    "industry": "小売業",
-    "official_source_url": "https://www.aeon.info/ir/stock/benefit/",
-    "record_months": [
-      2,
-      8
-    ],
-    "annual_occurrences": 2,
-    "benefit_tiers": [
-      {
-        "shares": 100,
-        "description": "オーナーズカード：買物金額の1%還元",
-        "annual_value_yen": null
-      },
-      {
-        "shares": 200,
-        "description": "オーナーズカード：買物金額の2%還元",
-        "annual_value_yen": null
-      },
-      {
-        "shares": 300,
-        "description": "オーナーズカード：買物金額の3%還元",
-        "annual_value_yen": null
-      },
-      {
-        "shares": 1500,
-        "description": "オーナーズカード：買物金額の4%還元",
-        "annual_value_yen": null
-      },
-      {
-        "shares": 3000,
-        "description": "オーナーズカード：買物金額の5%還元",
-        "annual_value_yen": null
-      }
-    ],
-    "sector": "小売業",
-    "minimum_shares": 100,
-    "benefit_summary": "オーナーズカード：買物金額の1%還元",
-    "long_term_required": false,
-    "last_checked_at": "2026-07-26",
-    "notes": "2025年9月1日の株式分割に伴い区分変更"
-  },
-  {
-    "name": "オリックス",
-    "last_record_date": "2024-03-31",
-    "change_or_abolition_note": "2024年3月31日基準の対象者への贈呈をもって廃止",
-    "abolished_at": "2024-03-31",
-    "code": "8591",
-    "category": "廃止済み",
-    "data_confidence": "official_confirmed",
-    "market": "プライム",
-    "long_term_condition": "廃止済み",
-    "official_verified_at": "2026-07-26",
-    "benefit_status": "abolished",
-    "industry": "その他金融業",
-    "official_source_url": "https://www.orix.co.jp/grp/company/newsroom/newsrelease/220511_ORIXG.html",
-    "record_months": [
-      3
-    ],
-    "annual_occurrences": 0,
-    "benefit_tiers": [
-      {
-        "shares": 100,
-        "description": "株主優待制度は廃止済み",
-        "annual_value_yen": null
-      }
-    ],
-    "sector": "その他金融業",
-    "minimum_shares": 100,
-    "benefit_summary": "株主優待制度は廃止済み",
-    "long_term_required": true,
-    "last_checked_at": "2026-07-26",
-    "notes": "2024年3月31日基準の対象者への贈呈をもって廃止"
-  },
-  {
-    "name": "日本航空",
-    "last_record_date": null,
-    "change_or_abolition_note": "変更・廃止予定の公式発表なし",
-    "abolished_at": null,
-    "code": "9201",
-    "category": "割引券",
-    "data_confidence": "official_confirmed",
-    "market": "プライム",
-    "long_term_condition": "なし（長期保有株主への追加発行あり）",
-    "official_verified_at": "2026-07-26",
-    "benefit_status": "official_confirmed",
-    "industry": "空運業",
-    "official_source_url": "https://www.jal.com/ja/investor/individual/guidance/",
-    "record_months": [
-      3,
-      9
-    ],
-    "annual_occurrences": 2,
-    "benefit_tiers": [
-      {
-        "shares": 100,
-        "description": "国内線株主割引券（3月末：1枚）ほか",
-        "annual_value_yen": null
-      },
-      {
-        "shares": 200,
-        "description": "国内線株主割引券（3月末：1枚、9月末：1枚）ほか",
-        "annual_value_yen": null
-      },
-      {
-        "shares": 300,
-        "description": "国内線株主割引券（3月末：2枚、9月末：1枚）ほか",
-        "annual_value_yen": null
-      }
-    ],
-    "sector": "空運業",
-    "minimum_shares": 100,
-    "benefit_summary": "国内線株主割引券（3月末：1枚）ほか",
-    "long_term_required": true,
-    "last_checked_at": "2026-07-26",
-    "notes": "変更・廃止予定の公式発表なし"
-  },
-  {
-    "name": "KDDI",
-    "last_record_date": null,
-    "change_or_abolition_note": "2026年度から200株以上・1年以上へ条件変更",
-    "abolished_at": null,
-    "code": "9433",
-    "category": "デジタルギフト",
-    "data_confidence": "official_confirmed",
-    "market": "プライム",
-    "long_term_condition": "継続保有1年以上",
-    "official_verified_at": "2026-07-26",
-    "benefit_status": "official_confirmed",
-    "industry": "情報・通信業",
-    "official_source_url": "https://www.kddi.com/corporate/ir/individual/stockholder/",
-    "record_months": [
-      3
-    ],
-    "annual_occurrences": 1,
-    "benefit_tiers": [
-      {
-        "shares": 200,
-        "description": "Pontaポイント等 2,000円相当（1年以上5年未満）",
-        "annual_value_yen": 2000
-      },
-      {
-        "shares": 200,
-        "description": "Pontaポイント等 3,000円相当（5年以上）",
-        "annual_value_yen": 3000
-      }
-    ],
-    "sector": "情報・通信業",
-    "minimum_shares": 200,
-    "benefit_summary": "Pontaポイント等 2,000円相当（1年以上5年未満）",
-    "long_term_required": true,
-    "last_checked_at": "2026-07-26",
-    "notes": "2026年度から200株以上・1年以上へ条件変更"
-  },
-  {
-    "name": "東宝",
-    "last_record_date": null,
-    "change_or_abolition_note": "変更・廃止予定の公式発表なし",
-    "abolished_at": null,
-    "code": "9602",
-    "category": "映画",
-    "data_confidence": "official_confirmed",
-    "market": "プライム",
-    "long_term_condition": "なし",
-    "official_verified_at": "2026-07-26",
-    "benefit_status": "official_confirmed",
-    "industry": "情報・通信業",
-    "official_source_url": "https://www.toho.co.jp/company/ir/stock/bond.html",
-    "record_months": [
-      2,
-      8
-    ],
-    "annual_occurrences": 2,
-    "benefit_tiers": [
-      {
-        "shares": 100,
-        "description": "映画株主ご招待券 年間2枚",
-        "annual_value_yen": null
-      },
-      {
-        "shares": 500,
-        "description": "映画株主ご招待券 年間6枚",
-        "annual_value_yen": null
-      },
-      {
-        "shares": 1000,
-        "description": "映画株主ご招待券 年間10枚",
-        "annual_value_yen": null
-      },
-      {
-        "shares": 2000,
-        "description": "映画株主ご招待券 年間20枚",
-        "annual_value_yen": null
-      }
-    ],
-    "sector": "情報・通信業",
-    "minimum_shares": 100,
-    "benefit_summary": "映画株主ご招待券 年間2枚",
-    "long_term_required": false,
-    "last_checked_at": "2026-07-26",
-    "notes": "変更・廃止予定の公式発表なし"
-  },
-  {
-    "code": "1301",
-    "name": "極洋",
-    "benefit_status": "official_confirmed",
-    "record_months": [
-      3
-    ],
-    "record_date": "3月31日",
-    "annual_occurrences": 1,
-    "minimum_shares": 100,
-    "maximum_shares": 299,
-    "benefit_title": "自社製品",
-    "benefit_description": "保有株式数に応じて自社製品を贈呈。",
-    "category": "食料品・水産加工品（自社製品）",
-    "annual_value_yen": 2500,
-    "valuation_type": "official_amount",
-    "long_term_required": false,
-    "holding_period_months": null,
-    "conditions": "100株以上300株未満：2,500円相当／300株以上：6,000円相当／毎年7月贈呈予定",
-    "official_source_url": "https://www.kyokuyo.co.jp/ir/concept/",
-    "official_source_title": "個人投資家の皆様へ - 株式会社 極洋",
-    "official_verified_at": "2026-07-26",
-    "abolished_at": null,
-    "last_record_date": null,
-    "change_or_abolition_note": null,
     "confidence_score": 95,
-    "evidence_text": "公式ページで3月31日現在の保有株式数に応じた自社製品の贈呈内容を確認。",
-    "error_reason": null,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "market": "プライム",
+    "abolished_at": null,
+    "last_record_date": null,
+    "official_verified_at": "2026-07-26",
+    "category": "食料品・水産加工品（自社製品）",
+    "name": "極洋",
+    "change_or_abolition_note": "3月31日現在の株主に保有株式数に応じた自社製品を毎年7月贈呈予定",
+    "long_term_condition": "なし",
+    "industry": "水産・農林業",
+    "official_source_url": "https://www.kyokuyo.co.jp/ir/concept/",
+    "code": "1301",
+    "benefit_status": "official_confirmed",
     "data_confidence": "official_confirmed",
-    "benefit_summary": "自社製品 2,500円相当",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
     "benefit_tiers": [
       {
         "shares": 100,
@@ -589,11 +541,8 @@
         "annual_value_yen": 6000
       }
     ],
-    "long_term_condition": "なし",
-    "last_checked_at": "2026-07-26",
-    "notes": "毎年7月贈呈予定",
-    "market": "プライム",
-    "sector": "水産・農林業",
-    "industry": "水産・農林業"
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": 2500
   }
 ]
