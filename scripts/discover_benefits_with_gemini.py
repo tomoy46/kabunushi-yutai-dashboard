@@ -12,8 +12,9 @@ from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 ROOT=Path(__file__).resolve().parents[1]; DATA=ROOT/'data'
-SEARCH_MODELS=('gemini-2.5-flash-lite','gemini-2.5-flash')
-EXTRACTION_MODELS=('gemini-2.5-flash-lite','gemini-3.5-flash-lite','gemini-3.6-flash')
+SEARCH_MODELS=EXTRACTION_MODELS=('gemini-3.1-flash-lite','gemini-3.5-flash-lite','gemini-3.6-flash','gemini-3.5-flash','gemini-flash-latest','gemini-2.5-flash-lite','gemini-2.5-flash')
+MODEL_STATUS_FILE='gemini-model-status.json'
+MODEL_STATUS_TTL=dt.timedelta(hours=24)
 ENDPOINT='https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent'
 MODELS_ENDPOINT='https://generativelanguage.googleapis.com/v1beta/models'
 OFFICIAL_HOSTS=('jpx.co.jp','tdnet.info')
@@ -24,7 +25,7 @@ QUEUE_REASONS={'low_confidence','official_source_not_found','minimum_shares_unkn
 
 class StageHTTPError(Exception):
  def __init__(self,stage,http_status,api_status,message,quota=None):
-  self.stage=stage;self.http_status=http_status;self.api_status=api_status;self.api_message=(message or '')[:500]
+  self.stage=stage;self.http_status=http_status;self.api_status=api_status;self.api_message=(message or '')[:300]
   self.quota=quota or {}
   super().__init__(f'{stage}: HTTP {http_status} {api_status or ""} {self.api_message}'.strip())
 
@@ -73,12 +74,91 @@ def list_models(key):
   page_token=body.get('nextPageToken')
   if not page_token:return available
 
-def choose_model(available,environment_name,priorities,search=False):
- configured=model_name(os.getenv(environment_name,'').strip())
- candidates=(configured,) if configured else priorities
- for model in candidates:
-  if model in available and (not search or model in SEARCH_MODELS):return model
- return None
+def quota_is_model_specific_zero(error):
+ """A zero quota explicitly scoped to a model means only that model is unusable."""
+ if not isinstance(error,StageHTTPError) or error.http_status!=429:return False
+ violations=error.quota.get('violations',[]) if isinstance(error.quota,dict) else []
+ return bool(violations) and all(str(v.get('quotaValue','')).strip() in ('0','0.0') and bool(v.get('model')) for v in violations)
+
+def probe_error(error,key):
+ if not isinstance(error,StageHTTPError):return {'status':'unavailable','error':safe_text(str(error),key)[:300]}
+ result={'status':'unavailable','http_status':error.http_status,'api_status':error.api_status,'error':safe_text(error.api_message,key)[:300]}
+ if error.http_status==429:result['quota']=error.quota
+ return result
+
+def probe_plain(key,model):
+ payload={'contents':[{'role':'user','parts':[{'text':'OKとだけ回答してください'}]}]}
+ return request_gemini(payload,key,'model_probe_plain',model,max_retries=1)
+
+def probe_search(key,model):
+ payload={'contents':[{'role':'user','parts':[{'text':'株式会社極洋の公式サイトを1件検索してください'}]}],'tools':[{'google_search':{}}]}
+ response=request_gemini(payload,key,'model_probe_search',model,max_retries=1)
+ candidates=response.get('candidates') or []
+ if not candidates or not candidates[0].get('groundingMetadata'):raise ValueError('groundingMetadata was not returned')
+ return response
+
+def probe_structured(key,model):
+ schema={'type':'object','properties':{'status':{'type':'string'}},'required':['status']}
+ payload={'contents':[{'role':'user','parts':[{'text':'statusをOKとして回答してください'}]}],'generationConfig':{'responseMimeType':'application/json','responseJsonSchema':schema}}
+ response=request_gemini(payload,key,'model_probe_structured',model,max_retries=1)
+ parsed=parse_structured_response(response)
+ if not isinstance(parsed,dict):raise ValueError('structured response is not a JSON object')
+ return response
+
+def print_probe(model,result):
+ print(model,file=sys.stderr)
+ for label in ('plain','search grounding','structured output'):
+  value=result.get(label.replace(' ','_'))
+  if value:
+   print(f'{label}: {"success" if value.get("status")=="success" else "unavailable"}',file=sys.stderr)
+   if value.get('status')!='success':
+    prefix=('HTTP %s %s' % (value.get('http_status',''),value.get('api_status',''))).strip()
+    print((prefix+' '+value.get('error','')).strip()[:300],file=sys.stderr)
+
+def diagnose_models(available,key):
+ results={};search_model=extraction_model=None
+ for model in SEARCH_MODELS:
+  if model not in available:continue
+  result=results.setdefault(model,{})
+  try:probe_plain(key,model);result['plain']={'status':'success'}
+  except Exception as error:
+   result['plain']=probe_error(error,key);print_probe(model,result)
+   if isinstance(error,StageHTTPError) and error.http_status==429 and not quota_is_model_specific_zero(error):raise
+   continue
+  if search_model is None:
+   try:probe_search(key,model);result['search_grounding']={'status':'success'};search_model=model
+   except Exception as error:
+    result['search_grounding']=probe_error(error,key)
+    if isinstance(error,StageHTTPError) and error.http_status==429 and not quota_is_model_specific_zero(error):raise
+  if extraction_model is None:
+   try:probe_structured(key,model);result['structured_output']={'status':'success'};extraction_model=model
+   except Exception as error:
+    result['structured_output']=probe_error(error,key)
+    if isinstance(error,StageHTTPError) and error.http_status==429 and not quota_is_model_specific_zero(error):raise
+  print_probe(model,result)
+  if search_model and extraction_model:break
+ return search_model,extraction_model,results
+
+def cached_models(available):
+ status=load(DATA/MODEL_STATUS_FILE,{})
+ try:checked=dt.datetime.fromisoformat(status['checked_at'].replace('Z','+00:00'))
+ except (KeyError,TypeError,ValueError):return None
+ if dt.datetime.now(dt.timezone.utc)-checked>MODEL_STATUS_TTL:return None
+ search=status.get('selected_search_model');extraction=status.get('selected_extraction_model')
+ if search not in available or extraction not in available:return None
+ return search,extraction,status.get('probe_results',{})
+
+def select_models(available,key,force=False):
+ cached=None if force else cached_models(available)
+ if cached:return cached
+ search,extraction,results=diagnose_models(available,key)
+ if search and extraction:
+  atomic(DATA/MODEL_STATUS_FILE,{'checked_at':dt.datetime.now(dt.timezone.utc).isoformat(),'available_model_count':len(available),'selected_search_model':search,'selected_extraction_model':extraction,'probe_results':results})
+ return search,extraction,results
+
+def invalidate_model_cache():
+ try:(DATA/MODEL_STATUS_FILE).unlink()
+ except FileNotFoundError:pass
 
 def load(path,default):
  try:return json.loads(path.read_text(encoding='utf-8'))
@@ -247,11 +327,13 @@ def run(args):
  key=os.getenv('GEMINI_API_KEY');
  if not key:raise SystemExit('GEMINI_API_KEY is required (it is never persisted or logged)')
  available=list_models(key)
- search_model=choose_model(available,'GEMINI_SEARCH_MODEL',SEARCH_MODELS,search=True)
- extraction_model=choose_model(available,'GEMINI_EXTRACTION_MODEL',EXTRACTION_MODELS)
  print(f'Available Gemini models: {len(available)}件',file=sys.stderr)
- print(f'Search model: {search_model or "unavailable"}',file=sys.stderr)
- print(f'Extraction model: {extraction_model or "unavailable"}',file=sys.stderr)
+ try:search_model,extraction_model,_=select_models(available,key)
+ except StageHTTPError as error:
+  print(f'Model probe stopped: HTTP {error.http_status} {error.api_status or ""} {safe_text(error.api_message,key)[:300]}',file=sys.stderr)
+  return 1
+ print(f'Selected search model: {search_model or "unavailable"}',file=sys.stderr)
+ print(f'Selected extraction model: {extraction_model or "unavailable"}',file=sys.stderr)
  if not search_model:
   print('このAPIキーでは無料のGoogle検索対応モデルを利用できません。\n課金設定を行うか、検索なしモードへ切り替えてください。',file=sys.stderr);return 1
  if not extraction_model:
@@ -263,7 +345,10 @@ def run(args):
  for code,domain in domains.items():
   if code in master_by_code and not master_by_code[code].get('official_domain'):master_by_code[code]['official_domain']=domain
  today=dt.date.today().isoformat();usage=load(DATA/'api-usage.json',[]);used_today=sum(x.get('processed_companies',0) for x in usage if str(x.get('executed_at','')).startswith(today));args.daily_limit=max(0,args.daily_limit-used_today);args.batch_size=min(100,max(0,args.batch_size));selected=select(master,args,progress,benefits,queue)
- if args.diagnostic_mode:selected=selected[:1]
+ if args.diagnostic_mode:
+  kyokuyo=next((company for company in master if str(company.get('code'))=='1301'),None)
+  if not kyokuyo:raise SystemExit('診断対象の極洋（1301）がlisted-companies.jsonに存在しません。')
+  selected=[kyokuyo]
  existing={x['code']:x for x in benefits};preserved={c for c,x in existing.items() if x.get('benefit_status') in ('official_confirmed','abolished')};started=time.monotonic();calls=success=failed=0;errors=[];previous_error=None;consecutive_errors=0;processed=0;diagnostic_result=None;model_unavailable=False
  for index,company in enumerate(selected):
   current_error=None
@@ -292,6 +377,7 @@ def run(args):
   except Exception as e:
    current_error=e
    if isinstance(e,StageHTTPError) and e.http_status==429:
+    invalidate_model_cache()
     detail=error_record(e,company);errors.append(detail);failed+=1
     print(f'Gemini {e.stage}: HTTP 429; quota={json.dumps(e.quota,ensure_ascii=False)}',file=sys.stderr)
     if e.stage=='search':print('このAPIキーでは無料のGoogle検索対応モデルを利用できません。\n課金設定を行うか、検索なしモードへ切り替えてください。',file=sys.stderr)
@@ -299,9 +385,11 @@ def run(args):
     # Do not mark the company failed and do not advance/persist its checkpoint.
     model_unavailable=True;break
    if isinstance(e,StageHTTPError) and e.http_status==404 and e.api_status=='NOT_FOUND':
+    invalidate_model_cache()
     model_unavailable=True
     print('選択されたモデルが利用できません。',file=sys.stderr)
     break
+   if isinstance(e,StageHTTPError) and e.http_status==403:invalidate_model_cache()
    failed+=1
    detail=error_record(e,company);errors.append(detail);signature=(detail['http_status'],detail['api_error_status'],detail['api_error_message'])
    consecutive_errors=consecutive_errors+1 if signature==previous_error else 1;previous_error=signature

@@ -88,7 +88,7 @@ GEMINI_API_KEY='...' python scripts/discover_benefits_with_gemini.py --batch-siz
 GEMINI_API_KEY='...' python scripts/discover_benefits_with_gemini.py --diagnostic-mode
 ```
 
-起動時に Gemini API の `models.list` を取得し、`generateContent` 対応モデルだけを候補にします。Google検索には `gemini-2.5-flash-lite`、`gemini-2.5-flash` の順、検索なしの構造化抽出には `gemini-2.5-flash-lite`、`gemini-3.5-flash-lite`、`gemini-3.6-flash` の順で選びます。`GEMINI_SEARCH_MODEL` と `GEMINI_EXTRACTION_MODEL` で段階ごとに上書きできますが、一覧にないモデルや、検索段階のGemini 3系は選択しません。APIキーとモデル一覧レスポンスはログへ出しません。
+起動時に Gemini API の `models.list` を取得し、`generateContent` 対応モデルだけを候補にします。ただし一覧の表示だけでは採用せず、候補順に通常呼び出し、Google Search grounding、JSON Schemaによる構造化出力を実際に検査し、各機能に成功したモデルを選びます。候補順は検索・抽出とも `gemini-3.1-flash-lite`、`gemini-3.5-flash-lite`、`gemini-3.6-flash`、`gemini-3.5-flash`、`gemini-flash-latest`、`gemini-2.5-flash-lite`、`gemini-2.5-flash` です。成功結果はAPIキーを含めず `data/gemini-model-status.json` に保存し、24時間再利用します。APIキー、リクエストURL、モデル一覧レスポンスはログへ出しません。
 
 通常は1社につきGoogle検索付きリクエスト1回と構造化抽出1回です。Google検索は429でも再送せず、銘柄を失敗扱いにせず処理位置を維持して停止します。429のログにはQuotaFailureの割り当て項目と再試行時間だけを安全に記録します。全API呼び出しの間隔は最低1秒で、初期日次上限は100社です。`daily_limit` は同日の `data/api-usage.json` を参照して上限を適用します。成功・確認待ち・失敗・所要時間も同ファイルへ記録します。
 
