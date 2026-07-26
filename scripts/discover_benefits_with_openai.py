@@ -224,8 +224,39 @@ def search_sources(response):
     return found
 
 
+def web_search_stats(response):
+    """Summarize search output without exposing queries, sources, or URLs.
+
+    Responses can contain duplicate representations of one tool call.  Prefer the
+    server-provided call ID for identity; older/id-less representations use only
+    the action fields that describe the call as a stable fallback identity.
+    """
+    items = [item for item in response.get("output", []) if item.get("type") == "web_search_call"]
+    unique, call_ids, action_types = set(), set(), set()
+    for item in items:
+        call_id = item.get("id")
+        if call_id:
+            call_ids.add(str(call_id))
+            identity = ("id", str(call_id))
+        else:
+            action = item.get("action") or {}
+            identity = ("action", json.dumps({
+                key: action.get(key) for key in ("type", "status", "queries", "sources")
+            }, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str))
+        unique.add(identity)
+        action_type = (item.get("action") or {}).get("type")
+        # Never echo arbitrary response content (including a URL) into diagnostics.
+        if isinstance(action_type, str) and re.fullmatch(r"[a-z][a-z0-9_]{0,63}", action_type):
+            action_types.add(action_type)
+    return {
+        "output_items": len(items), "unique_calls": len(unique), "call_ids": call_ids,
+        "action_types": sorted(action_types),
+    }
+
+
 def web_search_calls(response):
-    return sum(item.get("type") == "web_search_call" for item in response.get("output", []))
+    """Return the de-duplicated number of web-search tool calls."""
+    return web_search_stats(response)["unique_calls"]
 
 
 def usage(response):
@@ -312,7 +343,7 @@ def run(args):
         if args.diagnostic_mode:
             diagnostic_stage("API key check", "start")
             diagnostic_stage("API key check", "failure", ValueError("OPENAI_API_KEY is not set"))
-            print("Diagnostic result: failure\nFailed stage: plain\nResponses API calls: 0\nWeb search calls: 0\nInput tokens: 0\nOutput tokens: 0")
+            print("Diagnostic result: failure\nFailed stage: plain\nResponses API calls: 0\nWeb-search Responses requests: 0\nWeb-search output items: 0\nUnique web-search call IDs: 0\nWeb-search action types: none\nInput tokens: 0\nOutput tokens: 0")
             return 1
         print("OPENAI_API_KEY is required", file=sys.stderr); return 2
     model = os.environ.get("OPENAI_MODEL") or DEFAULT_MODEL
@@ -326,9 +357,12 @@ def run(args):
     benefits = load(DATA / "benefits.json", []); queue = load(DATA / "verification-queue.json", [])
     progress = load(DATA / "discovery-progress.json", {"next_index": 0, "processed_codes": [], "failed_codes": []})
     selected = companies if args.diagnostic_mode else choose(companies, args, progress, benefits)
-    totals = {"processed_companies": 0, "responses_api_calls": 0, "web_search_calls": 0,
+    totals = {"processed_companies": 0, "responses_api_calls": 0, "responses_with_web_search": 0,
+              "web_search_output_items": 0, "web_search_calls": 0,
               "input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0,
               "successes": 0, "verification_required": 0, "failures": 0}
+    unique_web_search_call_ids = set()
+    web_search_action_types = set()
     errors=[]; started=time.monotonic(); failed_stage = None
     if args.diagnostic_mode:
         print(f"OpenAI model: {model}")
@@ -351,8 +385,17 @@ def run(args):
         failure_logged = False
         try:
             if args.diagnostic_mode: diagnostic_stage("Web search + Structured Outputs", "start")
-            totals["responses_api_calls"] += 1; response = request_response(build_payload(company, model), key)
-            totals["web_search_calls"] += web_search_calls(response)
+            totals["responses_api_calls"] += 1
+            totals["responses_with_web_search"] += 1
+            response = request_response(build_payload(company, model), key)
+            search_stats = web_search_stats(response)
+            totals["web_search_output_items"] += search_stats["output_items"]
+            totals["web_search_calls"] += search_stats["unique_calls"]
+            unique_web_search_call_ids.update(search_stats["call_ids"])
+            web_search_action_types.update(search_stats["action_types"])
+            if args.diagnostic_mode and search_stats["output_items"] > 1:
+                print("Warning: multiple web_search_call output items were returned in one Responses API response.")
+                print("The response will continue because max_tool_calls=1 was requested and the API returned HTTP 200.")
             raw = output_text(response)
             if args.diagnostic_mode: diagnostic_stage("Web search + Structured Outputs", "success")
             try:
@@ -376,7 +419,6 @@ def run(args):
                 for key_name, value in usage(response2).items(): totals[key_name] += value
                 if args.diagnostic_mode: diagnostic_stage("Fallback structured output", "success")
             for key_name, value in usage(response).items(): totals[key_name] += value
-            if totals["web_search_calls"] > totals["processed_companies"] + 1: raise ValueError("more_than_one_search_call")
             active_label = "Search source extraction"
             if args.diagnostic_mode: diagnostic_stage(active_label, "start")
             sources = search_sources(response)
@@ -416,6 +458,7 @@ def run(args):
                 diagnostic_stage(active_label, "failure", error, key)
             totals["failures"] += 1; errors.append({"code": company["code"], "error": str(error)[:300]})
     if not args.diagnostic_mode:
+        totals["unique_web_search_call_ids"] = len(unique_web_search_call_ids)
         record = {"executed_at": dt.datetime.now(dt.timezone.utc).isoformat(), "model": model,
                   "diagnostic_mode": False, **totals, "duration_seconds": round(time.monotonic()-started, 3), "errors": errors}
         usage_log=load(DATA / "openai-api-usage.json", []); usage_log.append(record); atomic(DATA / "openai-api-usage.json", usage_log)
@@ -424,7 +467,10 @@ def run(args):
         print(f"Diagnostic result: {result}")
         print(f"Failed stage: {failed_stage or 'none'}")
         print(f"Responses API calls: {totals['responses_api_calls']}")
-        print(f"Web search calls: {totals['web_search_calls']}")
+        print(f"Web-search Responses requests: {totals['responses_with_web_search']}")
+        print(f"Web-search output items: {totals['web_search_output_items']}")
+        print(f"Unique web-search call IDs: {len(unique_web_search_call_ids)}")
+        print(f"Web-search action types: {', '.join(sorted(web_search_action_types)) or 'none'}")
         print(f"Input tokens: {totals['input_tokens']}")
         print(f"Output tokens: {totals['output_tokens']}")
         return 1 if failed_stage else 0

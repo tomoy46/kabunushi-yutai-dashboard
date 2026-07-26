@@ -13,6 +13,13 @@
 ChatGPTの契約情報やAPIキーはログ、JSON、Issue、コミットなどで公開しないでください。Gemini Workflowは履歴と
 手動での比較確認のために残していますが、現在はOpenAI版を使用し、自動スケジュールでは実行しません。
 
+OpenAI版は検索付きリクエストに `max_tool_calls=1` を指定します。Responses APIの `output` に同じ検索呼び出しを
+表す複数の `web_search_call` 項目が含まれる場合でも、HTTP 200と構造化出力が得られれば処理を継続します。
+`data/openai-api-usage.json` では、検索ツールを設定したリクエスト数（`responses_with_web_search`）と返却された
+項目数（`web_search_output_items`）を分けて記録します。費用の確認には、output項目数の推測ではなくOpenAIの
+Usage画面と `responses_with_web_search` を使用してください。診断モードはこれらの件数と安全なaction種別だけを
+表示し、検索語、URL、検索結果本文は表示せず、データファイルも更新しません。
+
 日本株の株主優待について、必要株数・必要投資額・優待/配当/総合利回りを横断して比較する、静的なPWAです。優待情報は企業公式情報で確認済みの10社と廃止済み2社を収録しています。株価・配当はJ-Quants未設定のため参考用サンプルであり、投資判断には利用できません。
 
 ## 機能
