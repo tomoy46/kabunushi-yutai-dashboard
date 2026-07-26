@@ -12,8 +12,10 @@ from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 ROOT=Path(__file__).resolve().parents[1]; DATA=ROOT/'data'
-GEMINI_MODEL=os.getenv('GEMINI_MODEL','gemini-3.6-flash')
+SEARCH_MODELS=('gemini-2.5-flash-lite','gemini-2.5-flash')
+EXTRACTION_MODELS=('gemini-2.5-flash-lite','gemini-3.5-flash-lite','gemini-3.6-flash')
 ENDPOINT='https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent'
+MODELS_ENDPOINT='https://generativelanguage.googleapis.com/v1beta/models'
 OFFICIAL_HOSTS=('jpx.co.jp','tdnet.info')
 BLOCKED=('yahoo.co.jp','minkabu.jp','kabutan.jp','rakuten-sec.co.jp','sbisec.co.jp','monex.co.jp','note.com','x.com','facebook.com','instagram.com','youtube.com')
 FIELDS={'code':{'type':'string'},'name':{'type':'string'},'benefit_status':{'type':'string','enum':['official_confirmed','candidate','abolished']},'record_months':{'type':'array','items':{'type':'integer'}},'record_date':{'type':['string','null']},'annual_occurrences':{'type':['integer','null']},'minimum_shares':{'type':['integer','null']},'maximum_shares':{'type':['integer','null']},'benefit_title':{'type':['string','null']},'benefit_description':{'type':['string','null']},'category':{'type':['string','null']},'annual_value_yen':{'type':['integer','null']},'valuation_type':{'type':'string','enum':['official_amount','not_calculated']},'long_term_required':{'type':['boolean','null']},'holding_period_months':{'type':['integer','null']},'conditions':{'type':['string','null']},'official_source_url':{'type':['string','null']},'official_source_title':{'type':['string','null']},'official_verified_at':{'type':'string'},'abolished_at':{'type':['string','null']},'last_record_date':{'type':['string','null']},'change_or_abolition_note':{'type':['string','null']},'confidence_score':{'type':'integer','minimum':0,'maximum':100},'evidence_text':{'type':['string','null']},'error_reason':{'type':['string','null']}}
@@ -21,8 +23,9 @@ SCHEMA={'type':'object','properties':FIELDS,'required':list(FIELDS),'additionalP
 QUEUE_REASONS={'low_confidence','official_source_not_found','minimum_shares_unknown','record_date_unknown','conflicting_official_sources','planned_change','pdf_parse_failed','fetch_failed'}
 
 class StageHTTPError(Exception):
- def __init__(self,stage,http_status,api_status,message):
+ def __init__(self,stage,http_status,api_status,message,quota=None):
   self.stage=stage;self.http_status=http_status;self.api_status=api_status;self.api_message=(message or '')[:500]
+  self.quota=quota or {}
   super().__init__(f'{stage}: HTTP {http_status} {api_status or ""} {self.api_message}'.strip())
 
 def http_error(error,stage,secret=None):
@@ -34,7 +37,48 @@ def http_error(error,stage,secret=None):
  message=str(detail.get('message') or error.reason or 'HTTP error')
  if secret:message=message.replace(secret,'[REDACTED]')
  message=re.sub(r'([?&](?:key|api_key)=)[^&\s]+',r'\1[REDACTED]',message,flags=re.I)
- return StageHTTPError(stage,error.code,detail.get('status'),message)
+ quota={}
+ if error.code==429:
+  violations=[];retry_delay=None
+  for entry in detail.get('details',[]) if isinstance(detail.get('details'),list) else []:
+   if not isinstance(entry,dict):continue
+   kind=entry.get('@type','')
+   if kind.endswith('QuotaFailure'):
+    for violation in entry.get('violations',[]):
+     if isinstance(violation,dict):
+      safe={k:safe_text(violation.get(k),secret) for k in ('quotaMetric','quotaId','quotaValue') if violation.get(k) is not None}
+      dimensions=violation.get('quotaDimensions') if isinstance(violation.get('quotaDimensions'),dict) else {}
+      model=violation.get('model') or dimensions.get('model')
+      if model is not None:safe['model']=safe_text(model,secret)
+      violations.append(safe)
+   if kind.endswith('RetryInfo'):retry_delay=entry.get('retryDelay')
+  quota={'violations':violations,'retryDelay':safe_text(retry_delay,secret) if retry_delay is not None else None}
+ return StageHTTPError(stage,error.code,detail.get('status'),message,quota)
+
+def model_name(value):
+ return str(value or '').removeprefix('models/')
+
+def list_models(key):
+ """Return generateContent-capable model IDs without logging the key or response."""
+ available=set();page_token=None
+ while True:
+  url=MODELS_ENDPOINT+(('?pageToken='+page_token) if page_token else '')
+  req=Request(url,headers={'x-goog-api-key':key})
+  wait_for_api_interval()
+  try:
+   with urlopen(req,timeout=30) as response:body=json.loads(response.read())
+  except HTTPError as error:raise http_error(error,'models.list',key) from None
+  for model in body.get('models',[]):
+   if isinstance(model,dict) and 'generateContent' in (model.get('supportedGenerationMethods') or []):available.add(model_name(model.get('name')))
+  page_token=body.get('nextPageToken')
+  if not page_token:return available
+
+def choose_model(available,environment_name,priorities,search=False):
+ configured=model_name(os.getenv(environment_name,'').strip())
+ candidates=(configured,) if configured else priorities
+ for model in candidates:
+  if model in available and (not search or model in SEARCH_MODELS):return model
+ return None
 
 def load(path,default):
  try:return json.loads(path.read_text(encoding='utf-8'))
@@ -84,26 +128,40 @@ def fetch_official(url,company,grounded_urls):
  if not company_identified(body,ctype,company):raise ValueError('company_identity_not_found')
  return final,ctype,body,candidate
 
-def request_gemini(payload,key,stage,max_retries=5):
- req=Request(ENDPOINT.format(model=GEMINI_MODEL),data=json.dumps(payload).encode(),headers={'Content-Type':'application/json','x-goog-api-key':key},method='POST')
+_last_api_call=0.0
+def wait_for_api_interval():
+ global _last_api_call
+ elapsed=time.monotonic()-_last_api_call
+ if elapsed<1:time.sleep(1-elapsed)
+ _last_api_call=time.monotonic()
+
+def request_gemini(payload,key,stage,model='gemini-2.5-flash-lite',max_retries=5):
+ req=Request(ENDPOINT.format(model=model),data=json.dumps(payload).encode(),headers={'Content-Type':'application/json','x-goog-api-key':key},method='POST')
  for attempt in range(max_retries):
+  wait_for_api_interval()
   try:
    with urlopen(req,timeout=90) as r:return json.loads(r.read())
   except HTTPError as e:
    error=http_error(e,stage,key)
-   if e.code not in (429,500,502,503,504) or attempt==max_retries-1:raise error from None
+   # A grounded request is limited to one attempt per company. A quota error must
+   # stop the checkpoint in place instead of consuming another grounded request.
+   if e.code==429 or e.code not in (500,502,503,504) or attempt==max_retries-1:raise error from None
    print(f'Gemini {stage}: HTTP {e.code}; retry {attempt + 1}/{max_retries}',file=sys.stderr)
   except (URLError,socket.timeout):
    if attempt==max_retries-1:raise
   time.sleep(min(60,2**attempt+random.random()))
 
-def call_gemini_search(company,key,max_retries=5):
+def call_gemini_plain(company,key,model,max_retries=5):
+ payload={'contents':[{'role':'user','parts':[{'text':f'証券コード {company["code"]} の会社名だけを復唱してください。検索はしないでください。'}]}]}
+ return request_gemini(payload,key,'plain',model,max_retries)
+
+def call_gemini_search(company,key,model='gemini-2.5-flash-lite',max_retries=5):
  prompt=f'''日本の上場会社「{company["name"]}」（証券コード {company["code"]}）の現在の株主優待を調査してください。
 Google Searchで次を検索:「会社名 証券コード 株主優待 公式」「会社名 株主優待 IR」「会社名 株主優待制度 PDF」。
 {company.get("official_domain") or "企業公式ドメイン"}、企業公式IR/PDF、JPX/TDnetだけを根拠にし、証券会社・まとめ・ブログ・SNSは参照しないでください。値を推測しないでください。
 URLは実際に検索結果で確認した直接URLだけ。割引券の価値はnot_calculated。evidence_textは原文の判断箇所を短く要約（200字以内）。確定条件を欠く場合candidateにしてください。'''
  payload={'contents':[{'role':'user','parts':[{'text':prompt}]}],'tools':[{'google_search':{}}],'generationConfig':{}}
- return request_gemini(payload,key,'search',max_retries)
+ return request_gemini(payload,key,'search',model,max_retries)
 
 def parse_search_response(response,company):
  candidates=response.get('candidates') or []
@@ -117,11 +175,11 @@ def parse_search_response(response,company):
  official_urls=sorted(url for url in urls if normalized_host(url))
  return text,urls,queries,official_urls
 
-def call_gemini_structured(company,key,search_text,official_urls,max_retries=5):
+def call_gemini_structured(company,key,search_text,official_urls,model='gemini-2.5-flash-lite',max_retries=5):
  evidence=json.dumps({'company':{'code':company['code'],'name':company['name']},'search_answer':search_text,'verified_grounding_urls':official_urls},ensure_ascii=False)
  prompt='''次の検索調査結果を指定スキーマへ忠実に変換してください。検索や外部参照はせず、入力にない値は推測しないでください。official_source_urlはverified_grounding_urlsのURLだけを使用してください。\n'''+evidence
  payload={'contents':[{'role':'user','parts':[{'text':prompt}]}],'generationConfig':{'responseMimeType':'application/json','responseJsonSchema':SCHEMA}}
- return request_gemini(payload,key,'structured_extraction',max_retries)
+ return request_gemini(payload,key,'structured_extraction',model,max_retries)
 
 def parse_structured_response(response):
  candidates=response.get('candidates') or []
@@ -182,13 +240,22 @@ def select(master,args,progress,benefits,queue):
 
 def error_record(error,company):
  if isinstance(error,StageHTTPError):
-  return {'code':company['code'],'name':company['name'],'stage':error.stage,'http_status':error.http_status,'api_error_status':error.api_status,'api_error_message':error.api_message}
+  return {'code':company['code'],'name':company['name'],'stage':error.stage,'http_status':error.http_status,'api_error_status':error.api_status,'api_error_message':error.api_message,**({'quota':error.quota} if error.http_status==429 else {})}
  return {'code':company['code'],'name':company['name'],'stage':'unknown','http_status':None,'api_error_status':None,'api_error_message':str(error)[:500]}
 
 def run(args):
  key=os.getenv('GEMINI_API_KEY');
  if not key:raise SystemExit('GEMINI_API_KEY is required (it is never persisted or logged)')
- print(f'Gemini model: {GEMINI_MODEL}',file=sys.stderr)
+ available=list_models(key)
+ search_model=choose_model(available,'GEMINI_SEARCH_MODEL',SEARCH_MODELS,search=True)
+ extraction_model=choose_model(available,'GEMINI_EXTRACTION_MODEL',EXTRACTION_MODELS)
+ print(f'Available Gemini models: {len(available)}件',file=sys.stderr)
+ print(f'Search model: {search_model or "unavailable"}',file=sys.stderr)
+ print(f'Extraction model: {extraction_model or "unavailable"}',file=sys.stderr)
+ if not search_model:
+  print('このAPIキーでは無料のGoogle検索対応モデルを利用できません。\n課金設定を行うか、検索なしモードへ切り替えてください。',file=sys.stderr);return 1
+ if not extraction_model:
+  print('構造化抽出に利用できるGeminiモデルがありません。',file=sys.stderr);return 1
  master=load(DATA/'listed-companies.json',[]);benefits=load(DATA/'benefits.json',[]);queue=load(DATA/'verification-queue.json',[]);progress=load(DATA/'discovery-progress.json',{})
  if len(master)<=12:raise SystemExit('上場会社マスターが未更新です（listed-companies.json は13社以上必要です）')
  if len(master)!=len({x['code'] for x in master}):raise SystemExit('duplicate code in listed-companies.json')
@@ -201,11 +268,15 @@ def run(args):
  for index,company in enumerate(selected):
   current_error=None
   try:
-   calls+=1;search_raw=call_gemini_search(company,key)
+   if args.diagnostic_mode:
+    calls+=1;call_gemini_plain(company,key,search_model);print('Plain request: success',file=sys.stderr)
+   calls+=1;search_raw=call_gemini_search(company,key,search_model)
    search_text,urls,queries,official_urls=parse_search_response(search_raw,company)
+   if args.diagnostic_mode:print('Google Search grounding: success',file=sys.stderr)
    print(f'{company["code"]} {company["name"]}: search success ({len(urls)} grounded URLs)',file=sys.stderr)
-   calls+=1;structured_raw=call_gemini_structured(company,key,search_text,official_urls)
+   calls+=1;structured_raw=call_gemini_structured(company,key,search_text,official_urls,extraction_model)
    item=parse_structured_response(structured_raw);item,reasons=validate(item,company,urls)
+   if args.diagnostic_mode:print('Structured extraction: success',file=sys.stderr)
    print(f'{company["code"]} {company["name"]}: structured_extraction success; validation complete',file=sys.stderr)
    verified_domain=item.pop('_verified_domain',None)
    if not args.diagnostic_mode and verified_domain and not any(verified_domain==host or verified_domain.endswith('.'+host) for host in OFFICIAL_HOSTS):domains[company['code']]=verified_domain
@@ -220,9 +291,16 @@ def run(args):
    previous_error=None;consecutive_errors=0
   except Exception as e:
    current_error=e
+   if isinstance(e,StageHTTPError) and e.http_status==429:
+    detail=error_record(e,company);errors.append(detail);failed+=1
+    print(f'Gemini {e.stage}: HTTP 429; quota={json.dumps(e.quota,ensure_ascii=False)}',file=sys.stderr)
+    if e.stage=='search':print('このAPIキーでは無料のGoogle検索対応モデルを利用できません。\n課金設定を行うか、検索なしモードへ切り替えてください。',file=sys.stderr)
+    else:print(f'Gemini {e.stage} の割り当て上限に達したため、処理位置を変更せず停止します。',file=sys.stderr)
+    # Do not mark the company failed and do not advance/persist its checkpoint.
+    model_unavailable=True;break
    if isinstance(e,StageHTTPError) and e.http_status==404 and e.api_status=='NOT_FOUND':
     model_unavailable=True
-    print(f'指定モデルが利用できません: {GEMINI_MODEL}',file=sys.stderr)
+    print('選択されたモデルが利用できません。',file=sys.stderr)
     break
    failed+=1
    detail=error_record(e,company);errors.append(detail);signature=(detail['http_status'],detail['api_error_status'],detail['api_error_message'])

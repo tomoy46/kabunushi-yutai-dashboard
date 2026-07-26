@@ -84,9 +84,13 @@ python scripts/merge_benefit_universe.py
 GEMINI_API_KEY='...' python scripts/discover_benefits_with_gemini.py --batch-size 10
 # 失敗分だけ再試行し、コード範囲も限定
 GEMINI_API_KEY='...' python scripts/discover_benefits_with_gemini.py --batch-size 10 --start-code 2000 --end-code 3999 --retry-failed
+# データを登録せず、モデル一覧→通常呼び出し→検索→構造化抽出を診断
+GEMINI_API_KEY='...' python scripts/discover_benefits_with_gemini.py --diagnostic-mode
 ```
 
-通常は1社につきGemini API 1回（10社の試験で最大10回、100社で最大100回）です。一時エラーは指数バックオフで同じ要求を最大5回試すため、障害時のHTTP要求数は増える場合があります。`daily_limit` は同日の `data/api-usage.json` を参照して上限を適用します。成功・確認待ち・失敗・所要時間も同ファイルへ記録します。
+起動時に Gemini API の `models.list` を取得し、`generateContent` 対応モデルだけを候補にします。Google検索には `gemini-2.5-flash-lite`、`gemini-2.5-flash` の順、検索なしの構造化抽出には `gemini-2.5-flash-lite`、`gemini-3.5-flash-lite`、`gemini-3.6-flash` の順で選びます。`GEMINI_SEARCH_MODEL` と `GEMINI_EXTRACTION_MODEL` で段階ごとに上書きできますが、一覧にないモデルや、検索段階のGemini 3系は選択しません。APIキーとモデル一覧レスポンスはログへ出しません。
+
+通常は1社につきGoogle検索付きリクエスト1回と構造化抽出1回です。Google検索は429でも再送せず、銘柄を失敗扱いにせず処理位置を維持して停止します。429のログにはQuotaFailureの割り当て項目と再試行時間だけを安全に記録します。全API呼び出しの間隔は最低1秒で、初期日次上限は100社です。`daily_limit` は同日の `data/api-usage.json` を参照して上限を適用します。成功・確認待ち・失敗・所要時間も同ファイルへ記録します。
 
 各社の結果後に優待データ、確認待ちキュー、`data/discovery-progress.json` をアトミック更新するため、途中終了しても次の会社から再開できます。90日以内に公式確認した既存データ、および既存の公式確認済み・廃止済みレコードは上書きしません。取得可能で公式ドメインと検証できたURLだけを採用し、確定条件不足、矛盾、変更予定、PDF失敗などは確認待ちへ送ります。
 

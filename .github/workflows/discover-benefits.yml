@@ -31,6 +31,8 @@ jobs:
       - name: Discover from official sources
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_SEARCH_MODEL: ${{ vars.GEMINI_SEARCH_MODEL }}
+          GEMINI_EXTRACTION_MODEL: ${{ vars.GEMINI_EXTRACTION_MODEL }}
         run: >-
           python scripts/discover_benefits_with_gemini.py
           --batch-size '${{ inputs.batch_size }}'
