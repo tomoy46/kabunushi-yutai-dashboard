@@ -2,9 +2,14 @@
   'use strict';
   const yen = new Intl.NumberFormat('ja-JP');
   const calcInvestment = (price, shares) => price * shares;
-  const calcBenefitYield = (value, investment) => value == null ? null : value / investment * 100;
-  const calcDividendYield = (dividend, price) => dividend == null ? null : dividend / price * 100;
-  const calcTotalYield = (benefit, dividend) => benefit == null ? null : benefit + (dividend || 0);
+  const calcBenefitYield = (value, investment) => Number.isFinite(value) && value >= 0 && Number.isFinite(investment) && investment > 0 ? value / investment * 100 : null;
+  const calcDividendYield = (dividend, price) => Number.isFinite(dividend) && dividend >= 0 && Number.isFinite(price) && price > 0 ? dividend / price * 100 : null;
+  const calcTotalYield = (benefit, dividend) => Number.isFinite(benefit) ? benefit + (Number.isFinite(dividend) ? dividend : 0) : null;
+  const pct = value => Number.isFinite(value) ? `${value.toFixed(2)}%` : '算定対象外';
+  const averageTotalYield = items => {
+    const valid = items.filter(item => Number.isFinite(item.totalYield));
+    return valid.length ? valid.reduce((sum, item) => sum + item.totalYield, 0) / valid.length : null;
+  };
   const validText = (value, fallback) => value != null && !['undefined','null','NaN',''].includes(String(value).trim()) ? String(value) : fallback;
   const validNumber = value => typeof value === 'number' && Number.isFinite(value) ? value : null;
   const normalizeBenefitRecord = (benefit, listedCompany = {}) => {
@@ -48,17 +53,23 @@
       (filters.showAbolished || x.benefit_status !== 'abolished') && (filters.showCandidates || x.benefit_status !== 'candidate') && (!filters.favoritesOnly || filters.favorites.includes(x.code));
   });
   const sortBenefits = (items, sort) => [...items].sort((a,b) => {
-    if (sort === 'investment-asc') return (a.investment??Infinity)-(b.investment??Infinity);
+    if (sort === 'investment-asc') {
+      const aValid = Number.isFinite(a.investment), bValid = Number.isFinite(b.investment);
+      if (aValid !== bValid) return aValid ? -1 : 1;
+      return aValid ? a.investment - b.investment : 0;
+    }
     if (a.rankingEligible !== b.rankingEligible) return a.rankingEligible ? -1 : 1;
     const key = {'benefit-desc':'benefitYield','dividend-desc':'dividendYield'}[sort] || 'totalYield';
-    return (b[key] ?? -1) - (a[key] ?? -1);
+    const aValid = Number.isFinite(a[key]), bValid = Number.isFinite(b[key]);
+    if (aValid !== bValid) return aValid ? -1 : 1;
+    return aValid ? b[key] - a[key] : 0;
   });
-  const api = {calcInvestment, calcBenefitYield, calcDividendYield, calcTotalYield, normalizeBenefitRecord, isRankingEligible, enrich, filterBenefits, sortBenefits};
+  const api = {calcInvestment, calcBenefitYield, calcDividendYield, calcTotalYield, pct, averageTotalYield, normalizeBenefitRecord, isRankingEligible, enrich, filterBenefits, sortBenefits};
   if (typeof module !== 'undefined') module.exports = api;
   if (typeof document === 'undefined') return;
 
   let items = [], favorites = JSON.parse(localStorage.getItem('yutai-favorites') || '[]'), favoritesOnly = false;
-  const $ = id => document.getElementById(id); const pct = n => n == null ? '算定対象外' : `${n.toFixed(2)}%`;
+  const $ = id => document.getElementById(id);
   const filters = () => ({search:$('search').value.trim(),month:$('month').value,category:$('category').value,maxInvestment:$('maxInvestment').value,hundredOnly:$('hundredOnly').checked,longTermOnly:$('longTermOnly').checked,showAbolished:$('showAbolished').checked,showCandidates:$('showCandidates').checked,favoritesOnly,favorites});
   const statusLabels = {official_confirmed:'公式確認済み',candidate:'公式確認未完了',abolished:'優待廃止済み'};
   const statusBadge = x => statusLabels[x.benefit_status] ? `<span class="status status-${x.benefit_status}">${statusLabels[x.benefit_status]}</span>` : '';
@@ -81,6 +92,6 @@
   $('favoritesButton').onclick=()=>{favoritesOnly=!favoritesOnly;$('favoritesButton').setAttribute('aria-pressed',favoritesOnly);render()};
   $('themeButton').onclick=()=>{const dark=document.documentElement.dataset.theme!=='dark';document.documentElement.dataset.theme=dark?'dark':'light';localStorage.setItem('yutai-theme',dark?'dark':'light')}; document.documentElement.dataset.theme=localStorage.getItem('yutai-theme')||'light';
   document.querySelector('.dialog-close').onclick=()=>$('detail').close();
-  Promise.all(['benefits.json','market-data.json','verification-queue.json','listed-companies.json','discovery-progress.json'].map(name=>fetch('data/'+name).then(r=>r.json()))).then(([benefits,market,queue,master,progress])=>{const companies=Object.fromEntries(master.map(company=>[company.code,company]));items=benefits.map(b=>enrich(normalizeBenefitRecord(b,companies[b.code]),market[b.code]));[...new Set(items.flatMap(x=>x.record_months||[]))].sort((a,b)=>a-b).forEach(v=>$('month').add(new Option(v+'月',v)));[...new Set(items.map(x=>x.category).filter(Boolean))].sort().forEach(v=>$('category').add(new Option(v,v)));$('masterCount').textContent=master.length+'社';$('confirmedCount').textContent=items.filter(x=>x.benefit_status==='official_confirmed').length+'社';$('candidateCount').textContent=queue.filter(x=>x.result!=='failed').length+'社';$('abolishedCount').textContent=items.filter(x=>x.benefit_status==='abolished').length+'社';$('unresearchedCount').textContent=(master.length-new Set(progress.processed_codes||[]).size)+'社';$('failedCount').textContent=progress.failed_codes?.length+'社';const valid=items.filter(x=>x.totalYield!=null);$('avgYield').textContent=valid.length?(valid.reduce((s,x)=>s+x.totalYield,0)/valid.length).toFixed(2)+'%':'—';$('queue').innerHTML=queue.length?queue.slice(0,50).map(x=>`<div class="queue-row"><b>${x.code||''} ${x.name||''}</b><span>${(x.record_months||[]).join('・')||'権利月 未確認'}</span><span>${x.result==='failed'?'取得失敗':'確認待ち'}</span><span>信頼度 ${x.confidence_score??'未取得'}</span><span>${(x.verification_reasons||[]).join(' / ')||'理由 未登録'}</span><span>${x.error_reason||x.evidence_text||'根拠 未取得'}</span></div>`).join(''):'<p>確認待ちはありません。</p>';render()}).catch(()=>{$('empty').hidden=false;$('empty').querySelector('b').textContent='データを読み込めませんでした';$('queue').textContent='確認待ちデータを読み込めませんでした'});
+  Promise.all(['benefits.json','market-data.json','verification-queue.json','listed-companies.json','discovery-progress.json'].map(name=>fetch('data/'+name).then(r=>r.json()))).then(([benefits,market,queue,master,progress])=>{const companies=Object.fromEntries(master.map(company=>[company.code,company]));items=benefits.map(b=>enrich(normalizeBenefitRecord(b,companies[b.code]),market[b.code]));[...new Set(items.flatMap(x=>x.record_months||[]))].sort((a,b)=>a-b).forEach(v=>$('month').add(new Option(v+'月',v)));[...new Set(items.map(x=>x.category).filter(Boolean))].sort().forEach(v=>$('category').add(new Option(v,v)));$('masterCount').textContent=master.length+'社';$('confirmedCount').textContent=items.filter(x=>x.benefit_status==='official_confirmed').length+'社';$('candidateCount').textContent=queue.filter(x=>x.result!=='failed').length+'社';$('abolishedCount').textContent=items.filter(x=>x.benefit_status==='abolished').length+'社';$('unresearchedCount').textContent=(master.length-new Set(progress.processed_codes||[]).size)+'社';$('failedCount').textContent=progress.failed_codes?.length+'社';const average=averageTotalYield(items);$('avgYield').textContent=average==null?'—':pct(average);$('queue').innerHTML=queue.length?queue.slice(0,50).map(x=>`<div class="queue-row"><b>${x.code||''} ${x.name||''}</b><span>${(x.record_months||[]).join('・')||'権利月 未確認'}</span><span>${x.result==='failed'?'取得失敗':'確認待ち'}</span><span>信頼度 ${x.confidence_score??'未取得'}</span><span>${(x.verification_reasons||[]).join(' / ')||'理由 未登録'}</span><span>${x.error_reason||x.evidence_text||'根拠 未取得'}</span></div>`).join(''):'<p>確認待ちはありません。</p>';render()}).catch(()=>{$('empty').hidden=false;$('empty').querySelector('b').textContent='データを読み込めませんでした';$('queue').textContent='確認待ちデータを読み込めませんでした'});
   if('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js');
 })(this);
