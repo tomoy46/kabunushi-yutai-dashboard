@@ -544,5 +544,34 @@
     "long_term_required": false,
     "last_checked_at": "2026-07-26",
     "notes": "変更・廃止予定の公式発表なし"
+  },
+  {
+    "code": "1301",
+    "name": "極洋",
+    "benefit_status": "official_confirmed",
+    "record_months": [
+      3
+    ],
+    "record_date": "3月31日",
+    "annual_occurrences": 1,
+    "minimum_shares": 100,
+    "maximum_shares": 299,
+    "benefit_title": "自社製品",
+    "benefit_description": "保有株式数に応じて自社製品を贈呈。",
+    "category": "食料品・水産加工品（自社製品）",
+    "annual_value_yen": 2500,
+    "valuation_type": "official_amount",
+    "long_term_required": false,
+    "holding_period_months": null,
+    "conditions": "100株以上300株未満：2,500円相当／300株以上：6,000円相当／毎年7月贈呈予定",
+    "official_source_url": "https://www.kyokuyo.co.jp/ir/concept/",
+    "official_source_title": "個人投資家の皆様へ - 株式会社 極洋",
+    "official_verified_at": "2026-07-26",
+    "abolished_at": null,
+    "last_record_date": null,
+    "change_or_abolition_note": null,
+    "confidence_score": 95,
+    "evidence_text": "公式ページで3月31日現在の保有株式数に応じた自社製品の贈呈内容を確認。",
+    "error_reason": null
   }
 ]
