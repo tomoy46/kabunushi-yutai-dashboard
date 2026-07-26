@@ -206,7 +206,7 @@ class GeminiDiscoveryTests(unittest.TestCase):
   with tempfile.TemporaryDirectory() as directory:
    args=self.run_fixture(directory,[])
    error=self.d.StageHTTPError('search',400,'INVALID_ARGUMENT','bad request')
-   with patch.object(self.d,'DATA',Path(directory)),patch.dict('os.environ',{'GEMINI_API_KEY':'secret'}),patch.object(self.d,'list_models',return_value={'gemini-2.5-flash-lite'}),patch.object(self.d,'call_gemini_search',side_effect=error):
+   with patch.object(self.d,'DATA',Path(directory)),patch.dict('os.environ',{'GEMINI_API_KEY':'secret'}),patch.object(self.d,'list_models',return_value={'gemini-2.5-flash-lite'}),patch.object(self.d,'select_models',return_value=('gemini-2.5-flash-lite','gemini-2.5-flash-lite',{})),patch.object(self.d,'call_gemini_search',side_effect=error):
     self.assertEqual(self.d.run(args),1)
    usage=json.loads((Path(directory)/'api-usage.json').read_text())[-1];queue=json.loads((Path(directory)/'verification-queue.json').read_text())
    self.assertEqual(usage['processed_companies'],1);self.assertEqual(queue[0]['http_status'],400);self.assertEqual(queue[0]['api_error_message'],'bad request')
@@ -215,7 +215,7 @@ class GeminiDiscoveryTests(unittest.TestCase):
   with tempfile.TemporaryDirectory() as directory:
    args=self.run_fixture(directory,['130A'])
    result={key:None for key in self.d.FIELDS};result.update({'benefit_status':'candidate','confidence_score':20,'code':'130A','name':'実在株式会社'})
-   with patch.object(self.d,'DATA',Path(directory)),patch.dict('os.environ',{'GEMINI_API_KEY':'secret'}),patch.object(self.d,'list_models',return_value={'gemini-2.5-flash-lite'}),patch.object(self.d,'call_gemini_search',return_value={}),patch.object(self.d,'parse_search_response',return_value=('answer',set(),[],[])),patch.object(self.d,'call_gemini_structured',return_value={}),patch.object(self.d,'parse_structured_response',return_value=result):
+   with patch.object(self.d,'DATA',Path(directory)),patch.dict('os.environ',{'GEMINI_API_KEY':'secret'}),patch.object(self.d,'list_models',return_value={'gemini-2.5-flash-lite'}),patch.object(self.d,'select_models',return_value=('gemini-2.5-flash-lite','gemini-2.5-flash-lite',{})),patch.object(self.d,'call_gemini_search',return_value={}),patch.object(self.d,'parse_search_response',return_value=('answer',set(),[],[])),patch.object(self.d,'call_gemini_structured',return_value={}),patch.object(self.d,'parse_structured_response',return_value=result):
     self.d.run(args)
    progress=json.loads((Path(directory)/'discovery-progress.json').read_text())
    self.assertNotIn('130A',progress['failed_codes']);self.assertEqual(progress['processed_codes'].count('130A'),1)
@@ -245,15 +245,42 @@ class GeminiModelCompatibilityTests(unittest.TestCase):
    available=self.d.list_models('TOP-SECRET-KEY')
   self.assertEqual(available,{'gemini-2.5-flash','gemini-2.5-flash-lite'})
 
- def test_lite_is_preferred_and_stages_can_be_configured_separately(self):
-  available={'gemini-2.5-flash-lite','gemini-2.5-flash','gemini-3.6-flash'}
-  with patch.dict('os.environ',{},clear=True):
-   self.assertEqual(self.d.choose_model(available,'GEMINI_SEARCH_MODEL',self.d.SEARCH_MODELS,True),'gemini-2.5-flash-lite')
-  with patch.dict('os.environ',{'GEMINI_SEARCH_MODEL':'gemini-2.5-flash','GEMINI_EXTRACTION_MODEL':'gemini-3.6-flash'},clear=True):
-   self.assertEqual(self.d.choose_model(available,'GEMINI_SEARCH_MODEL',self.d.SEARCH_MODELS,True),'gemini-2.5-flash')
-   self.assertEqual(self.d.choose_model(available,'GEMINI_EXTRACTION_MODEL',self.d.EXTRACTION_MODELS),'gemini-3.6-flash')
-  with patch.dict('os.environ',{'GEMINI_SEARCH_MODEL':'gemini-3.6-flash'},clear=True):
-   self.assertIsNone(self.d.choose_model(available,'GEMINI_SEARCH_MODEL',self.d.SEARCH_MODELS,True))
+ def test_candidate_order_matches_required_priority(self):
+  expected=('gemini-3.1-flash-lite','gemini-3.5-flash-lite','gemini-3.6-flash','gemini-3.5-flash','gemini-flash-latest','gemini-2.5-flash-lite','gemini-2.5-flash')
+  self.assertEqual(self.d.SEARCH_MODELS,expected);self.assertEqual(self.d.EXTRACTION_MODELS,expected)
+
+ def test_listed_model_requires_real_plain_and_capability_probes(self):
+  available={'gemini-3.1-flash-lite','gemini-3.5-flash-lite','gemini-2.5-flash-lite'}
+  unavailable=self.d.StageHTTPError('model_probe_plain',404,'NOT_FOUND','not available')
+  calls=[]
+  def plain(_key,model):
+   calls.append(('plain',model))
+   if model in ('gemini-3.1-flash-lite','gemini-2.5-flash-lite'):raise unavailable
+  with patch.object(self.d,'probe_plain',side_effect=plain),patch.object(self.d,'probe_search',side_effect=lambda k,m:calls.append(('search',m))),patch.object(self.d,'probe_structured',side_effect=lambda k,m:calls.append(('structured',m))),patch('sys.stderr',io.StringIO()):
+   search,extraction,results=self.d.diagnose_models(available,'TOP-SECRET-KEY')
+  self.assertEqual((search,extraction),('gemini-3.5-flash-lite','gemini-3.5-flash-lite'))
+  self.assertEqual(results['gemini-3.1-flash-lite']['plain']['status'],'unavailable')
+  self.assertNotIn(('search','gemini-3.1-flash-lite'),calls)
+  self.assertNotIn('TOP-SECRET-KEY',json.dumps(results))
+
+ def test_search_and_structured_failures_select_next_qualified_models(self):
+  available={'gemini-3.1-flash-lite','gemini-3.5-flash-lite','gemini-3.6-flash'}
+  def search(_key,model):
+   if model=='gemini-3.1-flash-lite':raise ValueError('no grounding metadata')
+  def structured(_key,model):
+   if model!='gemini-3.6-flash':raise ValueError('invalid JSON')
+  with patch.object(self.d,'probe_plain'),patch.object(self.d,'probe_search',side_effect=search),patch.object(self.d,'probe_structured',side_effect=structured),patch('sys.stderr',io.StringIO()):
+   search_model,extraction_model,_=self.d.diagnose_models(available,'secret')
+  self.assertEqual(search_model,'gemini-3.5-flash-lite');self.assertEqual(extraction_model,'gemini-3.6-flash')
+
+ def test_project_quota_stops_probing_but_zero_model_quota_continues(self):
+  model_quota=self.d.StageHTTPError('model_probe_plain',429,'RESOURCE_EXHAUSTED','quota',{'violations':[{'quotaValue':'0','model':'gemini-3.1-flash-lite'}]})
+  with patch.object(self.d,'probe_plain',side_effect=[model_quota,None]),patch.object(self.d,'probe_search'),patch.object(self.d,'probe_structured'),patch('sys.stderr',io.StringIO()):
+   selected=self.d.diagnose_models({'gemini-3.1-flash-lite','gemini-3.5-flash-lite'},'secret')[:2]
+  self.assertEqual(selected,('gemini-3.5-flash-lite','gemini-3.5-flash-lite'))
+  project_quota=self.d.StageHTTPError('model_probe_plain',429,'RESOURCE_EXHAUSTED','quota',{'violations':[{'quotaValue':'10'}]})
+  with patch.object(self.d,'probe_plain',side_effect=project_quota),patch('sys.stderr',io.StringIO()),self.assertRaises(self.d.StageHTTPError):
+   self.d.diagnose_models({'gemini-3.1-flash-lite','gemini-3.5-flash-lite'},'secret')
 
  def test_429_stops_without_advancing_or_recording_company_failure(self):
   with tempfile.TemporaryDirectory() as directory:
@@ -262,7 +289,7 @@ class GeminiModelCompatibilityTests(unittest.TestCase):
    before=json.loads((root/'discovery-progress.json').read_text())
    error=self.d.StageHTTPError('search',429,'RESOURCE_EXHAUSTED','quota exhausted',{'violations':[{'quotaMetric':'metric','model':'gemini-2.5-flash-lite'}],'retryDelay':'10s'})
    stderr=io.StringIO()
-   with patch.object(self.d,'DATA',root),patch.dict('os.environ',{'GEMINI_API_KEY':'TOP-SECRET-KEY'},clear=True),patch.object(self.d,'list_models',return_value={'gemini-2.5-flash-lite'}),patch.object(self.d,'call_gemini_search',side_effect=error),patch('sys.stderr',stderr):
+   with patch.object(self.d,'DATA',root),patch.dict('os.environ',{'GEMINI_API_KEY':'TOP-SECRET-KEY'},clear=True),patch.object(self.d,'list_models',return_value={'gemini-2.5-flash-lite'}),patch.object(self.d,'select_models',return_value=('gemini-2.5-flash-lite','gemini-2.5-flash-lite',{})),patch.object(self.d,'call_gemini_search',side_effect=error),patch('sys.stderr',stderr):
     self.assertEqual(self.d.run(args),1)
    after=json.loads((root/'discovery-progress.json').read_text())
    self.assertEqual(after,before)
