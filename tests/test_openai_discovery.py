@@ -241,22 +241,44 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                                {"type": "web_search_call", "action": copy.deepcopy(action)}]}
         self.assertEqual(discovery.web_search_stats(response)["unique_calls"], 1)
 
-    def test_existing_confirmed_and_abolished_are_immutable(self):
-        companies = [{"code": str(i), "name": str(i)} for i in range(15)]
-        benefits = [{"code": str(i), "benefit_status": "official_confirmed"} for i in range(10)] + [
-            {"code": "10", "benefit_status": "abolished"}, {"code": "11", "benefit_status": "abolished"}]
-        args = type("Args", (), {"start_code": None, "end_code": None, "retry_failed": False,
+    def test_manual_selection_keeps_existing_confirmed_and_abolished_immutable(self):
+        companies = [{"code": str(1000 + i), "name": str(i)} for i in range(15)]
+        benefits = [{"code": str(1000 + i), "benefit_status": "official_confirmed"} for i in range(10)] + [
+            {"code": "1010", "benefit_status": "abolished"}, {"code": "1011", "benefit_status": "abolished"}]
+        args = type("Args", (), {"security_codes": "1010,1011,1012,1013,1014", "retry_failed": False,
                                   "batch_size": 10, "daily_limit": 20})()
-        selected = discovery.choose(companies, args, {"next_index": 0}, benefits)
-        self.assertEqual([x["code"] for x in selected], ["12", "13", "14"])
+        with patch.object(discovery, "DATA", Path("/nonexistent")):
+            selected = discovery.choose(companies, args, {"next_index": 0}, benefits)
+        self.assertEqual([x["code"] for x in selected], ["1012", "1013", "1014"])
 
-    def test_manually_added_pending_companies_are_investigated_first(self):
+    def test_no_eligible_source_means_no_range_style_master_scan(self):
         companies = [{"code": str(code), "name": str(code)} for code in range(1000, 1005)]
-        args = type("Args", (), {"start_code": None, "end_code": None, "retry_failed": False,
+        args = type("Args", (), {"security_codes": "", "retry_failed": False,
                                   "batch_size": 2, "daily_limit": 20})()
-        queue = [{"code": "1001", "result": "failed"}, {"code": "1004", "result": "pending"}]
-        selected = discovery.choose(companies, args, {"next_index": 3}, [], queue)
-        self.assertEqual([item["code"] for item in selected], ["1004", "1001"])
+        with tempfile.TemporaryDirectory() as directory, patch.object(discovery, "DATA", Path(directory)):
+            selected = discovery.choose(companies, args, {"next_index": 3}, [])
+        self.assertEqual(selected, [])
+
+    def test_manual_codes_are_selected_in_order_including_a_code(self):
+        companies = [{"code": "130A", "name": "A"}, {"code": "7550", "name": "B"},
+                     {"code": "1375", "name": "C"}]
+        args = type("Args", (), {"security_codes": "7550,130A", "batch_size": 5, "daily_limit": 20})()
+        with tempfile.TemporaryDirectory() as directory, patch.object(discovery, "DATA", Path(directory)):
+            selected = discovery.choose(companies, args, {}, [])
+        self.assertEqual([item["code"] for item in selected], ["7550", "130A"])
+
+    def test_tdnet_and_candidate_universe_are_eligible_but_unrelated_a_code_is_not(self):
+        companies = [{"code": code, "name": code} for code in ("130A", "7550", "9861")]
+        args = type("Args", (), {"security_codes": "", "batch_size": 5, "daily_limit": 20})()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "benefit-universe.csv").write_text("code,name\n7550,test\n", encoding="utf-8")
+            (root / "review-queue.json").write_text(json.dumps([
+                {"title": "9861 株主優待制度の変更", "status": "pending"}
+            ]), encoding="utf-8")
+            with patch.object(discovery, "DATA", root):
+                selected = discovery.choose(companies, args, {}, [])
+        self.assertEqual([item["code"] for item in selected], ["7550", "9861"])
 
     def test_diagnostic_does_not_write_any_data_file(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -345,7 +367,7 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                 {"type": "web_search_call", "id": "ws_same", "action": {"type": "search", "sources": [{"url": url}]}},
             ], "usage": {}}
             args = type("Args", (), {"diagnostic_mode": False, "batch_size": 10, "daily_limit": 20,
-                "start_code": None, "end_code": None, "retry_failed": False, "official_only": False})()
+                "security_codes": "1301", "retry_failed": False, "official_only": False})()
             with patch.object(discovery, "DATA", root), patch.dict(os.environ, {"OPENAI_API_KEY": "mock"}), \
                  patch.object(discovery, "request_response", return_value=response), \
                  patch.object(discovery, "fetch_and_validate", return_value=url):
@@ -396,13 +418,15 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                         "verification-queue.json": [], "discovery-progress.json": progress, "openai-api-usage.json": []}
             for name, value in fixtures.items(): (root/name).write_text(json.dumps(value), encoding="utf-8")
             args = type("Args", (), {"diagnostic_mode": False, "batch_size": 10, "daily_limit": 20,
-                "start_code": None, "end_code": None, "retry_failed": False, "official_only": False})()
+                "security_codes": "1301", "retry_failed": False, "official_only": False})()
             with patch.object(discovery, "DATA", root), patch.dict(os.environ, {"OPENAI_API_KEY": "mock"}), \
                  patch.object(discovery, "request_response", side_effect=discovery.APIError(429, "rate limited")):
                 discovery.run(args)
             saved = json.loads((root/"discovery-progress.json").read_text())
-            self.assertEqual(saved["next_index"], 8)
-            self.assertEqual(saved["failed_codes"], ["8888", "1301"])
+            self.assertEqual(saved, progress)
+            log = json.loads((root / "research-log.json").read_text())
+            self.assertEqual(log[0]["code"], "1301")
+            self.assertEqual(log[0]["result"], "api_failed")
 
     def test_five_production_targets_are_all_persisted_and_accounted_for(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -421,7 +445,7 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                 responses.append({"output_text": json.dumps(item), "output": [{"type": "web_search_call", "action": {
                     "sources": [{"url": item["official_source_url"]}]}}], "usage": {}})
             args = type("Args", (), {"diagnostic_mode": False, "batch_size": 5, "daily_limit": 20,
-                "start_code": "1300", "end_code": "1999", "retry_failed": False, "official_only": False})()
+                "security_codes": "1300,1301,1302,1303,1304", "retry_failed": False, "official_only": False})()
             output = StringIO()
             with patch.object(discovery, "DATA", root), patch.dict(os.environ, {"OPENAI_API_KEY": "mock"}), \
                  patch.object(discovery, "request_response", side_effect=responses), \

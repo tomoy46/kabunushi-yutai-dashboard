@@ -8,8 +8,8 @@
 `gpt-5.4-nano` で、必要な場合だけRepository Variable `OPENAI_MODEL` で変更できます。Web検索にはモデル料金とは
 別の料金が発生します。
 
-最初は `diagnostic_mode` で極洋（1301）1社だけを実行し、問題がなければ10社、100社の順に拡大してください。
-全自動の結果を無条件で信用せず、`data/verification-queue.json` の確認待ち結果を必ず目視確認してください。
+最初は `diagnostic_mode` で極洋（1301）1社だけを実行してください。通常実行では `security_codes` に
+`7550,9861,8163` のようなカンマ区切りのコードを指定できます。証券コード範囲による全社走査は行いません。
 ChatGPTの契約情報やAPIキーはログ、JSON、Issue、コミットなどで公開しないでください。Gemini Workflowは履歴と
 手動での比較確認のために残していますが、現在はOpenAI版を使用し、自動スケジュールでは実行しません。
 
@@ -48,6 +48,7 @@ npm run serve
 | `data/benefits.csv` / `.json` | 手動確認済みの優待マスター |
 | `data/update-status.json` | 更新処理の結果 |
 | `data/review-queue.json` | TDnetから検出した人手確認待ち候補 |
+| `data/research-log.json` | 公式確認できなかった調査結果（ダッシュボード件数の対象外） |
 
 ```bash
 python scripts/csv_to_json.py
@@ -58,20 +59,18 @@ TDnet処理はタイトルを指定キーワードで抽出し、URL重複を除
 
 ### 証券コードから調査対象を追加する
 
-上場会社マスターを更新済みの状態で、4桁の証券コードを空白区切りで指定します。会社名・市場・業種は
-`data/listed-companies.json` から取得され、調査前の銘柄は `data/verification-queue.json` に追加されます。
+Actions の **Discover shareholder benefits with OpenAI** を手動実行し、`security_codes` に調査するコードだけを
+カンマ区切りで入力します。個別指定のほか、`data/benefit-universe.csv` の候補と、タイトルまたは `code` 項目から
+証券コードを取得できるTDnet優待開示だけが対象です。
 
 ```bash
-python scripts/add_companies.py 7550 9861 8163
-python scripts/add_companies.py --from 1301 --to 1999
+python scripts/discover_benefits_with_openai.py --security-codes 7550,9861,8163
 ```
 
-範囲指定では、両端を含む範囲のうち上場会社マスターに存在する4桁のコードだけを追加します。
-存在しない個別指定コードや4桁でない値は推測せずエラーにし、既存の優待データおよび登録済みコードは変更しません。
-追加をコミットしてから Actions の **Discover shareholder benefits with OpenAI** を手動実行してください。
-`batch_size`（1回の調査社数）の初期値は5社で、必要に応じて実行画面で変更できます。追加した確認待ち銘柄が
-優先して選ばれ、公式情報を確認できた結果だけが `data/benefits.csv` と `data/benefits.json` に追加されます。
-確認できなかった結果は `data/verification-queue.json` に残るため、公式ページを目視確認してください。
+コード範囲は受け付けません。A付きコードは明示指定または候補根拠がある場合に限って対象になります。
+`batch_size`（1回の調査社数）の初期値は5社で、必要に応じて実行画面で変更できます。手動指定は入力順で選ばれ、
+公式情報を確認できた結果だけが `data/benefits.csv` と `data/benefits.json` に追加されます。
+確認できなかった結果やAPI取得失敗は `data/research-log.json` に保存され、通常一覧と件数には加わりません。
 
 ## 公開構成
 

@@ -1,31 +1,8 @@
 {
-  "next_index": 15,
-  "processed_codes": [
-    "130A",
-    "1332",
-    "1333",
-    "135A",
-    "1375",
-    "1376",
-    "1377",
-    "1379",
-    "137A"
-  ],
-  "failed_codes": [
-    "1376",
-    "1377",
-    "1379",
-    "137A"
-  ],
-  "updated_at": "2026-07-26T22:23:50.968234+00:00",
+  "next_index": 0,
+  "processed_codes": [],
+  "failed_codes": [],
+  "updated_at": null,
   "total_companies": 3709,
-  "uninvestigated_count": 3700,
-  "status_counts": {
-    "uninvestigated": 3700,
-    "processed": 9,
-    "candidate": 0,
-    "official_confirmed": 11,
-    "abolished": 2,
-    "failed": 9
-  }
+  "uninvestigated_count": 3709
 }
