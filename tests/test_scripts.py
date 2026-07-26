@@ -163,11 +163,11 @@ class GeminiDiscoveryTests(unittest.TestCase):
 
  def test_search_and_structured_extraction_are_separate_requests(self):
   payloads=[]
-  def request(payload,key,stage,max_retries=5):payloads.append((stage,payload));return {}
+  def request(payload,key,stage,model,max_retries=5):payloads.append((stage,model,payload));return {}
   with patch.object(self.d,'request_gemini',side_effect=request):
    self.d.call_gemini_search(self.company,'secret')
    self.d.call_gemini_structured(self.company,'secret','調査回答',['https://example.co.jp/ir'])
-  search=payloads[0][1];structured=payloads[1][1]
+  search=payloads[0][2];structured=payloads[1][2]
   self.assertEqual(payloads[0][0],'search');self.assertIn('google_search',search['tools'][0])
   self.assertNotIn('responseMimeType',search['generationConfig']);self.assertNotIn('responseJsonSchema',search['generationConfig'])
   self.assertEqual(payloads[1][0],'structured_extraction');self.assertNotIn('tools',structured)
@@ -177,11 +177,11 @@ class GeminiDiscoveryTests(unittest.TestCase):
   body=json.dumps({'error':{'status':api_status,'message':message}}).encode()
   return HTTPError('https://example.invalid',status,'failed',{},io.BytesIO(body))
 
- def test_http_429_retries_but_400_does_not(self):
+ def test_http_429_does_not_retry_and_400_does_not_retry(self):
   response=type('Response',(),{'__enter__':lambda s:s,'__exit__':lambda *a:None,'read':lambda s:b'{}'})()
   with patch.object(self.d,'urlopen',side_effect=[self.http_error(429),response]) as opened,patch.object(self.d.time,'sleep'):
-   self.d.request_gemini({},'secret','search',max_retries=2)
-  self.assertEqual(opened.call_count,2)
+   with self.assertRaises(self.d.StageHTTPError):self.d.request_gemini({},'secret','search',max_retries=2)
+  self.assertEqual(opened.call_count,1)
   with patch.object(self.d,'urlopen',side_effect=self.http_error(400)) as opened:
    with self.assertRaises(self.d.StageHTTPError):self.d.request_gemini({},'secret','search')
   self.assertEqual(opened.call_count,1)
@@ -206,7 +206,7 @@ class GeminiDiscoveryTests(unittest.TestCase):
   with tempfile.TemporaryDirectory() as directory:
    args=self.run_fixture(directory,[])
    error=self.d.StageHTTPError('search',400,'INVALID_ARGUMENT','bad request')
-   with patch.object(self.d,'DATA',Path(directory)),patch.dict('os.environ',{'GEMINI_API_KEY':'secret'}),patch.object(self.d,'call_gemini_search',side_effect=error):
+   with patch.object(self.d,'DATA',Path(directory)),patch.dict('os.environ',{'GEMINI_API_KEY':'secret'}),patch.object(self.d,'list_models',return_value={'gemini-2.5-flash-lite'}),patch.object(self.d,'call_gemini_search',side_effect=error):
     self.assertEqual(self.d.run(args),1)
    usage=json.loads((Path(directory)/'api-usage.json').read_text())[-1];queue=json.loads((Path(directory)/'verification-queue.json').read_text())
    self.assertEqual(usage['processed_companies'],1);self.assertEqual(queue[0]['http_status'],400);self.assertEqual(queue[0]['api_error_message'],'bad request')
@@ -215,7 +215,7 @@ class GeminiDiscoveryTests(unittest.TestCase):
   with tempfile.TemporaryDirectory() as directory:
    args=self.run_fixture(directory,['130A'])
    result={key:None for key in self.d.FIELDS};result.update({'benefit_status':'candidate','confidence_score':20,'code':'130A','name':'実在株式会社'})
-   with patch.object(self.d,'DATA',Path(directory)),patch.dict('os.environ',{'GEMINI_API_KEY':'secret'}),patch.object(self.d,'call_gemini_search',return_value={}),patch.object(self.d,'parse_search_response',return_value=('answer',set(),[],[])),patch.object(self.d,'call_gemini_structured',return_value={}),patch.object(self.d,'parse_structured_response',return_value=result):
+   with patch.object(self.d,'DATA',Path(directory)),patch.dict('os.environ',{'GEMINI_API_KEY':'secret'}),patch.object(self.d,'list_models',return_value={'gemini-2.5-flash-lite'}),patch.object(self.d,'call_gemini_search',return_value={}),patch.object(self.d,'parse_search_response',return_value=('answer',set(),[],[])),patch.object(self.d,'call_gemini_structured',return_value={}),patch.object(self.d,'parse_structured_response',return_value=result):
     self.d.run(args)
    progress=json.loads((Path(directory)/'discovery-progress.json').read_text())
    self.assertNotIn('130A',progress['failed_codes']);self.assertEqual(progress['processed_codes'].count('130A'),1)
@@ -234,48 +234,41 @@ class GeminiModelCompatibilityTests(unittest.TestCase):
   (root/'company-domains.json').write_text('{}',encoding='utf-8');(root/'api-usage.json').write_text('[]',encoding='utf-8')
   return type('Args',(),{'start_code':None,'end_code':None,'retry_failed':True,'official_only':False,'batch_size':100,'daily_limit':100,'diagnostic_mode':False})()
 
- def test_default_model_and_environment_override(self):
-  script=Path('scripts/discover_benefits_with_gemini.py').resolve()
-  import runpy
-  with patch.dict('os.environ',{},clear=True):
-   self.assertEqual(runpy.run_path(str(script))['GEMINI_MODEL'],'gemini-3.6-flash')
-  with patch.dict('os.environ',{'GEMINI_MODEL':'gemini-custom-flash'},clear=True):
-   self.assertEqual(runpy.run_path(str(script))['GEMINI_MODEL'],'gemini-custom-flash')
-
- def test_both_stages_use_configured_model_without_unsupported_sampling(self):
-  requests=[]
+ def test_models_list_filters_generation_support_and_paginates(self):
+  pages=[{'models':[{'name':'models/gemini-2.5-flash','supportedGenerationMethods':['generateContent']},{'name':'models/embed','supportedGenerationMethods':['embedContent']}],'nextPageToken':'next'}, {'models':[{'name':'models/gemini-2.5-flash-lite','supportedGenerationMethods':['generateContent']}]}]
   class Response:
+   def __init__(self,body):self.body=body
    def __enter__(self):return self
    def __exit__(self,*args):pass
-   def read(self):return b'{}'
-  def open_request(request,timeout):
-   requests.append(request)
-   return Response()
-  with patch.object(self.d,'GEMINI_MODEL','gemini-custom-flash'),patch.object(self.d,'urlopen',side_effect=open_request):
-   self.d.call_gemini_search(self.company,'secret')
-   self.d.call_gemini_structured(self.company,'secret','answer',[])
-  self.assertEqual(len(requests),2)
-  for request in requests:
-   self.assertIn('/models/gemini-custom-flash:generateContent',request.full_url)
-   payload=json.loads(request.data)
-   self.assertEqual(payload['contents'][-1]['role'],'user')
-   config=payload.get('generationConfig',{})
-   self.assertTrue({'temperature','top_p','top_k'}.isdisjoint(config))
+   def read(self):return json.dumps(self.body).encode()
+  with patch.object(self.d,'urlopen',side_effect=[Response(x) for x in pages]),patch.object(self.d,'wait_for_api_interval'):
+   available=self.d.list_models('TOP-SECRET-KEY')
+  self.assertEqual(available,{'gemini-2.5-flash','gemini-2.5-flash-lite'})
 
- def test_not_found_model_stops_without_advancing_or_recording_company_failure(self):
+ def test_lite_is_preferred_and_stages_can_be_configured_separately(self):
+  available={'gemini-2.5-flash-lite','gemini-2.5-flash','gemini-3.6-flash'}
+  with patch.dict('os.environ',{},clear=True):
+   self.assertEqual(self.d.choose_model(available,'GEMINI_SEARCH_MODEL',self.d.SEARCH_MODELS,True),'gemini-2.5-flash-lite')
+  with patch.dict('os.environ',{'GEMINI_SEARCH_MODEL':'gemini-2.5-flash','GEMINI_EXTRACTION_MODEL':'gemini-3.6-flash'},clear=True):
+   self.assertEqual(self.d.choose_model(available,'GEMINI_SEARCH_MODEL',self.d.SEARCH_MODELS,True),'gemini-2.5-flash')
+   self.assertEqual(self.d.choose_model(available,'GEMINI_EXTRACTION_MODEL',self.d.EXTRACTION_MODELS),'gemini-3.6-flash')
+  with patch.dict('os.environ',{'GEMINI_SEARCH_MODEL':'gemini-3.6-flash'},clear=True):
+   self.assertIsNone(self.d.choose_model(available,'GEMINI_SEARCH_MODEL',self.d.SEARCH_MODELS,True))
+
+ def test_429_stops_without_advancing_or_recording_company_failure(self):
   with tempfile.TemporaryDirectory() as directory:
    args=self.run_fixture(directory,[])
    root=Path(directory)
    before=json.loads((root/'discovery-progress.json').read_text())
-   error=self.d.StageHTTPError('search',404,'NOT_FOUND','model unavailable')
+   error=self.d.StageHTTPError('search',429,'RESOURCE_EXHAUSTED','quota exhausted',{'violations':[{'quotaMetric':'metric','model':'gemini-2.5-flash-lite'}],'retryDelay':'10s'})
    stderr=io.StringIO()
-   with patch.object(self.d,'DATA',root),patch.object(self.d,'GEMINI_MODEL','gemini-3.6-flash'),patch.dict('os.environ',{'GEMINI_API_KEY':'TOP-SECRET-KEY'},clear=True),patch.object(self.d,'call_gemini_search',side_effect=error),patch('sys.stderr',stderr):
+   with patch.object(self.d,'DATA',root),patch.dict('os.environ',{'GEMINI_API_KEY':'TOP-SECRET-KEY'},clear=True),patch.object(self.d,'list_models',return_value={'gemini-2.5-flash-lite'}),patch.object(self.d,'call_gemini_search',side_effect=error),patch('sys.stderr',stderr):
     self.assertEqual(self.d.run(args),1)
    after=json.loads((root/'discovery-progress.json').read_text())
    self.assertEqual(after,before)
    self.assertNotIn('130A',after['failed_codes'])
    self.assertEqual(json.loads((root/'verification-queue.json').read_text()),[])
    log=stderr.getvalue()
-   self.assertIn('Gemini model: gemini-3.6-flash',log)
-   self.assertIn('指定モデルが利用できません',log)
+   self.assertIn('quotaMetric',log)
+   self.assertIn('無料のGoogle検索対応モデルを利用できません',log)
    self.assertNotIn('TOP-SECRET-KEY',log)
