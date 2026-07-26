@@ -34,11 +34,27 @@ class Tests(unittest.TestCase):
  def test_benefit_master_schema_and_kddi_orix(self):
   with tempfile.TemporaryDirectory() as directory:
    items=convert(Path('data/benefits.csv'),Path(directory)/'benefits.json')
-  self.assertEqual(len(items),12)
+  self.assertEqual(len(items),13)
+  self.assertEqual(sum(item['benefit_status']=='official_confirmed' for item in items),11)
   by_code={item['code']:item for item in items}
   self.assertEqual(by_code['8591']['benefit_status'],'abolished')
   self.assertEqual(by_code['8591']['last_record_date'],'2024-03-31')
   self.assertEqual(by_code['9433']['benefit_tiers'][0]['shares'],200)
+  kyokuyo=by_code['1301']
+  self.assertEqual(kyokuyo['market'],'プライム')
+  self.assertEqual(kyokuyo['industry'],'水産・農林業')
+  self.assertEqual(kyokuyo['record_months'],[3])
+  self.assertEqual(kyokuyo['benefit_status'],'official_confirmed')
+  self.assertEqual(kyokuyo['data_confidence'],'official_confirmed')
+  self.assertEqual(kyokuyo['confidence_score'],95)
+  self.assertEqual(kyokuyo['minimum_shares'],100)
+  self.assertEqual(kyokuyo['annual_value_yen'],2500)
+  self.assertEqual(kyokuyo['benefit_tiers'],[
+   {'shares':100,'maximum_shares':299,'description':'2,500円相当の自社製品','annual_value_yen':2500},
+   {'shares':300,'maximum_shares':None,'description':'6,000円相当の自社製品','annual_value_yen':6000},
+  ])
+  self.assertIn('3月31日',kyokuyo['change_or_abolition_note'])
+  self.assertIn('毎年7月贈呈予定',kyokuyo['change_or_abolition_note'])
   self.assertTrue(all(item['official_source_url'].startswith('https://') for item in items if item['data_confidence']=='official_confirmed'))
 
  def test_universe_merge_is_unique_and_preserves_official(self):
