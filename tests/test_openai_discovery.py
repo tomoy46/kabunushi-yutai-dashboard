@@ -37,7 +37,7 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         self.assertTrue(payload["text"]["format"]["strict"])
         self.assertEqual(payload["text"]["format"]["type"], "json_schema")
         self.assertEqual(payload["tools"][0]["filters"]["allowed_domains"],
-                         ["kyokuyo.co.jp"])
+                         ["kyokuyo.co.jp", "jpx.co.jp", "tdnet.info"])
 
     def test_schema_requires_benefit_tiers_and_storage_adds_compatibility_fields(self):
         self.assertIn("benefit_tiers", discovery.SCHEMA["required"])
@@ -61,6 +61,7 @@ class OpenAIDiscoveryTests(unittest.TestCase):
     def test_company_name_normalizes_legal_form_spaces_and_width(self):
         self.assertTrue(discovery.same_company_name("極洋", "株式会社 極洋"))
         self.assertTrue(discovery.same_company_name("ＡＢＣ １２３", "株式会社ABC123"))
+        self.assertTrue(discovery.same_company_name("テスト・ホールディングス", "テスト HD"))
         self.assertFalse(discovery.same_company_name("極洋", "日本取引所グループ"))
 
     def test_url_normalization_removes_tracking_and_fragment(self):
@@ -128,8 +129,8 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         self.assertFalse(discovery.allowed_url("https://kabutan.jp/stock/?code=1301", "kyokuyo.co.jp"))
         self.assertFalse(discovery.allowed_url("https://x.com/example", "kyokuyo.co.jp"))
         self.assertTrue(discovery.allowed_url("https://www.kyokuyo.co.jp/ir/", "kyokuyo.co.jp"))
-        self.assertFalse(discovery.allowed_url("https://www.jpx.co.jp/a.pdf", "kyokuyo.co.jp"))
-        self.assertFalse(discovery.allowed_url("https://www.release.tdnet.info/a.pdf", "kyokuyo.co.jp"))
+        self.assertTrue(discovery.allowed_url("https://www.jpx.co.jp/a.pdf", "kyokuyo.co.jp"))
+        self.assertTrue(discovery.allowed_url("https://www.release.tdnet.info/a.pdf", "kyokuyo.co.jp"))
         self.assertTrue(discovery.allowed_url("https://www.jpx.co.jp/a.pdf", None))
         self.assertTrue(discovery.allowed_url("https://www.release.tdnet.info/a.pdf", None))
 
@@ -141,7 +142,7 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         self.assertIsNone(item["official_source_url"])
         self.assertEqual(item["error_reason"], "official_source_validation_failed")
 
-    def test_exchange_disclosure_requires_company_name_and_code(self):
+    def test_exchange_disclosure_requires_code_but_not_company_name(self):
         url = "https://release.tdnet.info/inbs/example.pdf"
         company = {"code": "1301", "name": "株式会社 極洋", "official_domain": None}
         class Response:
@@ -154,9 +155,39 @@ class OpenAIDiscoveryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "exchange_disclosure_identity_mismatch"):
                 discovery.fetch_official_page(url, company, {url})
         response = Response()
-        response.read = lambda _limit: "株式会社 極洋 証券コード1301 株主優待制度".encode()
+        response.read = lambda _limit: "旧社名・ブランド名 証券コード1301 株主優待制度".encode()
         with patch.object(discovery, "urlopen", return_value=response):
             self.assertEqual(discovery.fetch_official_page(url, company, {url})[0], url)
+
+    def test_target_exchange_pdfs_accept_matching_code_in_disclosure_metadata(self):
+        for code in ("7550", "9861", "8163", "7616", "7412"):
+            with self.subTest(code=code):
+                url = f"https://www.release.tdnet.info/inbs/{code}.pdf"
+                company = {"code": code, "name": "現在の会社名", "official_domain": "example.co.jp"}
+                class Response:
+                    status = 200
+                    def geturl(self): return url
+                    def read(self, _limit): return "株主優待制度のお知らせ".encode()
+                    def __enter__(self): return self
+                    def __exit__(self, *_args): pass
+                metadata = {url: {"title": f"旧社名（証券コード {code}）"}}
+                with patch.object(discovery, "urlopen", return_value=Response()):
+                    self.assertEqual(discovery.fetch_official_page(url, company, metadata)[0], url)
+
+    def test_stale_candidate_falls_through_to_another_official_url(self):
+        stale = "https://kyokuyo.co.jp/ir/old.pdf"
+        current = "https://kyokuyo.co.jp/ir/current.pdf"
+        checked = []
+        def fetcher(url, *_args):
+            checked.append(url)
+            if url == stale:
+                raise discovery.HTTPError(url, 404, "not found", {}, None)
+            return url
+        item = self.item(stale)
+        selected, _ = discovery.select_verified_source(item, self.company,
+                                                        {stale: {}, current: {}}, fetcher)
+        self.assertEqual(selected, current)
+        self.assertEqual(checked, [stale, current])
 
     def test_registered_official_domain_accepts_title_identity_without_code(self):
         requested = "https://www.kyokuyo.co.jp/ir/concept/"
@@ -190,6 +221,23 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         with patch.object(discovery, "urlopen", return_value=Response()):
             with self.assertRaisesRegex(ValueError, "jpx_corporate_page"):
                 discovery.fetch_official_page(url, company, {url})
+
+    def test_jpx_overview_is_replaced_by_linked_corporate_ir_evidence(self):
+        overview = "https://jpx.co.jp/corporate/investor-relations/example.html"
+        disclosure = "https://kyokuyo.co.jp/ir/benefit.pdf"
+        class Response:
+            status = 200
+            def geturl(self): return overview
+            def read(self, _limit): return f'<a href="{disclosure}">公式IR</a>'.encode()
+            def __enter__(self): return self
+            def __exit__(self, *_args): pass
+        checked = []
+        with patch.object(discovery, "urlopen", return_value=Response()):
+            selected, _ = discovery.select_verified_source(
+                self.item(overview), self.company, {overview: {}},
+                lambda url, *_args: checked.append(url) or url)
+        self.assertEqual(selected, disclosure)
+        self.assertEqual(checked, [disclosure])
 
     def test_kyokuyo_official_result_keeps_current_benefit_details(self):
         url = "https://www.kyokuyo.co.jp/ir/concept/"

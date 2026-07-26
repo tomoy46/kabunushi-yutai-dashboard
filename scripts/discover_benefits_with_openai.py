@@ -19,7 +19,7 @@ import time
 import unicodedata
 from pathlib import Path
 from urllib.error import HTTPError, URLError
-from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
+from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -175,7 +175,8 @@ def normalize_company_name(value):
     # NFKC maps full-width Latin letters/digits and （株） to their ASCII forms.
     value = unicodedata.normalize("NFKC", value)
     value = value.replace("株式会社", "").replace("(株)", "")
-    return re.sub(r"[\s\u3000]+", "", value).strip()
+    value = re.sub(r"ホールディングス|holdings", "HD", value, flags=re.I)
+    return re.sub(r"[\s\u3000・·•・‐‑‒–—−_-]+", "", value).strip().casefold()
 
 
 def same_company_name(left, right):
@@ -187,10 +188,11 @@ def allowed_url(url, official_domain):
     host = hostname(url)
     if not host or any(is_subdomain(host, bad) for bad in BLOCKED_HOSTS):
         return False
-    # Once a corporate domain is known, ordinary discovery must not escape to
-    # JPX/TDnet (or any other company). Exchange disclosures are a fallback only
-    # for companies whose official domain has not yet been identified.
-    domains = ((official_domain.lower().removeprefix("www."),) if official_domain else OFFICIAL_HOSTS)
+    # Exchange disclosures remain first-party evidence even when the corporate
+    # domain is known.  Their issuer identity is checked against the security
+    # code after download.
+    domains = ((official_domain.lower().removeprefix("www."),) + OFFICIAL_HOSTS
+               if official_domain else OFFICIAL_HOSTS)
     return any(is_subdomain(host, domain) for domain in domains)
 
 
@@ -257,7 +259,7 @@ def build_payload(company, model=DEFAULT_MODEL):
     tool = {"type": "web_search", "search_context_size": "low"}
     domain = company.get("official_domain")
     if domain:
-        tool["filters"] = {"allowed_domains": [domain]}
+        tool["filters"] = {"allowed_domains": [domain, *OFFICIAL_HOSTS]}
     return {"model": model, "input": company_prompt(company), "tools": [tool], "max_tool_calls": 1,
             "include": ["web_search_call.action.sources"], "store": False,
             "reasoning": {"effort": "none"}, "text": {"format": response_format()}}
@@ -406,6 +408,23 @@ def page_text(body):
     return re.sub(r"\s+", " ", re.sub(r"(?s)<[^>]+>", " ", decoded)).strip()
 
 
+def source_metadata_text(source_urls, url):
+    """Return bounded search/disclosure metadata associated with a URL."""
+    if not isinstance(source_urls, dict):
+        return ""
+    wanted = url_identity(url)
+    metadata = next((value for key, value in source_urls.items()
+                     if url_identity(key) == wanted and isinstance(value, dict)), {})
+    return " ".join(str(metadata.get(key) or "")[:1_000]
+                    for key in ("title", "description", "snippet", "security_code", "code"))
+
+
+def security_code_found(text, code):
+    """Match a listed code without confusing it with part of a longer number."""
+    return bool(re.search(rf"(?<![0-9A-Z]){re.escape(str(code).upper())}(?![0-9A-Z])",
+                          unicodedata.normalize("NFKC", str(text or "")).upper()))
+
+
 def fetch_official_page(url, company, source_urls):
     normalized = canonical_url(url)
     if not any(url_identity(normalized) == url_identity(source) for source in source_urls):
@@ -413,29 +432,36 @@ def fetch_official_page(url, company, source_urls):
     if not allowed_url(normalized, company.get("official_domain")):
         raise ValueError("source_url_not_allowed")
     request = Request(normalized, headers={"User-Agent": BROWSER_USER_AGENT,
-                                           "Accept": "text/html,application/xhtml+xml"})
+                                           "Accept": "text/html,application/xhtml+xml,application/pdf"})
     with urlopen(request, timeout=25) as response:
         if response.status != 200: raise ValueError(f"HTTP_status_{response.status}")
         final = canonical_url(response.geturl())
         expected = company.get("official_domain")
-        if not final or (expected and not is_subdomain(hostname(final), expected)):
+        final_is_exchange = final and any(is_subdomain(hostname(final), exchange)
+                                          for exchange in OFFICIAL_HOSTS)
+        if not final or (expected and not is_subdomain(hostname(final), expected) and
+                         not final_is_exchange):
             raise ValueError(f"redirect_host_not_official_domain:{hostname(final) or 'invalid'}")
         if not expected and hostname(final) != hostname(normalized):
             raise ValueError("source_redirected_outside_candidate_domain")
         body = response.read(2_000_000)
     text = page_text(body)
+    identity_text = text + " " + source_metadata_text(source_urls, normalized)
     host, path = hostname(final), urlparse(final).path.lower()
     if is_subdomain(host, "jpx.co.jp") and any(path.startswith(value) for value in JPX_BLOCKED_PATHS):
         raise ValueError("jpx_corporate_page_not_company_disclosure")
-    normalized_text = normalize_company_name(text)
+    normalized_text = normalize_company_name(identity_text)
     name_found = normalize_company_name(company["name"]) in normalized_text
-    code_found = str(company["code"]) in text
+    code_found = security_code_found(identity_text, company["code"])
     if any(is_subdomain(host, exchange) for exchange in OFFICIAL_HOSTS):
-        if not (name_found and code_found):
+        # The security code is the stable issuer identifier.  Do not reject a
+        # valid disclosure merely because its company name uses an old name,
+        # brand, HD abbreviation, spacing, punctuation, or width variant.
+        if not code_found:
             raise ValueError("exchange_disclosure_identity_mismatch")
     elif not name_found:
         raise ValueError("company_identity_not_found")
-    if not any(word in text for word in BENEFIT_WORDS):
+    if not any(word in identity_text for word in BENEFIT_WORDS):
         raise ValueError("shareholder_benefit_text_not_found")
     return final, text
 
@@ -458,11 +484,49 @@ def candidate_urls(sources, company, selected=None):
     return [url for url in sorted(urls, key=rank) if allowed_url(url, domain)][:5]
 
 
+def linked_official_sources(sources, company):
+    """Follow official links on a JPX overview instead of citing the overview.
+
+    A linked URL is eligible only when it points at the mapped corporate domain
+    or at a JPX/TDnet PDF.  This keeps the evidence chain official and bounded.
+    Failures (including stale/404 overview URLs) are ignored so the remaining
+    search candidates can still be tried.
+    """
+    expanded = dict(sources)
+    domain = company.get("official_domain")
+    for overview in list(sources)[:5]:
+        host, path = hostname(overview), urlparse(overview).path.lower()
+        if not (is_subdomain(host, "jpx.co.jp") and
+                any(path.startswith(value) for value in JPX_BLOCKED_PATHS)):
+            continue
+        try:
+            request = Request(overview, headers={"User-Agent": BROWSER_USER_AGENT,
+                                                 "Accept": "text/html,application/xhtml+xml"})
+            with urlopen(request, timeout=25) as response:
+                if response.status != 200:
+                    continue
+                final = canonical_url(response.geturl()) or overview
+                body = response.read(2_000_000)
+            html = body.decode("utf-8", "ignore")
+        except (HTTPError, URLError, socket.timeout, ValueError):
+            continue
+        for match in re.finditer(r'''(?is)\bhref\s*=\s*["']([^"'#]+)["']''', html):
+            linked = canonical_url(urljoin(final, match.group(1)))
+            linked_host = hostname(linked)
+            is_exchange_pdf = (linked and urlparse(linked).path.lower().endswith(".pdf") and
+                               any(is_subdomain(linked_host, exchange) for exchange in OFFICIAL_HOSTS))
+            is_corporate = bool(domain and is_subdomain(linked_host, domain))
+            if linked and (is_exchange_pdf or is_corporate):
+                expanded.setdefault(linked, {"title": "JPX linked official disclosure"})
+    return expanded
+
+
 def select_verified_source(item, company, sources, page_fetcher=None):
     page_fetcher = page_fetcher or fetch_and_validate
+    sources = linked_official_sources(sources, company)
     for url in candidate_urls(sources, company, item.get("official_source_url")):
         try:
-            result = page_fetcher(url, company, set(sources))
+            result = page_fetcher(url, company, sources)
             return result if isinstance(result, tuple) else (result, "")
         except Exception as error:
             # The exception values produced by fetch_official_page are bounded
