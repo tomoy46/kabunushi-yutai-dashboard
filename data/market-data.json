@@ -1,0 +1,74 @@
+{
+  "8267": {
+    "price": 1024.5,
+    "forecast_dividend": 40,
+    "price_at": "2026-07-18 15:30 JST",
+    "source": "sample"
+  },
+  "3197": {
+    "price": 2900,
+    "forecast_dividend": 20,
+    "price_at": "2026-07-18 15:30 JST",
+    "source": "sample"
+  },
+  "2702": {
+    "price": 6450,
+    "forecast_dividend": 56,
+    "price_at": "2026-07-18 15:30 JST",
+    "source": "sample"
+  },
+  "2914": {
+    "price": 4750,
+    "forecast_dividend": 234,
+    "price_at": "2026-07-18 15:30 JST",
+    "source": "sample"
+  },
+  "8591": {
+    "price": 3550,
+    "forecast_dividend": 120,
+    "price_at": "2026-07-18 15:30 JST",
+    "source": "sample"
+  },
+  "9433": {
+    "price": 2490,
+    "forecast_dividend": 80,
+    "price_at": "2026-07-18 15:30 JST",
+    "source": "sample"
+  },
+  "4661": {
+    "price": 3450,
+    "forecast_dividend": 14,
+    "price_at": "2026-07-18 15:30 JST",
+    "source": "sample"
+  },
+  "9201": {
+    "price": 3020,
+    "forecast_dividend": 92,
+    "price_at": "2026-07-18 15:30 JST",
+    "source": "sample"
+  },
+  "9602": {
+    "price": 8750,
+    "forecast_dividend": 85,
+    "price_at": "2026-07-18 15:30 JST",
+    "source": "sample"
+  },
+  "2503": {
+    "price": 2140,
+    "forecast_dividend": 74,
+    "price_at": "2026-07-18 15:30 JST",
+    "source": "sample"
+  },
+  "3087": {
+    "price": 2450,
+    "forecast_dividend": 40,
+    "price_at": "2026-07-18 15:30 JST",
+    "source": "sample"
+  },
+  "8136": {
+    "price": 6820,
+    "forecast_dividend": 22,
+    "price_at": "2026-07-18 15:30 JST",
+    "source": "sample"
+  }
+}

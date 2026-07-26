@@ -1,0 +1,344 @@
+[
+  {
+    "code": "8267",
+    "name": "イオン",
+    "market": "プライム",
+    "official_url": "https://example.com/benefits/8267",
+    "category": "買い物",
+    "long_term_condition": "",
+    "industry": "小売業",
+    "info_checked_at": "2026-07-20",
+    "record_months": [
+      2,
+      8
+    ],
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "3%キャッシュバック（オーナーズカード）",
+        "annual_value_yen": null
+      },
+      {
+        "shares": 500,
+        "description": "3%キャッシュバック（オーナーズカード）（2区分）",
+        "annual_value_yen": null
+      },
+      {
+        "shares": 1000,
+        "description": "3%キャッシュバック（オーナーズカード）（3区分）",
+        "annual_value_yen": null
+      }
+    ]
+  },
+  {
+    "code": "3197",
+    "name": "すかいらーくホールディングス",
+    "market": "プライム",
+    "official_url": "https://example.com/benefits/3197",
+    "category": "食事券",
+    "long_term_condition": "",
+    "industry": "小売業",
+    "info_checked_at": "2026-07-20",
+    "record_months": [
+      6,
+      12
+    ],
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間4,000円分の株主優待カード",
+        "annual_value_yen": 4000
+      },
+      {
+        "shares": 300,
+        "description": "年間4,000円分の株主優待カード（2区分）",
+        "annual_value_yen": 8000
+      },
+      {
+        "shares": 500,
+        "description": "年間4,000円分の株主優待カード（3区分）",
+        "annual_value_yen": 12000
+      },
+      {
+        "shares": 1000,
+        "description": "年間4,000円分の株主優待カード（5区分）",
+        "annual_value_yen": 20000
+      }
+    ]
+  },
+  {
+    "code": "2702",
+    "name": "日本マクドナルドホールディングス",
+    "market": "スタンダード",
+    "official_url": "https://example.com/benefits/2702",
+    "category": "食事券",
+    "long_term_condition": "継続保有1年以上",
+    "industry": "小売業",
+    "info_checked_at": "2026-07-20",
+    "record_months": [
+      6,
+      12
+    ],
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "優待食事券 1冊",
+        "annual_value_yen": 3900
+      },
+      {
+        "shares": 300,
+        "description": "優待食事券 1冊（2区分）",
+        "annual_value_yen": 7800
+      },
+      {
+        "shares": 500,
+        "description": "優待食事券 1冊（3区分）",
+        "annual_value_yen": 11700
+      }
+    ]
+  },
+  {
+    "code": "2914",
+    "name": "日本たばこ産業",
+    "market": "プライム",
+    "official_url": "https://example.com/benefits/2914",
+    "category": "商品",
+    "long_term_condition": "継続保有1年以上",
+    "industry": "食料品",
+    "info_checked_at": "2026-07-20",
+    "record_months": [
+      12
+    ],
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "自社グループ商品 2,500円相当",
+        "annual_value_yen": 2500
+      },
+      {
+        "shares": 200,
+        "description": "自社グループ商品 2,500円相当（2区分）",
+        "annual_value_yen": 5000
+      }
+    ]
+  },
+  {
+    "code": "8591",
+    "name": "オリックス",
+    "market": "プライム",
+    "official_url": "https://example.com/benefits/8591",
+    "category": "カタログ",
+    "long_term_condition": "継続保有3年以上",
+    "industry": "その他金融業",
+    "info_checked_at": "2026-07-20",
+    "record_months": [
+      3
+    ],
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "カタログギフト 5,000円相当",
+        "annual_value_yen": 5000
+      }
+    ]
+  },
+  {
+    "code": "9433",
+    "name": "KDDI",
+    "market": "プライム",
+    "official_url": "https://example.com/benefits/9433",
+    "category": "デジタルギフト",
+    "long_term_condition": "継続保有1年以上",
+    "industry": "情報・通信業",
+    "info_checked_at": "2026-07-20",
+    "record_months": [
+      3
+    ],
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "Pontaポイント等 2,000円相当",
+        "annual_value_yen": 2000
+      },
+      {
+        "shares": 200,
+        "description": "Pontaポイント等 2,000円相当（2区分）",
+        "annual_value_yen": 4000
+      }
+    ]
+  },
+  {
+    "code": "4661",
+    "name": "オリエンタルランド",
+    "market": "プライム",
+    "official_url": "https://example.com/benefits/4661",
+    "category": "レジャー",
+    "long_term_condition": "",
+    "industry": "サービス業",
+    "info_checked_at": "2026-07-20",
+    "record_months": [
+      3,
+      9
+    ],
+    "benefit_tiers": [
+      {
+        "shares": 500,
+        "description": "1デーパスポート 1枚",
+        "annual_value_yen": 10900
+      },
+      {
+        "shares": 2000,
+        "description": "1デーパスポート 1枚（2区分）",
+        "annual_value_yen": 21800
+      }
+    ]
+  },
+  {
+    "code": "9201",
+    "name": "日本航空",
+    "market": "プライム",
+    "official_url": "https://example.com/benefits/9201",
+    "category": "割引券",
+    "long_term_condition": "",
+    "industry": "空運業",
+    "info_checked_at": "2026-07-20",
+    "record_months": [
+      3,
+      9
+    ],
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "国内線運賃50%割引券 1枚",
+        "annual_value_yen": null
+      },
+      {
+        "shares": 200,
+        "description": "国内線運賃50%割引券 1枚（2区分）",
+        "annual_value_yen": null
+      },
+      {
+        "shares": 300,
+        "description": "国内線運賃50%割引券 1枚（3区分）",
+        "annual_value_yen": null
+      }
+    ]
+  },
+  {
+    "code": "9602",
+    "name": "東宝",
+    "market": "プライム",
+    "official_url": "https://example.com/benefits/9602",
+    "category": "映画",
+    "long_term_condition": "",
+    "industry": "情報・通信業",
+    "info_checked_at": "2026-07-20",
+    "record_months": [
+      2,
+      8
+    ],
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "映画株主ご招待券 1枚",
+        "annual_value_yen": 2000
+      },
+      {
+        "shares": 500,
+        "description": "映画株主ご招待券 1枚（2区分）",
+        "annual_value_yen": 4000
+      },
+      {
+        "shares": 1000,
+        "description": "映画株主ご招待券 1枚（3区分）",
+        "annual_value_yen": 6000
+      }
+    ]
+  },
+  {
+    "code": "2503",
+    "name": "キリンホールディングス",
+    "market": "プライム",
+    "official_url": "https://example.com/benefits/2503",
+    "category": "商品",
+    "long_term_condition": "継続保有1年以上",
+    "industry": "食料品",
+    "info_checked_at": "2026-07-20",
+    "record_months": [
+      12
+    ],
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "自社商品詰め合わせ 500円相当",
+        "annual_value_yen": 500
+      },
+      {
+        "shares": 1000,
+        "description": "自社商品詰め合わせ 500円相当（2区分）",
+        "annual_value_yen": 1000
+      }
+    ]
+  },
+  {
+    "code": "3087",
+    "name": "ドトール・日レスホールディングス",
+    "market": "プライム",
+    "official_url": "https://example.com/benefits/3087",
+    "category": "食事券",
+    "long_term_condition": "",
+    "industry": "小売業",
+    "info_checked_at": "2026-07-20",
+    "record_months": [
+      2
+    ],
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "株主優待カード 1,000円分",
+        "annual_value_yen": 1000
+      },
+      {
+        "shares": 300,
+        "description": "株主優待カード 1,000円分（2区分）",
+        "annual_value_yen": 2000
+      },
+      {
+        "shares": 500,
+        "description": "株主優待カード 1,000円分（3区分）",
+        "annual_value_yen": 3000
+      }
+    ]
+  },
+  {
+    "code": "8136",
+    "name": "サンリオ",
+    "market": "プライム",
+    "official_url": "https://example.com/benefits/8136",
+    "category": "レジャー",
+    "long_term_condition": "",
+    "industry": "卸売業",
+    "info_checked_at": "2026-07-20",
+    "record_months": [
+      3,
+      9
+    ],
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "テーマパーク共通優待券 1枚等",
+        "annual_value_yen": 3600
+      },
+      {
+        "shares": 300,
+        "description": "テーマパーク共通優待券 1枚等（2区分）",
+        "annual_value_yen": 7200
+      },
+      {
+        "shares": 1500,
+        "description": "テーマパーク共通優待券 1枚等（3区分）",
+        "annual_value_yen": 10800
+      }
+    ]
+  }
+]
