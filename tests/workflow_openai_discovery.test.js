@@ -51,8 +51,7 @@ test('production inputs and startup log are wired to workflow_dispatch values', 
   const expectedWiring = {
     batch_size: '--batch-size${{inputs.batch_size}}',
     daily_limit: '--daily-limit${{inputs.daily_limit}}',
-    start_code: '${{inputs.start_code&&format(--start-code{0},inputs.start_code)||}}',
-    end_code: '${{inputs.end_code&&format(--end-code{0},inputs.end_code)||}}',
+    security_codes: '--security-codes${{inputs.security_codes}}',
     retry_failed: '${{inputs.retry_failed==true&&--retry-failed||}}',
     official_only: '${{inputs.official_only==true&&--official-only||}}',
     diagnostic_mode: '${{inputs.diagnostic_mode==true&&--diagnostic-mode||}}',
@@ -62,9 +61,17 @@ test('production inputs and startup log are wired to workflow_dispatch values', 
   }
 
   const logStep = stepNamed('Log workflow inputs');
-  for (const input of ['diagnostic_mode', 'start_code', 'end_code', 'batch_size', 'daily_limit']) {
+  for (const input of ['diagnostic_mode', 'security_codes', 'batch_size', 'daily_limit']) {
     const environmentName = input.toUpperCase();
     assert.equal(logStep.env[environmentName], `\${{ inputs.${input} }}`);
     assert.ok(logStep.run.includes(`echo "${input}=\${${environmentName}}"`));
   }
+});
+
+test('deprecated security-code range inputs cannot trigger indiscriminate discovery', () => {
+  assert.equal(dispatchInputs.start_code, undefined);
+  assert.equal(dispatchInputs.end_code, undefined);
+  const command = stepNamed('Discover from official sources').run;
+  assert.ok(!command.includes('--start-code'));
+  assert.ok(!command.includes('--end-code'));
 });

@@ -532,19 +532,48 @@ def learn_domain_candidate(company, sources, page_fetcher=None):
 
 
 def choose(companies, args, progress, benefits, queue=None):
+    """Select only explicitly eligible companies; never scan the JPX master.
+
+    Eligibility comes from a manual code list, the maintained benefit universe,
+    or a TDnet review item.  Code ranges and progress cursors intentionally play
+    no part in selection.
+    """
     immutable = {x["code"] for x in benefits if x.get("benefit_status") in ("official_confirmed", "abolished")}
-    failed = set(progress.get("failed_codes", []))
-    candidates = [x for x in companies if x["code"] not in immutable]
-    if args.start_code: candidates = [x for x in candidates if x["code"] >= args.start_code]
-    if args.end_code: candidates = [x for x in candidates if x["code"] <= args.end_code]
-    pending = {x.get("code") for x in (queue or []) if x.get("result") == "pending"}
-    queued = {x.get("code") for x in (queue or [])}
-    if queued:
-        candidates.sort(key=lambda x: (x["code"] not in pending, x["code"] not in queued))
-    elif args.retry_failed: candidates.sort(key=lambda x: x["code"] not in failed)
-    else:
-        start = progress.get("next_index", 0) % max(1, len(candidates)); candidates = candidates[start:] + candidates[:start]
+    manual = parse_security_codes(getattr(args, "security_codes", ""))
+    universe = load_benefit_universe(DATA / "benefit-universe.csv")
+    tdnet = tdnet_codes(load(DATA / "review-queue.json", []))
+    eligible = set(manual) | universe | tdnet
+    by_code = {str(company["code"]): company for company in companies}
+    ordered = manual + sorted(eligible - set(manual))
+    candidates = [by_code[code] for code in ordered if code in by_code and code not in immutable]
     return candidates[:min(args.batch_size, args.daily_limit)]
+
+
+def parse_security_codes(value):
+    codes = [code.strip().upper() for code in str(value or "").split(",") if code.strip()]
+    invalid = [code for code in codes if not re.fullmatch(r"(?:\d{4}|\d{3}[A-Z])", code)]
+    if invalid:
+        raise ValueError("invalid security code(s): " + ", ".join(invalid))
+    return list(dict.fromkeys(codes))
+
+
+def load_benefit_universe(path):
+    if not path.exists():
+        return set()
+    with path.open(encoding="utf-8", newline="") as source:
+        return {str(row.get("code", "")).strip().upper() for row in csv.DictReader(source)
+                if str(row.get("code", "")).strip()}
+
+
+def tdnet_codes(items):
+    result = set()
+    for item in items:
+        code = str(item.get("code") or "").strip().upper()
+        if re.fullmatch(r"(?:\d{4}|\d{3}[A-Z])", code):
+            result.add(code)
+        for match in re.findall(r"(?<![0-9A-Z])(\d{4}|\d{3}[A-Z])(?![0-9A-Z])", str(item.get("title") or "").upper()):
+            result.add(match)
+    return result
 
 
 def upsert_benefit_csv(path, item):
@@ -587,6 +616,16 @@ def persist_production_state(benefits, queue, progress):
     atomic(DATA / "benefits.json", benefits)
     atomic(DATA / "verification-queue.json", queue)
     atomic(DATA / "discovery-progress.json", progress)
+
+
+def append_research_log(company, result, reasons):
+    """Keep non-official outcomes out of dashboard queues and counters."""
+    path = DATA / "research-log.json"
+    entries = load(path, [])
+    entries.append({"code": company["code"], "name": company["name"],
+                    "result": result, "reasons": list(reasons),
+                    "checked_at": dt.datetime.now(dt.timezone.utc).isoformat()})
+    atomic(path, entries)
 
 
 def run(args):
@@ -723,15 +762,15 @@ def run(args):
             if args.diagnostic_mode:
                 continue
             if reasons:
-                item["result"] = "verification_required"
-                queue = [x for x in queue if x.get("code") != company["code"]] + [item]
-                outcome = "verification_queue"
+                append_research_log(company, "not_officially_verified", reasons)
+                queue = [x for x in queue if x.get("code") != company["code"]]
+                outcome = "research_log"
             else:
                 benefits = [value for value in benefits if value.get("code") != company["code"]] + [item]
                 upsert_benefit_csv(DATA / "benefits.csv", item)
                 queue = [x for x in queue if x.get("code") != company["code"]]
+                save_progress(progress, company["code"])
                 outcome = "confirmed"
-            save_progress(progress, company["code"])
             persist_production_state(benefits, queue, progress)
             print(f'Result {company["code"]} {company["name"]}: {outcome}')
         except APIError as error:
@@ -740,7 +779,7 @@ def run(args):
                 diagnostic_stage(active_label, "failure", error, key)
             totals["failures"] += 1; errors.append({"code": company["code"], "status": error.status, "error": error.message})
             if not args.diagnostic_mode:
-                save_progress(progress, company["code"], failed=True)
+                append_research_log(company, "api_failed", [error.message])
                 persist_production_state(benefits, queue, progress)
                 print(f'Result {company["code"]} {company["name"]}: failed')
         except Exception as error:
@@ -749,7 +788,7 @@ def run(args):
                 diagnostic_stage(active_label, "failure", error, key)
             totals["failures"] += 1; errors.append({"code": company["code"], "error": str(error)[:300]})
             if not args.diagnostic_mode:
-                save_progress(progress, company["code"], failed=True)
+                append_research_log(company, "failed", [safe_message(error)])
                 persist_production_state(benefits, queue, progress)
                 print(f'Result {company["code"]} {company["name"]}: failed')
     if not args.diagnostic_mode:
@@ -785,7 +824,8 @@ def run(args):
 
 def parser():
     result=argparse.ArgumentParser(); result.add_argument("--batch-size", type=int, default=5); result.add_argument("--daily-limit", type=int, default=20)
-    result.add_argument("--start-code"); result.add_argument("--end-code"); result.add_argument("--retry-failed", action="store_true")
+    result.add_argument("--security-codes", default="", help="comma-separated security codes")
+    result.add_argument("--retry-failed", action="store_true")
     result.add_argument("--official-only", action="store_true"); result.add_argument("--diagnostic-mode", action="store_true"); return result
 
 

@@ -4,8 +4,7 @@ on:
     inputs:
       batch_size: {description: 'Companies per run', default: '5', type: string}
       daily_limit: {description: 'Maximum companies per run', default: '20', type: string}
-      start_code: {description: 'Optional first security code', required: false, type: string}
-      end_code: {description: 'Optional last security code', required: false, type: string}
+      security_codes: {description: 'Security codes (comma-separated, e.g. 7550,9861,8163)', required: false, type: string}
       retry_failed: {description: 'Retry failed companies', default: false, type: boolean}
       official_only: {description: 'Only register fully official results', default: true, type: boolean}
       diagnostic_mode: {description: 'Diagnose code 1301 without changing data', default: false, type: boolean}
@@ -19,14 +18,12 @@ jobs:
       - name: Log workflow inputs
         env:
           DIAGNOSTIC_MODE: ${{ inputs.diagnostic_mode }}
-          START_CODE: ${{ inputs.start_code }}
-          END_CODE: ${{ inputs.end_code }}
+          SECURITY_CODES: ${{ inputs.security_codes }}
           BATCH_SIZE: ${{ inputs.batch_size }}
           DAILY_LIMIT: ${{ inputs.daily_limit }}
         run: |
           echo "diagnostic_mode=${DIAGNOSTIC_MODE}"
-          echo "start_code=${START_CODE}"
-          echo "end_code=${END_CODE}"
+          echo "security_codes=${SECURITY_CODES}"
           echo "batch_size=${BATCH_SIZE}"
           echo "daily_limit=${DAILY_LIMIT}"
       - uses: actions/checkout@v4
@@ -40,8 +37,7 @@ jobs:
           python scripts/discover_benefits_with_openai.py
           --batch-size '${{ inputs.batch_size }}'
           --daily-limit '${{ inputs.daily_limit }}'
-          ${{ inputs.start_code && format('--start-code {0}', inputs.start_code) || '' }}
-          ${{ inputs.end_code && format('--end-code {0}', inputs.end_code) || '' }}
+          --security-codes '${{ inputs.security_codes }}'
           ${{ inputs.retry_failed == true && '--retry-failed' || '' }}
           ${{ inputs.official_only == true && '--official-only' || '' }}
           ${{ inputs.diagnostic_mode == true && '--diagnostic-mode' || '' }}
@@ -51,7 +47,7 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add data/benefits.csv data/benefits.json data/verification-queue.json data/discovery-progress.json data/openai-api-usage.json
+          git add data/benefits.csv data/benefits.json data/verification-queue.json data/discovery-progress.json data/research-log.json data/openai-api-usage.json
           echo "Changed files and added/updated record counts before commit:"
           python - <<'PY'
           import csv, io, json, pathlib, subprocess
