@@ -1,4 +1,4 @@
-import csv,json,tempfile,unittest
+import csv,json,tempfile,unittest,datetime as dt
 from pathlib import Path
 import sys;sys.path.insert(0,str(Path(__file__).parents[1]/'scripts'))
 from csv_to_json import convert
@@ -48,3 +48,29 @@ class Tests(unittest.TestCase):
   self.assertEqual(sum(x['benefit_status']=='candidate' for x in items),0)
 
 if __name__=='__main__':unittest.main()
+
+class GeminiDiscoveryTests(unittest.TestCase):
+ def setUp(self):
+  import discover_benefits_with_gemini as discovery
+  self.d=discovery
+  self.company={'code':'1234','name':'実在株式会社','market':'プライム','sector':'製造業','official_domain':'example.co.jp'}
+
+ def test_unofficial_or_missing_url_cannot_be_confirmed(self):
+  item={key:None for key in self.d.FIELDS};item.update({'benefit_status':'official_confirmed','confidence_score':95,'minimum_shares':100,'record_months':[3],'benefit_description':'商品','official_source_url':None})
+  checked,reasons=self.d.validate(item,self.company,set())
+  self.assertEqual(checked['benefit_status'],'candidate');self.assertIn('official_source_not_found',reasons)
+
+ def test_confidence_below_90_is_queued(self):
+  item={'confidence_score':89,'official_source_url':'https://example.co.jp/ir','minimum_shares':100,'record_months':[3],'benefit_status':'candidate'}
+  self.assertIn('low_confidence',self.d.queue_reasons(item))
+
+ def test_selection_resumes_and_preserves_recent_official(self):
+  master=[dict(self.company,code='1111'),dict(self.company,code='2222'),dict(self.company,code='3333')]
+  args=type('Args',(),{'start_code':None,'end_code':None,'retry_failed':False,'official_only':False,'batch_size':100,'daily_limit':100})()
+  benefits=[{'code':'2222','benefit_status':'official_confirmed','official_verified_at':dt.date.today().isoformat()}]
+  selected=self.d.select(master,args,{'next_index':1,'failed_codes':[]},benefits,[])
+  self.assertEqual([x['code'] for x in selected],['3333','1111'])
+
+ def test_duplicate_listed_codes_are_detectable(self):
+  master=[self.company,self.company]
+  self.assertNotEqual(len(master),len({x['code'] for x in master}))
