@@ -88,5 +88,34 @@
     "verification_reasons": [
       "fetch_failed"
     ]
+  },
+  {
+    "code": "1301",
+    "name": "株式会社 極洋",
+    "benefit_status": "candidate",
+    "record_months": [
+      3
+    ],
+    "record_date": null,
+    "annual_occurrences": 1,
+    "minimum_shares": 100,
+    "maximum_shares": 299,
+    "benefit_title": "株主優待（当社製品贈呈）",
+    "benefit_description": "毎年3月31日現在の当社株主名簿に記載または記録された株主（1単元=100株以上、3単元=300株未満）に、2,500円相当の当社製品を贈呈。",
+    "category": "食料品・水産加工品（自社製品）",
+    "annual_value_yen": null,
+    "valuation_type": "not_calculated",
+    "long_term_required": null,
+    "holding_period_months": null,
+    "conditions": "対象：毎年3月31日現在、100株以上300株未満（1単元以上3単元未満）。",
+    "official_source_url": null,
+    "official_source_title": "個人投資家の皆様へ - 株式会社 極洋（株主優待の内容）",
+    "official_verified_at": "2026-07-26",
+    "abolished_at": null,
+    "last_record_date": null,
+    "change_or_abolition_note": null,
+    "confidence_score": 70,
+    "evidence_text": "毎年3月31日現在の株主名簿に記載または記録された1単元(100株)以上3単元(300株)未満の株主に、2,500円相当の当社製品を贈呈。",
+    "error_reason": "official_source_validation_failed"
   }
 ]
