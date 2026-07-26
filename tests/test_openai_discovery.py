@@ -84,6 +84,23 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                                {"type": "message", "content": []}]}
         self.assertEqual(discovery.web_search_calls(response), 1)
 
+    def test_duplicate_search_call_ids_are_counted_once(self):
+        response = {"output": [
+            {"type": "web_search_call", "id": "ws_1", "action": {"type": "search", "queries": ["first"]}},
+            {"type": "web_search_call", "id": "ws_1", "action": {"type": "search", "queries": ["first"]}},
+        ]}
+        stats = discovery.web_search_stats(response)
+        self.assertEqual(stats["output_items"], 2)
+        self.assertEqual(stats["unique_calls"], 1)
+        self.assertEqual(stats["call_ids"], {"ws_1"})
+
+    def test_idless_duplicate_search_actions_are_counted_once(self):
+        action = {"type": "open_page", "status": "completed", "queries": [],
+                  "sources": [{"url": "https://example.test/private"}]}
+        response = {"output": [{"type": "web_search_call", "action": copy.deepcopy(action)},
+                               {"type": "web_search_call", "action": copy.deepcopy(action)}]}
+        self.assertEqual(discovery.web_search_stats(response)["unique_calls"], 1)
+
     def test_existing_confirmed_and_abolished_are_immutable(self):
         companies = [{"code": str(i), "name": str(i)} for i in range(15)]
         benefits = [{"code": str(i), "benefit_status": "official_confirmed"} for i in range(10)] + [
@@ -110,6 +127,62 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                  patch.object(discovery, "fetch_and_validate", return_value=self.item()["official_source_url"]):
                 discovery.run(args)
             self.assertEqual(before, {p.name: p.read_bytes() for p in root.iterdir()})
+
+    def test_multiple_search_items_continue_through_official_validation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            files = {"listed-companies.json": [self.company], "company-domains.json": {},
+                     "benefits.json": [], "verification-queue.json": [], "discovery-progress.json": {"next_index": 0},
+                     "openai-api-usage.json": []}
+            for name, value in files.items(): (root/name).write_text(json.dumps(value), encoding="utf-8")
+            url = self.item()["official_source_url"]
+            search_response = {"output_text": json.dumps(self.item()), "output": [
+                {"type": "web_search_call", "id": "ws_1", "action": {"type": "search", "sources": [{"url": url}]}},
+                {"type": "web_search_call", "id": "ws_2", "action": {"type": "open_page", "sources": [{"url": url}]}},
+            ], "usage": {}}
+            args = type("Args", (), {"diagnostic_mode": True, "batch_size": 10, "daily_limit": 20,
+                "start_code": None, "end_code": None, "retry_failed": False, "official_only": False})()
+            output = StringIO()
+            with patch.object(discovery, "DATA", root), patch.dict(os.environ, {"OPENAI_API_KEY": "sk-mock-secret-value"}), \
+                 patch.object(discovery, "request_response", side_effect=[{"output": [], "usage": {}}, search_response]), \
+                 patch.object(discovery, "fetch_and_validate", return_value=url), redirect_stdout(output):
+                result = discovery.run(args)
+            text = output.getvalue()
+            self.assertEqual(result, 0)
+            self.assertIn("Official URL validation: success", text)
+            self.assertIn("Web-search Responses requests: 1", text)
+            self.assertIn("Web-search output items: 2", text)
+            self.assertIn("Unique web-search call IDs: 2", text)
+            self.assertIn("Web-search action types: open_page, search", text)
+            self.assertIn("Warning: multiple web_search_call output items", text)
+            self.assertNotIn("more_than_one_search_call", text)
+            self.assertNotIn(url, text)
+            self.assertNotIn("sk-mock-secret-value", text)
+            self.assertEqual({name: json.loads((root/name).read_text()) for name in files}, files)
+
+    def test_usage_records_search_requests_and_output_items_separately(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            fixtures = {"listed-companies.json": [self.company], "company-domains.json": {}, "benefits.json": [],
+                        "verification-queue.json": [], "discovery-progress.json": {"next_index": 0},
+                        "openai-api-usage.json": []}
+            for name, value in fixtures.items(): (root/name).write_text(json.dumps(value), encoding="utf-8")
+            url = self.item()["official_source_url"]
+            response = {"output_text": json.dumps(self.item()), "output": [
+                {"type": "web_search_call", "id": "ws_same", "action": {"type": "search", "sources": [{"url": url}]}},
+                {"type": "web_search_call", "id": "ws_same", "action": {"type": "search", "sources": [{"url": url}]}},
+            ], "usage": {}}
+            args = type("Args", (), {"diagnostic_mode": False, "batch_size": 10, "daily_limit": 20,
+                "start_code": None, "end_code": None, "retry_failed": False, "official_only": False})()
+            with patch.object(discovery, "DATA", root), patch.dict(os.environ, {"OPENAI_API_KEY": "mock"}), \
+                 patch.object(discovery, "request_response", return_value=response), \
+                 patch.object(discovery, "fetch_and_validate", return_value=url):
+                self.assertEqual(discovery.run(args), 0)
+            record = json.loads((root/"openai-api-usage.json").read_text())[-1]
+            self.assertEqual(record["responses_with_web_search"], 1)
+            self.assertEqual(record["web_search_output_items"], 2)
+            self.assertEqual(record["web_search_calls"], 1)
+            self.assertEqual(record["unique_web_search_call_ids"], 1)
 
     def test_diagnostic_failure_prints_safe_error_and_final_summary(self):
         with tempfile.TemporaryDirectory() as directory:
