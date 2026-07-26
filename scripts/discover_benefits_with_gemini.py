@@ -34,16 +34,33 @@ def host_allowed(url,company):
  expected=(company.get('official_domain') or '').lower().removeprefix('www.')
  return any(host==x or host.endswith('.'+x) for x in OFFICIAL_HOSTS) or bool(expected and (host==expected or host.endswith('.'+expected)))
 
-def fetch_official(url,company):
- if not host_allowed(url,company):raise ValueError('official_domain_mismatch')
+def normalized_host(url):
+ try:
+  parsed=urlparse(url);host=(parsed.hostname or '').lower().removeprefix('www.')
+  return host if parsed.scheme=='https' and host and not any(host==x or host.endswith('.'+x) for x in BLOCKED) else None
+ except ValueError:return None
+
+def company_identified(body,ctype,company):
+ # PDFs frequently contain plain/UTF-16 text; decoding several safe representations
+ # is conservative: an unextractable PDF is queued rather than trusted.
+ variants=[body.decode('utf-8','ignore'),body.decode('shift_jis','ignore'),body.decode('utf-16','ignore')]
+ needles={str(company['code']),company['name'],company['name'].replace('株式会社','').replace('（株）','')}
+ return any(needle and needle in text for needle in needles for text in variants)
+
+def fetch_official(url,company,grounded_urls):
+ if url not in grounded_urls or not normalized_host(url):raise ValueError('url_not_https_grounding')
+ candidate=normalized_host(url);known=company.get('official_domain')
+ if known and not host_allowed(url,company):raise ValueError('official_domain_mismatch')
  req=Request(url,headers={'User-Agent':'kabunushi-yutai-dashboard/1.0 (+official-source-verification)'})
  with urlopen(req,timeout=20) as response:
   if response.status!=200:raise ValueError(f'http_{response.status}')
   final=response.geturl()
-  if not host_allowed(final,company):raise ValueError('redirected_outside_official_domain')
+  if normalized_host(final)!=candidate:raise ValueError('redirected_outside_candidate_domain')
+  if known and not host_allowed(final,company):raise ValueError('redirected_outside_official_domain')
   body=response.read(2_000_000)
   ctype=response.headers.get_content_type()
- return final,ctype,body
+ if not company_identified(body,ctype,company):raise ValueError('company_identity_not_found')
+ return final,ctype,body,candidate
 
 def call_gemini(company,key,max_retries=5):
  prompt=f'''日本の上場会社「{company["name"]}」（証券コード {company["code"]}）の現在の株主優待を調査してください。
@@ -89,11 +106,7 @@ def validate(item,company,grounded_urls):
  url=item.get('official_source_url');fetch_error=None
  if url:
   try:
-   final,ctype,body=fetch_official(url,company);item['official_source_url']=final
-   # A generated URL is rejected unless found in grounding or content visibly identifies the company.
-   visible=body.decode('utf-8','ignore') if ctype!='application/pdf' else ''
-   identified=company['code'] in visible or company['name'].replace('株式会社','') in visible
-   if url not in grounded_urls and not identified:raise ValueError('url_not_grounded_or_identified')
+   final,ctype,body,domain=fetch_official(url,company,grounded_urls);item['official_source_url']=final;item['_verified_domain']=domain
   except Exception as e:item['official_source_url']=None;fetch_error=str(e);item['error_reason']=fetch_error
  required=bool(item.get('official_source_url') and item['confidence_score']>=90 and item.get('minimum_shares') is not None and (item.get('record_months') or item.get('record_date')) and item.get('benefit_description'))
  if item.get('benefit_status')!='abolished' and not required:item['benefit_status']='candidate'
@@ -106,12 +119,15 @@ def to_app(item,company):
  return {'code':item['code'],'name':item['name'],'market':company.get('market',''),'sector':company.get('sector',''),'industry':company.get('sector',''),'benefit_status':item['benefit_status'],'data_confidence':'official_confirmed' if item['benefit_status'] in ('official_confirmed','abolished') else 'candidate','record_months':item.get('record_months') or [],'annual_occurrences':item.get('annual_occurrences') or 0,'minimum_shares':shares,'category':item.get('category') or '未分類','long_term_required':item.get('long_term_required'),'long_term_condition':item.get('conditions') or '未確認','official_source_url':item.get('official_source_url'),'official_source_title':item.get('official_source_title'),'official_verified_at':item.get('official_verified_at'),'confidence_score':item.get('confidence_score'),'evidence_text':item.get('evidence_text'),'abolished_at':item.get('abolished_at'),'last_record_date':item.get('last_record_date'),'change_or_abolition_note':item.get('change_or_abolition_note'),'benefit_tiers':[] if shares is None else [{'shares':shares,'description':desc,'annual_value_yen':item.get('annual_value_yen')}], 'discovery_error':item.get('error_reason')}
 
 def select(master,args,progress,benefits,queue):
- start=int(args.start_code) if args.start_code else 0;end=int(args.end_code) if args.end_code else 99999
+ start=args.start_code;end=args.end_code
  existing={x['code']:x for x in benefits};queued={x.get('code') for x in queue};today=dt.date.today();out=[]
  ordered=master[progress.get('next_index',0):]+master[:progress.get('next_index',0)]
- for c in ordered:
-  code=int(c['code'])
-  if not start<=code<=end:continue
+ processed=set(progress.get('processed_codes',[]))
+ ordered=sorted(enumerate(ordered),key=lambda pair:(pair[1]['code'] in processed,pair[0]))
+ for _,c in ordered:
+  code=str(c['code'])
+  if start is not None and code<str(start):continue
+  if end is not None and code>str(end):continue
   old=existing.get(c['code']);failed=c['code'] in progress.get('failed_codes',[])
   if failed and not args.retry_failed:continue
   if old and old.get('benefit_status') in ('official_confirmed','abolished'):
@@ -126,12 +142,18 @@ def run(args):
  key=os.getenv('GEMINI_API_KEY');
  if not key:raise SystemExit('GEMINI_API_KEY is required (it is never persisted or logged)')
  master=load(DATA/'listed-companies.json',[]);benefits=load(DATA/'benefits.json',[]);queue=load(DATA/'verification-queue.json',[]);progress=load(DATA/'discovery-progress.json',{})
+ if len(master)<=12:raise SystemExit('上場会社マスターが未更新です（listed-companies.json は13社以上必要です）')
  if len(master)!=len({x['code'] for x in master}):raise SystemExit('duplicate code in listed-companies.json')
+ domains=load(DATA/'company-domains.json',{});master_by_code={x['code']:x for x in master}
+ for code,domain in domains.items():
+  if code in master_by_code and not master_by_code[code].get('official_domain'):master_by_code[code]['official_domain']=domain
  today=dt.date.today().isoformat();usage=load(DATA/'api-usage.json',[]);used_today=sum(x.get('processed_companies',0) for x in usage if str(x.get('executed_at','')).startswith(today));args.daily_limit=max(0,args.daily_limit-used_today);args.batch_size=min(100,max(0,args.batch_size));selected=select(master,args,progress,benefits,queue);existing={x['code']:x for x in benefits};preserved={c for c,x in existing.items() if x.get('benefit_status') in ('official_confirmed','abolished')};started=time.monotonic();calls=success=failed=0
  for company in selected:
   calls+=1
   try:
    raw=call_gemini(company,key);item,urls=parse_response(raw);item,reasons=validate(item,company,urls)
+   verified_domain=item.pop('_verified_domain',None)
+   if verified_domain and not any(verified_domain==host or verified_domain.endswith('.'+host) for host in OFFICIAL_HOSTS):domains[company['code']]=verified_domain
    # Never overwrite pre-existing confirmed or abolished records.
    if company['code'] not in preserved:existing[company['code']]=to_app(item,company)
    queue=[q for q in queue if q.get('code')!=company['code']]
@@ -143,7 +165,8 @@ def run(args):
    if company['code'] not in progress.get('failed_codes',[]):progress.setdefault('failed_codes',[]).append(company['code'])
    queue=[q for q in queue if q.get('code')!=company['code']]+[{'code':company['code'],'name':company['name'],'confidence_score':0,'result':'failed','error_reason':type(e).__name__,'verification_reasons':['fetch_failed']}]
   progress.setdefault('processed_codes',[]).append(company['code']);progress['processed_codes']=list(dict.fromkeys(progress['processed_codes']));progress['next_index']=(master.index(company)+1)%max(1,len(master));progress['updated_at']=dt.datetime.now(dt.timezone.utc).isoformat()
-  atomic(DATA/'benefits.json',list(existing.values()));atomic(DATA/'verification-queue.json',queue);atomic(DATA/'discovery-progress.json',progress)
+  progress['total_companies']=len(master);progress['uninvestigated_count']=len(master)-len(set(progress['processed_codes']));progress['status_counts']={'uninvestigated':progress['uninvestigated_count'],'processed':len(progress['processed_codes']),'candidate':sum(q.get('result')!='failed' for q in queue),'official_confirmed':sum(x.get('benefit_status')=='official_confirmed' for x in existing.values()),'abolished':sum(x.get('benefit_status')=='abolished' for x in existing.values()),'failed':len(progress.get('failed_codes',[]))}
+  atomic(DATA/'benefits.json',list(existing.values()));atomic(DATA/'verification-queue.json',queue);atomic(DATA/'discovery-progress.json',progress);atomic(DATA/'company-domains.json',domains)
  usage.append({'executed_at':dt.datetime.now(dt.timezone.utc).isoformat(),'processed_companies':len(selected),'gemini_api_calls':calls,'successes':success,'verification_required':len(selected)-success-failed,'failures':failed,'duration_seconds':round(time.monotonic()-started,2)});atomic(DATA/'api-usage.json',usage[-365:])
  return 1 if failed else 0
 

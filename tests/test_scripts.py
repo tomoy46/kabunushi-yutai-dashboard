@@ -1,4 +1,5 @@
 import csv,json,tempfile,unittest,datetime as dt
+from unittest.mock import patch
 from pathlib import Path
 import sys;sys.path.insert(0,str(Path(__file__).parents[1]/'scripts'))
 from csv_to_json import convert
@@ -74,3 +75,33 @@ class GeminiDiscoveryTests(unittest.TestCase):
  def test_duplicate_listed_codes_are_detectable(self):
   master=[self.company,self.company]
   self.assertNotEqual(len(master),len({x['code'] for x in master}))
+
+ def test_alphanumeric_codes_are_selected_without_integer_conversion(self):
+  master=[dict(self.company,code='130A'),dict(self.company,code='9999')]
+  args=type('Args',(),{'start_code':'130A','end_code':'130A','retry_failed':False,'official_only':False,'batch_size':100,'daily_limit':100})()
+  self.assertEqual([x['code'] for x in self.d.select(master,args,{'next_index':0},[],[])],['130A'])
+
+ def test_unknown_domain_requires_grounding_fetch_identity_and_same_redirect_host(self):
+  company=dict(self.company,official_domain=None)
+  item={key:None for key in self.d.FIELDS};item.update({'benefit_status':'official_confirmed','confidence_score':95,'minimum_shares':100,'record_months':[3],'benefit_description':'商品','official_source_url':'https://corp.example/ir','annual_value_yen':None})
+  class Headers:
+   def get_content_type(self):return 'text/html'
+  class Response:
+   status=200;headers=Headers()
+   def __enter__(self):return self
+   def __exit__(self,*args):pass
+   def geturl(self):return 'https://corp.example/ir/final'
+   def read(self,limit):return '実在株式会社（証券コード 1234）'.encode()
+  with patch.object(self.d,'urlopen',return_value=Response()):
+   checked,reasons=self.d.validate(item,company,{'https://corp.example/ir'})
+  self.assertEqual(checked['benefit_status'],'official_confirmed');self.assertEqual(checked['_verified_domain'],'corp.example');self.assertEqual(reasons,[])
+
+ def test_ungrounded_unknown_domain_is_never_official(self):
+  company=dict(self.company,official_domain=None)
+  item={key:None for key in self.d.FIELDS};item.update({'benefit_status':'official_confirmed','confidence_score':99,'minimum_shares':100,'record_months':[3],'benefit_description':'商品','official_source_url':'https://corp.example/ir'})
+  checked,reasons=self.d.validate(item,company,set())
+  self.assertEqual(checked['benefit_status'],'candidate');self.assertIn('fetch_failed',reasons)
+
+ def test_uninvestigated_is_master_minus_unique_processed(self):
+  master=['1','2','3','4'];processed=['1','1','3']
+  self.assertEqual(len(master)-len(set(processed)),2)
