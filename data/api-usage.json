@@ -40,5 +40,26 @@
     "failures": 0,
     "errors": [],
     "duration_seconds": 0.0
+  },
+  {
+    "executed_at": "2026-07-26T04:47:57.530271+00:00",
+    "diagnostic_mode": true,
+    "diagnostic_result": null,
+    "processed_companies": 1,
+    "gemini_api_calls": 1,
+    "successes": 0,
+    "verification_required": 0,
+    "failures": 1,
+    "errors": [
+      {
+        "code": "1301",
+        "name": "極洋",
+        "stage": "search",
+        "http_status": 429,
+        "api_error_status": "RESOURCE_EXHAUSTED",
+        "api_error_message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. "
+      }
+    ],
+    "duration_seconds": 16.48
   }
 ]
