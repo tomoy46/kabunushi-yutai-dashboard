@@ -1,7 +1,6 @@
 {
-  "next_index": 11,
+  "next_index": 0,
   "processed_codes": [
-    "1301",
     "130A",
     "1332",
     "1333",
@@ -25,13 +24,13 @@
   ],
   "updated_at": "2026-07-26T07:28:52.719222+00:00",
   "total_companies": 3709,
-  "uninvestigated_count": 3699,
+  "uninvestigated_count": 3700,
   "status_counts": {
-    "uninvestigated": 3699,
-    "processed": 10,
+    "uninvestigated": 3700,
+    "processed": 9,
     "candidate": 0,
     "official_confirmed": 10,
     "abolished": 2,
-    "failed": 10
+    "failed": 9
   }
 }
