@@ -37,7 +37,12 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         self.assertTrue(payload["text"]["format"]["strict"])
         self.assertEqual(payload["text"]["format"]["type"], "json_schema")
         self.assertEqual(payload["tools"][0]["filters"]["allowed_domains"],
-                         ["kyokuyo.co.jp", "jpx.co.jp", "tdnet.info"])
+                         ["kyokuyo.co.jp"])
+
+    def test_company_name_normalizes_legal_form_spaces_and_width(self):
+        self.assertTrue(discovery.same_company_name("極洋", "株式会社 極洋"))
+        self.assertTrue(discovery.same_company_name("ＡＢＣ １２３", "株式会社ABC123"))
+        self.assertFalse(discovery.same_company_name("極洋", "日本取引所グループ"))
 
     def test_api_error_diagnostic_fields_are_allowlisted_and_redacted(self):
         secret = "sk-this-is-a-secret-value"
@@ -96,8 +101,69 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         self.assertFalse(discovery.allowed_url("https://kabutan.jp/stock/?code=1301", "kyokuyo.co.jp"))
         self.assertFalse(discovery.allowed_url("https://x.com/example", "kyokuyo.co.jp"))
         self.assertTrue(discovery.allowed_url("https://www.kyokuyo.co.jp/ir/", "kyokuyo.co.jp"))
+        self.assertFalse(discovery.allowed_url("https://www.jpx.co.jp/a.pdf", "kyokuyo.co.jp"))
+        self.assertFalse(discovery.allowed_url("https://www.release.tdnet.info/a.pdf", "kyokuyo.co.jp"))
         self.assertTrue(discovery.allowed_url("https://www.jpx.co.jp/a.pdf", None))
         self.assertTrue(discovery.allowed_url("https://www.release.tdnet.info/a.pdf", None))
+
+    def test_failed_validation_clears_model_url(self):
+        item, reasons = discovery.validate(
+            self.item("https://www.jpx.co.jp/corporate/investor-relations/shareholders/incentives/index.html"),
+            self.company, {}, fetcher=lambda *args: (_ for _ in ()).throw(ValueError("wrong company")))
+        self.assertIn("source_not_in_search_results", reasons)
+        self.assertIsNone(item["official_source_url"])
+        self.assertEqual(item["error_reason"], "official_source_validation_failed")
+
+    def test_exchange_disclosure_requires_company_name_and_code(self):
+        url = "https://release.tdnet.info/inbs/example.pdf"
+        company = {"code": "1301", "name": "株式会社 極洋", "official_domain": None}
+        class Response:
+            status = 200
+            def geturl(self): return url
+            def read(self, _limit): return "極洋 株主優待制度".encode()
+            def __enter__(self): return self
+            def __exit__(self, *_args): pass
+        with patch.object(discovery, "urlopen", return_value=Response()):
+            with self.assertRaisesRegex(ValueError, "exchange_disclosure_identity_mismatch"):
+                discovery.fetch_official_page(url, company, {url})
+        response = Response()
+        response.read = lambda _limit: "株式会社 極洋 証券コード1301 株主優待制度".encode()
+        with patch.object(discovery, "urlopen", return_value=response):
+            self.assertEqual(discovery.fetch_official_page(url, company, {url})[0], url)
+
+    def test_jpx_own_ir_page_is_never_company_disclosure(self):
+        url = "https://jpx.co.jp/corporate/investor-relations/shareholders/incentives/index.html"
+        company = {"code": "1301", "name": "極洋", "official_domain": None}
+        class Response:
+            status = 200
+            def geturl(self): return url
+            def read(self, _limit): return "極洋 1301 株主優待制度".encode()
+            def __enter__(self): return self
+            def __exit__(self, *_args): pass
+        with patch.object(discovery, "urlopen", return_value=Response()):
+            with self.assertRaisesRegex(ValueError, "jpx_corporate_page"):
+                discovery.fetch_official_page(url, company, {url})
+
+    def test_kyokuyo_official_result_keeps_current_benefit_details(self):
+        url = "https://www.kyokuyo.co.jp/ir/concept/"
+        item = self.item(url)
+        item.update({"name": "株式会社 極洋", "record_date": "3月31日", "annual_occurrences": 1,
+                     "benefit_title": "自社製品", "annual_value_yen": 2500,
+                     "conditions": "100株以上300株未満は2,500円相当、300株以上は6,000円相当。毎年7月贈呈予定"})
+        validated, reasons = discovery.validate(item, self.company, {url: {}}, fetcher=lambda *args: url)
+        self.assertFalse(reasons)
+        self.assertEqual(validated["record_months"], [3])
+        self.assertEqual(validated["annual_value_yen"], 2500)
+        self.assertIn("300株以上は6,000円相当", validated["conditions"])
+        self.assertGreaterEqual(validated["confidence_score"], 90)
+
+    def test_other_company_abolition_cannot_mark_kyokuyo_abolished(self):
+        item = self.item("https://www.jpx.co.jp/corporate/investor-relations/shareholders/incentives/index.html")
+        item["benefit_status"] = "abolished"
+        validated, reasons = discovery.validate(item, self.company, {}, fetcher=lambda *args: None)
+        self.assertEqual(validated["benefit_status"], "candidate")
+        self.assertIn("abolition_not_officially_confirmed", reasons)
+        self.assertIsNone(validated["official_source_url"])
 
     def test_discount_is_never_invented_as_cash_value(self):
         item = self.item(); item.update({"benefit_description": "購入額を10%割引", "annual_value_yen": 9999})

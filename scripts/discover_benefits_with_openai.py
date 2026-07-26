@@ -15,6 +15,7 @@ import re
 import socket
 import sys
 import time
+import unicodedata
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse, urlunparse
@@ -25,6 +26,7 @@ DATA = ROOT / "data"
 ENDPOINT = "https://api.openai.com/v1/responses"
 DEFAULT_MODEL = "gpt-5.4-nano"
 OFFICIAL_HOSTS = ("jpx.co.jp", "tdnet.info")
+JPX_BLOCKED_PATHS = ("/corporate/investor-relations/", "/corporate/about-jpx/")
 BLOCKED_HOSTS = (
     "yahoo.co.jp", "minkabu.jp", "kabutan.jp", "rakuten-sec.co.jp",
     "sbisec.co.jp", "monex.co.jp", "note.com", "x.com", "facebook.com",
@@ -129,11 +131,28 @@ def is_subdomain(host, parent):
     return bool(host and (host == parent or host.endswith("." + parent)))
 
 
+def normalize_company_name(value):
+    """Normalize harmless legal/width variants without fuzzy matching companies."""
+    value = str(value or "").strip()
+    # NFKC maps full-width Latin letters/digits and （株） to their ASCII forms.
+    value = unicodedata.normalize("NFKC", value)
+    value = value.replace("株式会社", "").replace("(株)", "")
+    return re.sub(r"[\s\u3000]+", "", value).strip()
+
+
+def same_company_name(left, right):
+    normalized = normalize_company_name(left)
+    return bool(normalized and normalized == normalize_company_name(right))
+
+
 def allowed_url(url, official_domain):
     host = hostname(url)
     if not host or any(is_subdomain(host, bad) for bad in BLOCKED_HOSTS):
         return False
-    domains = OFFICIAL_HOSTS + ((official_domain.lower().removeprefix("www."),) if official_domain else ())
+    # Once a corporate domain is known, ordinary discovery must not escape to
+    # JPX/TDnet (or any other company). Exchange disclosures are a fallback only
+    # for companies whose official domain has not yet been identified.
+    domains = ((official_domain.lower().removeprefix("www."),) if official_domain else OFFICIAL_HOSTS)
     return any(is_subdomain(host, domain) for domain in domains)
 
 
@@ -158,7 +177,7 @@ def build_payload(company, model=DEFAULT_MODEL):
     tool = {"type": "web_search", "search_context_size": "low"}
     domain = company.get("official_domain")
     if domain:
-        tool["filters"] = {"allowed_domains": [domain, *OFFICIAL_HOSTS]}
+        tool["filters"] = {"allowed_domains": [domain]}
     return {"model": model, "input": company_prompt(company), "tools": [tool], "max_tool_calls": 1,
             "include": ["web_search_call.action.sources"], "store": False,
             "reasoning": {"effort": "none"}, "text": {"format": response_format()}}
@@ -317,8 +336,16 @@ def fetch_official_page(url, company, source_urls):
             raise ValueError("source_redirected_outside_candidate_domain")
         body = response.read(2_000_000)
     text = page_text(body)
-    names = (company["name"], company["name"].replace("株式会社", ""), str(company["code"]))
-    if not any(needle and needle in text for needle in names):
+    host, path = hostname(final), urlparse(final).path.lower()
+    if is_subdomain(host, "jpx.co.jp") and any(path.startswith(value) for value in JPX_BLOCKED_PATHS):
+        raise ValueError("jpx_corporate_page_not_company_disclosure")
+    normalized_text = normalize_company_name(text)
+    name_found = normalize_company_name(company["name"]) in normalized_text
+    code_found = str(company["code"]) in text
+    if any(is_subdomain(host, exchange) for exchange in OFFICIAL_HOSTS):
+        if not (name_found and code_found):
+            raise ValueError("exchange_disclosure_identity_mismatch")
+    elif not name_found:
         raise ValueError("company_identity_not_found")
     if not any(word in text for word in BENEFIT_WORDS):
         raise ValueError("shareholder_benefit_text_not_found")
@@ -357,7 +384,8 @@ def select_verified_source(item, company, sources, page_fetcher=None):
 def validate(item, company, sources, fetcher=None):
     fetcher = fetcher or fetch_and_validate
     reasons = []
-    if item.get("code") != str(company["code"]) or item.get("name") != company["name"]: reasons.append("company_identity_mismatch")
+    if str(item.get("code")) != str(company["code"]) or not same_company_name(item.get("name"), company["name"]):
+        reasons.append("company_identity_mismatch")
     original = canonical_url(item.get("official_source_url"))
     url, _ = select_verified_source(item, company, sources, fetcher)
     if url:
@@ -368,16 +396,26 @@ def validate(item, company, sources, fetcher=None):
         reasons.append("source_domain_not_allowed")
     else:
         reasons.append("official_source_validation_failed")
+    source_failed = any(reason in reasons for reason in (
+        "source_not_in_search_results", "source_domain_not_allowed", "official_source_validation_failed"))
+    if source_failed:
+        # Never expose a model-supplied, unverified URL as an official source.
+        item["official_source_url"] = None
+        item["error_reason"] = "official_source_validation_failed"
     if item.get("minimum_shares") is None: reasons.append("minimum_shares_unknown")
     if not item.get("record_months") and not item.get("record_date"): reasons.append("record_date_unknown")
     if item.get("confidence_score", 0) < 90: reasons.append("low_confidence")
-    if item.get("benefit_status") != "official_confirmed": reasons.append("current_program_not_confirmed")
+    if item.get("benefit_status") == "abolished" and source_failed:
+        reasons.append("abolition_not_officially_confirmed")
+    if item.get("benefit_status") not in ("official_confirmed", "abolished"):
+        reasons.append("current_program_not_confirmed")
     description = " ".join(str(item.get(k) or "") for k in ("benefit_title", "benefit_description", "conditions"))
     if re.search(r"割引|％|%|利用額", description):
         item["annual_value_yen"], item["valuation_type"] = None, "not_calculated"
     if reasons:
         item["benefit_status"] = "candidate"
-        item["error_reason"] = ",".join(dict.fromkeys(reasons))
+        item["error_reason"] = ("official_source_validation_failed" if source_failed else
+                                ",".join(dict.fromkeys(reasons)))
     return item, list(dict.fromkeys(reasons))
 
 
