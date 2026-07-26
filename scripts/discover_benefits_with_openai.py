@@ -547,8 +547,8 @@ def choose(companies, args, progress, benefits, queue=None):
     return candidates[:min(args.batch_size, args.daily_limit)]
 
 
-def append_benefit_csv(path, item):
-    """Append one officially verified result without rewriting existing CSV rows."""
+def upsert_benefit_csv(path, item):
+    """Insert or replace one officially verified result in the derived CSV."""
     if not path.exists():
         # Test/standalone data directories may start without the derived CSV.
         fieldnames = ["code", "name", "market", "industry", "category", "record_months",
@@ -560,15 +560,33 @@ def append_benefit_csv(path, item):
     with path.open(encoding="utf-8", newline="") as source:
         reader = csv.DictReader(source)
         fieldnames = reader.fieldnames
-        existing = {row["code"] for row in reader}
-    if item["code"] in existing:
-        return
+        rows = list(reader)
     row = {name: "" for name in fieldnames}
     row.update({name: item.get(name) for name in fieldnames if name in item})
     row["record_months"] = "|".join(map(str, item.get("record_months") or []))
     row["benefit_tiers_json"] = json.dumps(item.get("benefit_tiers") or [], ensure_ascii=False)
-    with path.open("a", encoding="utf-8", newline="") as output:
-        csv.DictWriter(output, fieldnames=fieldnames).writerow(row)
+    rows = [existing for existing in rows if existing["code"] != item["code"]] + [row]
+    with path.open("w", encoding="utf-8", newline="") as output:
+        writer = csv.DictWriter(output, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def save_progress(progress, code, failed=False):
+    """Record a production target exactly once as processed or failed."""
+    if failed:
+        progress["failed_codes"] = list(dict.fromkeys(progress.get("failed_codes", []) + [code]))
+    else:
+        progress["processed_codes"] = list(dict.fromkeys(progress.get("processed_codes", []) + [code]))
+        progress["failed_codes"] = [value for value in progress.get("failed_codes", []) if value != code]
+    progress["next_index"] = progress.get("next_index", 0) + 1
+    progress["updated_at"] = dt.datetime.now(dt.timezone.utc).isoformat()
+
+
+def persist_production_state(benefits, queue, progress):
+    atomic(DATA / "benefits.json", benefits)
+    atomic(DATA / "verification-queue.json", queue)
+    atomic(DATA / "discovery-progress.json", progress)
 
 
 def run(args):
@@ -591,6 +609,9 @@ def run(args):
     benefits = load(DATA / "benefits.json", []); queue = load(DATA / "verification-queue.json", [])
     progress = load(DATA / "discovery-progress.json", {"next_index": 0, "processed_codes": [], "failed_codes": []})
     selected = companies if args.diagnostic_mode else choose(companies, args, progress, benefits, queue)
+    if not args.diagnostic_mode:
+        targets = ", ".join(f'{company["code"]} {company["name"]}' for company in selected) or "none"
+        print(f"Production targets ({len(selected)}): {targets}")
     totals = {"processed_companies": 0, "responses_api_calls": 0, "responses_with_web_search": 0,
               "web_search_output_items": 0, "web_search_calls": 0,
               "input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0,
@@ -613,7 +634,6 @@ def run(args):
             failed_stage = "plain"
             diagnostic_stage("Plain Responses API", "failure", error, key)
     for company in selected:
-        before_progress = json.loads(json.dumps(progress))
         active_label = "Web search + Structured Outputs"
         active_failed_stage = "web_search"
         failure_logged = False
@@ -702,35 +722,48 @@ def run(args):
             else: totals["successes"] += 1
             if args.diagnostic_mode:
                 continue
-            if reasons: queue = [x for x in queue if x.get("code") != company["code"]] + [item]
+            if reasons:
+                item["result"] = "verification_required"
+                queue = [x for x in queue if x.get("code") != company["code"]] + [item]
+                outcome = "verification_queue"
             else:
-                if not any(x.get("code") == company["code"] for x in benefits):
-                    benefits.append(item)
-                    append_benefit_csv(DATA / "benefits.csv", item)
+                benefits = [value for value in benefits if value.get("code") != company["code"]] + [item]
+                upsert_benefit_csv(DATA / "benefits.csv", item)
                 queue = [x for x in queue if x.get("code") != company["code"]]
-            progress["processed_codes"] = list(dict.fromkeys(progress.get("processed_codes", []) + [company["code"]]))
-            progress["failed_codes"] = [x for x in progress.get("failed_codes", []) if x != company["code"]]
-            progress["next_index"] = progress.get("next_index", 0) + 1
-            progress["updated_at"] = dt.datetime.now(dt.timezone.utc).isoformat()
-            atomic(DATA / "benefits.json", benefits); atomic(DATA / "verification-queue.json", queue); atomic(DATA / "discovery-progress.json", progress)
+                outcome = "confirmed"
+            save_progress(progress, company["code"])
+            persist_production_state(benefits, queue, progress)
+            print(f'Result {company["code"]} {company["name"]}: {outcome}')
         except APIError as error:
             if args.diagnostic_mode and not failure_logged:
                 failed_stage = failed_stage or active_failed_stage
                 diagnostic_stage(active_label, "failure", error, key)
-            if error.status == 429:
-                progress = before_progress; errors.append({"code": company["code"], "status": 429, "error": error.message}); break
             totals["failures"] += 1; errors.append({"code": company["code"], "status": error.status, "error": error.message})
-            if error.status in (401, 403, 404): break
+            if not args.diagnostic_mode:
+                save_progress(progress, company["code"], failed=True)
+                persist_production_state(benefits, queue, progress)
+                print(f'Result {company["code"]} {company["name"]}: failed')
         except Exception as error:
             if args.diagnostic_mode and not failure_logged:
                 failed_stage = failed_stage or active_failed_stage
                 diagnostic_stage(active_label, "failure", error, key)
             totals["failures"] += 1; errors.append({"code": company["code"], "error": str(error)[:300]})
+            if not args.diagnostic_mode:
+                save_progress(progress, company["code"], failed=True)
+                persist_production_state(benefits, queue, progress)
+                print(f'Result {company["code"]} {company["name"]}: failed')
     if not args.diagnostic_mode:
         totals["unique_web_search_call_ids"] = len(unique_web_search_call_ids)
         record = {"executed_at": dt.datetime.now(dt.timezone.utc).isoformat(), "model": model,
                   "diagnostic_mode": False, **totals, "duration_seconds": round(time.monotonic()-started, 3), "errors": errors}
         usage_log=load(DATA / "openai-api-usage.json", []); usage_log.append(record); atomic(DATA / "openai-api-usage.json", usage_log)
+        accounted = totals["successes"] + totals["verification_required"] + totals["failures"]
+        print("Production summary: "
+              f"confirmed={totals['successes']} verification_queue={totals['verification_required']} "
+              f"failed={totals['failures']} skipped=0 selected={len(selected)}")
+        if accounted != len(selected):
+            print(f"ERROR: selected {len(selected)} companies but persisted outcomes for {accounted}", file=sys.stderr)
+            return 1
     if args.diagnostic_mode:
         verification_required = totals["verification_required"] > 0 and not failed_stage
         result = "failure" if failed_stage else "success_with_verification_required" if verification_required else "success"
@@ -745,7 +778,9 @@ def run(args):
         print(f"Input tokens: {totals['input_tokens']}")
         print(f"Output tokens: {totals['output_tokens']}")
         return 1 if failed_stage else 0
-    return 1 if totals["failures"] else 0
+    # Per-company failures are durable discovery outcomes, not a reason to skip
+    # the commit step. Structural/accounting and diagnostic failures return early.
+    return 0
 
 
 def parser():

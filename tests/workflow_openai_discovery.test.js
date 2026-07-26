@@ -19,6 +19,23 @@ test('diagnostic mode is enabled only by the checked input', () => {
   assert.doesNotMatch(workflow, /\$\{\{ inputs\.diagnostic_mode && '--diagnostic-mode'/);
 });
 
+test('all boolean workflow inputs use typed boolean comparisons', () => {
+  for (const [input, option] of [
+    ['retry_failed', '--retry-failed'],
+    ['official_only', '--official-only'],
+    ['diagnostic_mode', '--diagnostic-mode'],
+  ]) {
+    assert.match(workflow, new RegExp(`inputs\\.${input} == true && '${option}'`));
+  }
+});
+
+test('commit step reports staged changes and explains an empty diff', () => {
+  assert.match(workflow, /added=\$\{added\} updated=\$\{updated\}/);
+  assert.match(workflow, /git diff --cached --numstat/);
+  assert.match(workflow, /::warning::No data files changed/);
+  assert.match(workflow, /Production targets and Production summary logs/);
+});
+
 test('production inputs and startup log are wired to workflow_dispatch values', () => {
   for (const [input, option] of [
     ['batch_size', '--batch-size'],
