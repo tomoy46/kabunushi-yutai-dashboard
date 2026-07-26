@@ -572,6 +572,28 @@
     "change_or_abolition_note": null,
     "confidence_score": 95,
     "evidence_text": "公式ページで3月31日現在の保有株式数に応じた自社製品の贈呈内容を確認。",
-    "error_reason": null
+    "error_reason": null,
+    "data_confidence": "official_confirmed",
+    "benefit_summary": "自社製品 2,500円相当",
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "maximum_shares": 299,
+        "description": "2,500円相当の自社製品",
+        "annual_value_yen": 2500
+      },
+      {
+        "shares": 300,
+        "maximum_shares": null,
+        "description": "6,000円相当の自社製品",
+        "annual_value_yen": 6000
+      }
+    ],
+    "long_term_condition": "なし",
+    "last_checked_at": "2026-07-26",
+    "notes": "毎年7月贈呈予定",
+    "market": "プライム",
+    "sector": "水産・農林業",
+    "industry": "水産・農林業"
   }
 ]
