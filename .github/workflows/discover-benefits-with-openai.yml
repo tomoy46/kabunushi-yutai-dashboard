@@ -8,7 +8,7 @@ on:
       end_code: {description: 'Optional last security code', required: false, type: string}
       retry_failed: {description: 'Retry failed companies', default: false, type: boolean}
       official_only: {description: 'Only register fully official results', default: true, type: boolean}
-      diagnostic_mode: {description: 'Diagnose code 1301 without changing data', default: true, type: boolean}
+      diagnostic_mode: {description: 'Diagnose code 1301 without changing data', default: false, type: boolean}
 permissions: {contents: write}
 concurrency: {group: openai-benefit-discovery, cancel-in-progress: false}
 jobs:
@@ -16,6 +16,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
+      - name: Log workflow inputs
+        env:
+          DIAGNOSTIC_MODE: ${{ inputs.diagnostic_mode }}
+          START_CODE: ${{ inputs.start_code }}
+          END_CODE: ${{ inputs.end_code }}
+          BATCH_SIZE: ${{ inputs.batch_size }}
+          DAILY_LIMIT: ${{ inputs.daily_limit }}
+        run: |
+          echo "diagnostic_mode=${DIAGNOSTIC_MODE}"
+          echo "start_code=${START_CODE}"
+          echo "end_code=${END_CODE}"
+          echo "batch_size=${BATCH_SIZE}"
+          echo "daily_limit=${DAILY_LIMIT}"
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
@@ -31,10 +44,10 @@ jobs:
           ${{ inputs.end_code && format('--end-code {0}', inputs.end_code) || '' }}
           ${{ inputs.retry_failed && '--retry-failed' || '' }}
           ${{ inputs.official_only && '--official-only' || '' }}
-          ${{ inputs.diagnostic_mode && '--diagnostic-mode' || '' }}
+          ${{ inputs.diagnostic_mode == true && '--diagnostic-mode' || '' }}
       - run: npm test
       - name: Commit verified results
-        if: ${{ success() && !inputs.diagnostic_mode }}
+        if: ${{ success() && inputs.diagnostic_mode != true }}
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
