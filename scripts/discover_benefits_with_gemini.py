@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 ROOT=Path(__file__).resolve().parents[1]; DATA=ROOT/'data'
-MODEL=os.getenv('GEMINI_MODEL','gemini-2.5-flash')
+GEMINI_MODEL=os.getenv('GEMINI_MODEL','gemini-3.6-flash')
 ENDPOINT='https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent'
 OFFICIAL_HOSTS=('jpx.co.jp','tdnet.info')
 BLOCKED=('yahoo.co.jp','minkabu.jp','kabutan.jp','rakuten-sec.co.jp','sbisec.co.jp','monex.co.jp','note.com','x.com','facebook.com','instagram.com','youtube.com')
@@ -85,7 +85,7 @@ def fetch_official(url,company,grounded_urls):
  return final,ctype,body,candidate
 
 def request_gemini(payload,key,stage,max_retries=5):
- req=Request(ENDPOINT.format(model=MODEL),data=json.dumps(payload).encode(),headers={'Content-Type':'application/json','x-goog-api-key':key},method='POST')
+ req=Request(ENDPOINT.format(model=GEMINI_MODEL),data=json.dumps(payload).encode(),headers={'Content-Type':'application/json','x-goog-api-key':key},method='POST')
  for attempt in range(max_retries):
   try:
    with urlopen(req,timeout=90) as r:return json.loads(r.read())
@@ -102,7 +102,7 @@ def call_gemini_search(company,key,max_retries=5):
 Google Searchで次を検索:「会社名 証券コード 株主優待 公式」「会社名 株主優待 IR」「会社名 株主優待制度 PDF」。
 {company.get("official_domain") or "企業公式ドメイン"}、企業公式IR/PDF、JPX/TDnetだけを根拠にし、証券会社・まとめ・ブログ・SNSは参照しないでください。値を推測しないでください。
 URLは実際に検索結果で確認した直接URLだけ。割引券の価値はnot_calculated。evidence_textは原文の判断箇所を短く要約（200字以内）。確定条件を欠く場合candidateにしてください。'''
- payload={'contents':[{'role':'user','parts':[{'text':prompt}]}],'tools':[{'google_search':{}}],'generationConfig':{'temperature':0}}
+ payload={'contents':[{'role':'user','parts':[{'text':prompt}]}],'tools':[{'google_search':{}}],'generationConfig':{}}
  return request_gemini(payload,key,'search',max_retries)
 
 def parse_search_response(response,company):
@@ -120,7 +120,7 @@ def parse_search_response(response,company):
 def call_gemini_structured(company,key,search_text,official_urls,max_retries=5):
  evidence=json.dumps({'company':{'code':company['code'],'name':company['name']},'search_answer':search_text,'verified_grounding_urls':official_urls},ensure_ascii=False)
  prompt='''次の検索調査結果を指定スキーマへ忠実に変換してください。検索や外部参照はせず、入力にない値は推測しないでください。official_source_urlはverified_grounding_urlsのURLだけを使用してください。\n'''+evidence
- payload={'contents':[{'role':'user','parts':[{'text':prompt}]}],'generationConfig':{'responseMimeType':'application/json','responseJsonSchema':SCHEMA,'temperature':0}}
+ payload={'contents':[{'role':'user','parts':[{'text':prompt}]}],'generationConfig':{'responseMimeType':'application/json','responseJsonSchema':SCHEMA}}
  return request_gemini(payload,key,'structured_extraction',max_retries)
 
 def parse_structured_response(response):
@@ -188,6 +188,7 @@ def error_record(error,company):
 def run(args):
  key=os.getenv('GEMINI_API_KEY');
  if not key:raise SystemExit('GEMINI_API_KEY is required (it is never persisted or logged)')
+ print(f'Gemini model: {GEMINI_MODEL}',file=sys.stderr)
  master=load(DATA/'listed-companies.json',[]);benefits=load(DATA/'benefits.json',[]);queue=load(DATA/'verification-queue.json',[]);progress=load(DATA/'discovery-progress.json',{})
  if len(master)<=12:raise SystemExit('上場会社マスターが未更新です（listed-companies.json は13社以上必要です）')
  if len(master)!=len({x['code'] for x in master}):raise SystemExit('duplicate code in listed-companies.json')
@@ -196,7 +197,7 @@ def run(args):
   if code in master_by_code and not master_by_code[code].get('official_domain'):master_by_code[code]['official_domain']=domain
  today=dt.date.today().isoformat();usage=load(DATA/'api-usage.json',[]);used_today=sum(x.get('processed_companies',0) for x in usage if str(x.get('executed_at','')).startswith(today));args.daily_limit=max(0,args.daily_limit-used_today);args.batch_size=min(100,max(0,args.batch_size));selected=select(master,args,progress,benefits,queue)
  if args.diagnostic_mode:selected=selected[:1]
- existing={x['code']:x for x in benefits};preserved={c for c,x in existing.items() if x.get('benefit_status') in ('official_confirmed','abolished')};started=time.monotonic();calls=success=failed=0;errors=[];previous_error=None;consecutive_errors=0;processed=0;diagnostic_result=None
+ existing={x['code']:x for x in benefits};preserved={c for c,x in existing.items() if x.get('benefit_status') in ('official_confirmed','abolished')};started=time.monotonic();calls=success=failed=0;errors=[];previous_error=None;consecutive_errors=0;processed=0;diagnostic_result=None;model_unavailable=False
  for index,company in enumerate(selected):
   current_error=None
   try:
@@ -219,6 +220,10 @@ def run(args):
    previous_error=None;consecutive_errors=0
   except Exception as e:
    current_error=e
+   if isinstance(e,StageHTTPError) and e.http_status==404 and e.api_status=='NOT_FOUND':
+    model_unavailable=True
+    print(f'指定モデルが利用できません: {GEMINI_MODEL}',file=sys.stderr)
+    break
    failed+=1
    detail=error_record(e,company);errors.append(detail);signature=(detail['http_status'],detail['api_error_status'],detail['api_error_message'])
    consecutive_errors=consecutive_errors+1 if signature==previous_error else 1;previous_error=signature
@@ -236,7 +241,7 @@ def run(args):
   if failed and (stop or consecutive_errors>=3):
    print(f'Stopping run after {processed} company/companies to prevent repeated failures.',file=sys.stderr);break
  usage.append({'executed_at':dt.datetime.now(dt.timezone.utc).isoformat(),'diagnostic_mode':args.diagnostic_mode,'diagnostic_result':diagnostic_result if args.diagnostic_mode else None,'processed_companies':processed,'gemini_api_calls':calls,'successes':success,'verification_required':processed-success-failed,'failures':failed,'errors':errors,'duration_seconds':round(time.monotonic()-started,2)});atomic(DATA/'api-usage.json',usage[-365:])
- return 1 if failed else 0
+ return 1 if failed or model_unavailable else 0
 
 def parser():
  p=argparse.ArgumentParser();p.add_argument('--batch-size',type=int,default=100);p.add_argument('--daily-limit',type=int,default=100);p.add_argument('--start-code');p.add_argument('--end-code');p.add_argument('--retry-failed',action='store_true');p.add_argument('--official-only',action='store_true');p.add_argument('--diagnostic-mode',action='store_true');return p
