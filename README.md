@@ -56,6 +56,21 @@ python scripts/fetch_tdnet.py --feed-url 'TDnetのRSS/XML URL'
 
 TDnet処理はタイトルを指定キーワードで抽出し、URL重複を除いてレビューキューに追加するだけで、優待マスターを変更しません。優待データ更新の定期処理は平日09:15 JST（00:15 UTC）です。
 
+### 証券コードから調査対象を追加する
+
+上場会社マスターを更新済みの状態で、4桁の証券コードを空白区切りで指定します。会社名・市場・業種は
+`data/listed-companies.json` から取得され、調査前の銘柄は `data/verification-queue.json` に追加されます。
+
+```bash
+python scripts/add_companies.py 7550 9861 8163
+```
+
+存在しないコードや4桁でない値は推測せずエラーにし、既存の優待データおよび登録済みコードは変更しません。
+追加をコミットしてから Actions の **Discover shareholder benefits with OpenAI** を手動実行してください。
+`batch_size`（1回の調査社数）の初期値は5社で、必要に応じて実行画面で変更できます。追加した確認待ち銘柄が
+優先して選ばれ、公式情報を確認できた結果だけが `data/benefits.csv` と `data/benefits.json` に追加されます。
+確認できなかった結果は `data/verification-queue.json` に残るため、公式ページを目視確認してください。
+
 ## 公開構成
 
 静的ファイルだけで公開できます。Cloudflare Pagesで公開する場合もWorkers KVやPages Functionsのbindingは不要です。GitHub Actionsの優待データ更新処理にも外部の株価APIやCloudflareの認証情報は使用しません。

@@ -2,7 +2,7 @@ name: Discover shareholder benefits with OpenAI
 on:
   workflow_dispatch:
     inputs:
-      batch_size: {description: 'Companies per run', default: '10', type: string}
+      batch_size: {description: 'Companies per run', default: '5', type: string}
       daily_limit: {description: 'Maximum companies per run', default: '20', type: string}
       start_code: {description: 'Optional first security code', required: false, type: string}
       end_code: {description: 'Optional last security code', required: false, type: string}
@@ -38,6 +38,6 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add data/benefits.json data/verification-queue.json data/discovery-progress.json data/openai-api-usage.json
+          git add data/benefits.csv data/benefits.json data/verification-queue.json data/discovery-progress.json data/openai-api-usage.json
           git diff --cached --quiet || git commit -m "chore: update OpenAI benefit discovery"
           git push

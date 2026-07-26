@@ -250,6 +250,14 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         selected = discovery.choose(companies, args, {"next_index": 0}, benefits)
         self.assertEqual([x["code"] for x in selected], ["12", "13", "14"])
 
+    def test_manually_added_pending_companies_are_investigated_first(self):
+        companies = [{"code": str(code), "name": str(code)} for code in range(1000, 1005)]
+        args = type("Args", (), {"start_code": None, "end_code": None, "retry_failed": False,
+                                  "batch_size": 2, "daily_limit": 20})()
+        queue = [{"code": "1001", "result": "failed"}, {"code": "1004", "result": "pending"}]
+        selected = discovery.choose(companies, args, {"next_index": 3}, [], queue)
+        self.assertEqual([item["code"] for item in selected], ["1004", "1001"])
+
     def test_diagnostic_does_not_write_any_data_file(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
