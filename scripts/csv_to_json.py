@@ -35,9 +35,17 @@ def convert(source: Path, destination: Path):
             except ValueError: raise ValueError(f"{row['code']}: 候補には最終確認日が必要です") from None
         item = {k: (None if k in NULLABLE and not row[k] else row[k])
                 for k in REQUIRED - {'benefit_tiers_json', 'record_months', 'annual_occurrences'}}
+        if item['data_confidence'] == 'official_confirmed' and item['benefit_status'] != 'abolished':
+            item['benefit_status'] = 'official_confirmed'
         item['record_months'] = [int(x) for x in row['record_months'].split('|') if x]
         item['annual_occurrences'] = int(row['annual_occurrences'])
         item['benefit_tiers'] = json.loads(row['benefit_tiers_json'])
+        if item['data_confidence'] == 'official_confirmed':
+            item['confidence_score'] = 95
+        if item['benefit_tiers']:
+            first_tier = item['benefit_tiers'][0]
+            item['minimum_shares'] = first_tier.get('shares')
+            item['annual_value_yen'] = first_tier.get('annual_value_yen')
         result.append(item)
     destination.write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     return result
