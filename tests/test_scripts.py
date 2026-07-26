@@ -4,11 +4,17 @@ from urllib.error import HTTPError
 from pathlib import Path
 import sys;sys.path.insert(0,str(Path(__file__).parents[1]/'scripts'))
 from csv_to_json import convert
-from market_data import update_market_data
+from market_data import JQuantsProvider, update_market_data
 from merge_benefit_universe import merge
 from fetch_tdnet import extract,merge_queue
 from update_listed_companies_from_jpx import parse_workbook,update
 class Tests(unittest.TestCase):
+ def test_jquants_provider_uses_latest_close(self):
+  response=io.BytesIO(b'{"data":[{"Date":"2026-07-24","C":123.5},{"Date":"2026-07-23","C":120}]}')
+  with patch('market_data.urlopen',return_value=response) as request:
+   quote=JQuantsProvider('secret',today=dt.date(2026,7,26)).fetch('1234')
+  self.assertEqual(quote.price,123.5);self.assertEqual(quote.price_at,'2026-07-24');self.assertEqual(quote.source,'jquants')
+  self.assertEqual(request.call_args.args[0].headers['X-api-key'],'secret')
  def test_previous_quote_retained_on_failure(self):
   class Broken:
    def fetch(self,code):raise RuntimeError('failure')

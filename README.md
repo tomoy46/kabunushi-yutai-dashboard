@@ -20,7 +20,7 @@ OpenAI版は検索付きリクエストに `max_tool_calls=1` を指定します
 Usage画面と `responses_with_web_search` を使用してください。診断モードはこれらの件数と安全なaction種別だけを
 表示し、検索語、URL、検索結果本文は表示せず、データファイルも更新しません。
 
-日本株の株主優待について、必要株数・必要投資額・優待/配当/総合利回りを横断して比較する、静的なPWAです。優待情報は企業公式情報で確認済みの10社と廃止済み2社を収録しています。株価・配当はJ-Quants未設定のため参考用サンプルであり、投資判断には利用できません。
+日本株の株主優待について、必要株数・必要投資額・優待/配当/総合利回りを横断して比較する、静的なPWAです。優待情報は企業公式情報で確認済みの10社と廃止済み2社を収録しています。株価はJ-Quants APIから定期取得してCloudflare Workers KVに保存し、Pages Functions経由で表示します。投資判断には利用できません。
 
 ## 機能
 
@@ -46,32 +46,34 @@ npm run serve
 | ファイル | 用途 |
 |---|---|
 | `data/benefits.csv` / `.json` | 手動確認済みの優待マスター |
-| `data/market-data.json` | 株価、予想年間配当、取得日時、データ源、サンプル判定 |
+| Workers KV `market-data` | 株価、取得日、データ源（リポジトリには保存しません） |
 | `data/update-status.json` | 更新処理の結果 |
 | `data/review-queue.json` | TDnetから検出した人手確認待ち候補 |
 
 ```bash
 python scripts/csv_to_json.py
-python scripts/update_market_data.py
+JQUANTS_API_KEY=... python scripts/update_market_data.py --output /tmp/market-data.json
 python scripts/fetch_tdnet.py --feed-url 'TDnetのRSS/XML URL'
 ```
 
-`market_data.py` はproviderを分離しています。現在はAPIキー不要の `SampleProvider` のみで、将来 `JQuantsProvider` を実装して切り替えられます。取得失敗時は当該銘柄の前回値を保持します。TDnet処理はタイトルを指定キーワードで抽出し、URL重複を除いてレビューキューに追加するだけで、優待マスターを変更しません。定期処理は平日09:15 JST（00:15 UTC）です。
+`market_data.py` の `JQuantsProvider` はJ-Quants API v2から各銘柄の直近終値を取得します。WorkflowはKVの直前値を読み、取得失敗した銘柄ではその値を保持したうえで、Cloudflare APIを使ってKVキー `market-data` を更新します。TDnet処理はタイトルを指定キーワードで抽出し、URL重複を除いてレビューキューに追加するだけで、優待マスターを変更しません。定期処理は平日09:15 JST（00:15 UTC）です。
 
-## GitHub Pages公開
+## Cloudflare Pages公開と設定
 
-1. PRを `main` にマージします。
-2. GitHubの **Settings → Pages → Build and deployment → Source** で **GitHub Actions** を選択します。
-3. `Deploy GitHub Pages` workflowの完了後、表示されたPages URLへアクセスします。以後 `main` へのpushでテスト後に自動公開されます。
-4. 対応ブラウザでページを開き、「ホーム画面に追加」または「アプリをインストール」を選びます。
+1. CloudflareでWorkers KV namespaceを作成し、Pagesプロジェクトの **Settings → Bindings** でKV namespace bindingを追加します。変数名は必ず `MARKET_DATA` とし、PreviewとProductionの両環境を対象にします。
+2. GitHub Actions Secretsに `JQUANTS_API_KEY` と、対象KVへの読み書き権限を持つ `CLOUDFLARE_API_TOKEN` を登録します。
+3. GitHub Actions Variablesに `CLOUDFLARE_ACCOUNT_ID` と `CLOUDFLARE_KV_NAMESPACE_ID` を登録します。
+4. Cloudflare Pagesをこのリポジトリへ接続します。静的ファイルに加えて `functions/api/market-data.js` がデプロイされ、`/api/market-data` からbinding先のKVキー `market-data` を返します。
+5. `Update benefit and market data` workflowを実行し、KVへ初回データを保存します。株価JSONは一時ファイルだけに生成され、Gitにはコミットされません。
+
+ローカルの単純なHTTPサーバーにはPages FunctionsとKV bindingがないため、株価欄には「株価データ取得不可」と表示されます。Functions込みの確認にはWranglerでKV bindingを設定してください。
 
 ## 制限・未実装
 
-- J-Quants連携、認証/APIキー管理、実データの取得は未実装です。現在の更新workflowはサンプル値を再処理します。
 - TDnetはフィードURLを固定していません。提供形式に応じた運用設定が必要で、PDF本文解析や優待マスターへの自動反映は意図的に行いません。
 - SVGアイコンのみです。一部PWAストア向けにはPNGアイコン追加が必要な場合があります。
 - 静的アプリのため、お気に入り・テーマはブラウザ間で同期されません。オフライン時は最後に正常取得したキャッシュを表示します。
-- 株価と予想配当は引き続きサンプル値で、画面上でも「サンプル」「参考値」と明記します。
+- J-Quantsの日足APIからは予想配当を取得しないため、配当データがない場合は「データなし」と表示します。
 
 ## 計算
 
