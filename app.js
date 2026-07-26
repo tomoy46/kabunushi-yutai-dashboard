@@ -10,7 +10,10 @@
     })).filter(tier => tier.shares != null).sort((a, b) => a.shares - b.shares);
     const minimumShares = validNumber(benefit.minimum_shares) ?? tiers[0]?.shares ?? null;
     const annualValue = validNumber(benefit.annual_value_yen) ?? tiers.find(t => t.shares === minimumShares)?.annual_value_yen ?? tiers[0]?.annual_value_yen ?? null;
-    const summary = validText(benefit.benefit_summary, validText(benefit.benefit_title, validText(benefit.benefit_description, '優待内容未取得')));
+    const summary = validText(benefit.benefit_summary,
+      validText(benefit.benefit_title,
+        validText(benefit.benefit_description,
+          validText(tiers[0]?.description, '優待内容未取得'))));
     if (!tiers.length && minimumShares != null) tiers = [{shares: minimumShares, maximum_shares: validNumber(benefit.maximum_shares), description: summary, annual_value_yen: annualValue}];
     return {...benefit, code: validText(benefit.code, ''), name: validText(benefit.name, '名称未取得'),
       market: validText(benefit.market, validText(listedCompany.market, '市場未取得')),

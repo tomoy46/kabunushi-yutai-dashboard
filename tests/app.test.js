@@ -38,12 +38,32 @@ test('証券コード順と銘柄名順に並べる', () => {
 });
 
 test('新形式の極洋と複数の優待区分を保持する', () => {
-  const raw = {code:'1301', name:'極洋', benefit_status:'official_confirmed', benefit_title:'自社製品', annual_value_yen:2500, official_verified_at:'2026-07-26', official_source_url:'https://www.kyokuyo.co.jp/ir/concept/', record_months:[3], long_term_required:false, benefit_tiers:[{shares:300, maximum_shares:null, description:'6,000円相当の自社製品', annual_value_yen:6000},{shares:100, maximum_shares:299, description:'2,500円相当の自社製品', annual_value_yen:2500}]};
+  const raw = {code:'1301', name:'極洋', benefit_status:'official_confirmed', annual_value_yen:2500, official_verified_at:'2026-07-26', official_source_url:'https://www.kyokuyo.co.jp/ir/concept/', record_months:[3], long_term_required:false, benefit_tiers:[{shares:300, maximum_shares:null, description:'6,000円相当の自社製品', annual_value_yen:6000},{shares:100, maximum_shares:299, description:'2,500円相当の自社製品', annual_value_yen:2500}]};
   const x = app.normalizeBenefitRecord(raw, {market:'プライム', sector:'水産・農林業'});
   assert.equal(x.minimum_shares, 100);
+  assert.equal(x.benefit_summary, '2,500円相当の自社製品');
   assert.equal(x.last_checked_at, '2026-07-26');
   assert.deepEqual(x.benefit_tiers.map(t => t.shares), [100,300]);
   assert.equal(x.official_source_url, 'https://www.kyokuyo.co.jp/ir/concept/');
+});
+
+test('一覧の優待概要は既存項目を優先する', () => {
+  const tiers = [{shares:100, description:'最小株数の優待'}];
+  assert.equal(app.normalizeBenefitRecord({...base, benefit_summary:'概要', benefit_title:'タイトル', benefit_description:'説明', benefit_tiers:tiers}).benefit_summary, '概要');
+  assert.equal(app.normalizeBenefitRecord({...base, benefit_title:'タイトル', benefit_description:'説明', benefit_tiers:tiers}).benefit_summary, 'タイトル');
+  assert.equal(app.normalizeBenefitRecord({...base, benefit_description:'説明', benefit_tiers:tiers}).benefit_summary, '説明');
+});
+
+test('CSV由来データは最小株数区分の実際の優待内容を一覧に表示する', () => {
+  const kirin = app.normalizeBenefitRecord({code:'2503', name:'キリンホールディングス', benefit_tiers:[
+    {shares:1000, description:'自社商品等 1,000円相当（1年以上3年未満）'},
+    {shares:100, description:'自社商品等 500円相当（1年以上3年未満）'}
+  ]});
+  assert.equal(kirin.benefit_summary, '自社商品等 500円相当（1年以上3年未満）');
+  assert.equal(kirin.tier.shares, 100);
+
+  const anotherCompany = app.normalizeBenefitRecord({code:'9999', name:'他社', benefit_tiers:[{shares:100, description:'オリジナルカタログ'}]});
+  assert.equal(anotherCompany.benefit_summary, 'オリジナルカタログ');
 });
 
 test('欠損値を安全に正規化する', () => {
