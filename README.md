@@ -1,6 +1,6 @@
 # 株主優待ダッシュボード
 
-日本株の株主優待について、必要株数・必要投資額・優待/配当/総合利回りを横断して比較する、静的なPWAです。現在の12銘柄と株価はすべて**デモ用サンプル**であり、投資判断には利用できません。
+日本株の株主優待について、必要株数・必要投資額・優待/配当/総合利回りを横断して比較する、静的なPWAです。優待情報は企業公式情報で確認済みの10社と廃止済み2社を収録しています。株価・配当はJ-Quants未設定のため参考用サンプルであり、投資判断には利用できません。
 
 ## 機能
 
@@ -69,3 +69,30 @@ python scripts/merge_benefit_universe.py
 ```
 
 このコマンドは既存コードを上書きせず `data/benefits.json` に新規候補だけを統合し、当月・翌月・翌々月、変更開示、その他の順で `data/verification-queue.json` を再生成します。公式ページで確認したレコードだけを `official_confirmed` に昇格し、確認URLと日付を保存してください。廃止時は `abolished` と最終基準日を保持します。
+
+## Geminiによる全上場会社の自動調査
+
+`data/listed-companies.json` を実在する上場会社マスターとして読み込み、`scripts/discover_benefits_with_gemini.py` が Gemini Structured Outputs と Google Search grounding で100社ずつ調査します。現在は安全な試験入力として既存12社のみを収録しています。J-Quants契約後は同じ `code`、`name`、`market`、`sector`（可能なら `official_domain` も）のJSON配列を上場銘柄一覧から生成して差し替えられます。証券コードの連番や会社名の生成は行いません。
+
+### APIキーと手動実行
+
+1. Google AI StudioでGemini APIキーを作成します。
+2. GitHubの **Settings → Secrets and variables → Actions → New repository secret** で、名前を `GEMINI_API_KEY`、値をAPIキーとして登録します。キーはコード、データ、ログには保存されません。
+3. Actionsの **Discover shareholder benefits with Gemini → Run workflow** から件数・コード範囲・失敗再試行などを指定します。ローカルでは次のように実行できます。
+
+```bash
+GEMINI_API_KEY='...' python scripts/discover_benefits_with_gemini.py --batch-size 10
+# 失敗分だけ再試行し、コード範囲も限定
+GEMINI_API_KEY='...' python scripts/discover_benefits_with_gemini.py --batch-size 10 --start-code 2000 --end-code 3999 --retry-failed
+```
+
+通常は1社につきGemini API 1回（10社の試験で最大10回、100社で最大100回）です。一時エラーは指数バックオフで同じ要求を最大5回試すため、障害時のHTTP要求数は増える場合があります。`daily_limit` は同日の `data/api-usage.json` を参照して上限を適用します。成功・確認待ち・失敗・所要時間も同ファイルへ記録します。
+
+各社の結果後に優待データ、確認待ちキュー、`data/discovery-progress.json` をアトミック更新するため、途中終了しても次の会社から再開できます。90日以内に公式確認した既存データ、および既存の公式確認済み・廃止済みレコードは上書きしません。取得可能で公式ドメインと検証できたURLだけを採用し、確定条件不足、矛盾、変更予定、PDF失敗などは確認待ちへ送ります。
+
+### 現在の制限
+
+- このリポジトリには全上場会社マスターを同梱せず、既存の実在12社を試験入力にしています。全社走査にはJ-Quantsの上場銘柄一覧、または同形式の信頼できる実在会社マスターの投入が必要です。
+- J-Quants未設定でも、入力済み会社のGemini調査、公式URL検証、再開、キュー表示、利用量記録は動作します。株価・配当の実データ更新は行いません。
+- TDnetのキーワード検出は既存の `fetch_tdnet.py` が確認キューを作るところまでです。TDnet API/フィードの恒久的な取得先や、検出銘柄を自動的に最優先する統合は未実装です。
+- Google Search groundingや企業サイト側のアクセス制限により、取得不能・PDF解析不能になる場合は人手確認が必要です。APIキーがない開発環境では実API試験は実施できません。

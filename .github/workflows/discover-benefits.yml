@@ -1,0 +1,40 @@
+name: Discover shareholder benefits with Gemini
+on:
+  workflow_dispatch:
+    inputs:
+      batch_size: {description: 'Companies per run (max 100)', default: '100', type: string}
+      daily_limit: {description: 'Maximum companies charged in this run/day', default: '100', type: string}
+      start_code: {description: 'Optional first security code', required: false, type: string}
+      end_code: {description: 'Optional last security code', required: false, type: string}
+      retry_failed: {description: 'Retry failed companies', default: false, type: boolean}
+      official_only: {description: 'Skip current verification queue', default: false, type: boolean}
+permissions: {contents: write}
+concurrency: {group: gemini-benefit-discovery, cancel-in-progress: false}
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Discover from official sources
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: >-
+          python scripts/discover_benefits_with_gemini.py
+          --batch-size '${{ inputs.batch_size }}'
+          --daily-limit '${{ inputs.daily_limit }}'
+          ${{ inputs.start_code && format('--start-code {0}', inputs.start_code) || '' }}
+          ${{ inputs.end_code && format('--end-code {0}', inputs.end_code) || '' }}
+          ${{ inputs.retry_failed && '--retry-failed' || '' }}
+          ${{ inputs.official_only && '--official-only' || '' }}
+      - run: npm test
+      - name: Commit checkpoint and results
+        if: always()
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add data/benefits.json data/verification-queue.json data/discovery-progress.json data/api-usage.json
+          git diff --cached --quiet || git commit -m "chore: update Gemini benefit discovery"
+          git push

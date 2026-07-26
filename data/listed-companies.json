@@ -1,0 +1,86 @@
+[
+  {
+    "code": "2503",
+    "name": "キリンホールディングス",
+    "market": "プライム",
+    "sector": "食料品",
+    "official_domain": "www.kirinholdings.com"
+  },
+  {
+    "code": "2702",
+    "name": "日本マクドナルドホールディングス",
+    "market": "スタンダード",
+    "sector": "小売業",
+    "official_domain": "www.mcd-holdings.co.jp"
+  },
+  {
+    "code": "2914",
+    "name": "日本たばこ産業",
+    "market": "プライム",
+    "sector": "食料品",
+    "official_domain": "www.jti.co.jp"
+  },
+  {
+    "code": "3087",
+    "name": "ドトール・日レスホールディングス",
+    "market": "プライム",
+    "sector": "小売業",
+    "official_domain": "www.dnh.co.jp"
+  },
+  {
+    "code": "3197",
+    "name": "すかいらーくホールディングス",
+    "market": "プライム",
+    "sector": "小売業",
+    "official_domain": "corp.skylark.co.jp"
+  },
+  {
+    "code": "4661",
+    "name": "オリエンタルランド",
+    "market": "プライム",
+    "sector": "サービス業",
+    "official_domain": "www.olc.co.jp"
+  },
+  {
+    "code": "8136",
+    "name": "サンリオ",
+    "market": "プライム",
+    "sector": "卸売業",
+    "official_domain": "corporate.sanrio.co.jp"
+  },
+  {
+    "code": "8267",
+    "name": "イオン",
+    "market": "プライム",
+    "sector": "小売業",
+    "official_domain": "www.aeon.info"
+  },
+  {
+    "code": "8591",
+    "name": "オリックス",
+    "market": "プライム",
+    "sector": "その他金融業",
+    "official_domain": "www.orix.co.jp"
+  },
+  {
+    "code": "9201",
+    "name": "日本航空",
+    "market": "プライム",
+    "sector": "空運業",
+    "official_domain": "www.jal.com"
+  },
+  {
+    "code": "9433",
+    "name": "KDDI",
+    "market": "プライム",
+    "sector": "情報・通信業",
+    "official_domain": "www.kddi.com"
+  },
+  {
+    "code": "9602",
+    "name": "東宝",
+    "market": "プライム",
+    "sector": "情報・通信業",
+    "official_domain": "www.toho.co.jp"
+  }
+]
