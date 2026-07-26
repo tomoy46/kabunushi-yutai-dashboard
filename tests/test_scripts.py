@@ -219,3 +219,63 @@ class GeminiDiscoveryTests(unittest.TestCase):
     self.d.run(args)
    progress=json.loads((Path(directory)/'discovery-progress.json').read_text())
    self.assertNotIn('130A',progress['failed_codes']);self.assertEqual(progress['processed_codes'].count('130A'),1)
+
+class GeminiModelCompatibilityTests(unittest.TestCase):
+ def setUp(self):
+  import discover_benefits_with_gemini as discovery
+  self.d=discovery
+  self.company={'code':'1234','name':'実在株式会社','market':'プライム','sector':'製造業','official_domain':'example.co.jp'}
+
+ def run_fixture(self,directory,failed_codes):
+  root=Path(directory);companies=[dict(self.company,code='130A')]+[dict(self.company,code=str(2000+i),name=f'会社{i}') for i in range(12)]
+  (root/'listed-companies.json').write_text(json.dumps(companies),encoding='utf-8')
+  (root/'benefits.json').write_text('[]',encoding='utf-8');(root/'verification-queue.json').write_text('[]',encoding='utf-8')
+  (root/'discovery-progress.json').write_text(json.dumps({'next_index':0,'processed_codes':[],'failed_codes':failed_codes}),encoding='utf-8')
+  (root/'company-domains.json').write_text('{}',encoding='utf-8');(root/'api-usage.json').write_text('[]',encoding='utf-8')
+  return type('Args',(),{'start_code':None,'end_code':None,'retry_failed':True,'official_only':False,'batch_size':100,'daily_limit':100,'diagnostic_mode':False})()
+
+ def test_default_model_and_environment_override(self):
+  script=Path('scripts/discover_benefits_with_gemini.py').resolve()
+  import runpy
+  with patch.dict('os.environ',{},clear=True):
+   self.assertEqual(runpy.run_path(str(script))['GEMINI_MODEL'],'gemini-3.6-flash')
+  with patch.dict('os.environ',{'GEMINI_MODEL':'gemini-custom-flash'},clear=True):
+   self.assertEqual(runpy.run_path(str(script))['GEMINI_MODEL'],'gemini-custom-flash')
+
+ def test_both_stages_use_configured_model_without_unsupported_sampling(self):
+  requests=[]
+  class Response:
+   def __enter__(self):return self
+   def __exit__(self,*args):pass
+   def read(self):return b'{}'
+  def open_request(request,timeout):
+   requests.append(request)
+   return Response()
+  with patch.object(self.d,'GEMINI_MODEL','gemini-custom-flash'),patch.object(self.d,'urlopen',side_effect=open_request):
+   self.d.call_gemini_search(self.company,'secret')
+   self.d.call_gemini_structured(self.company,'secret','answer',[])
+  self.assertEqual(len(requests),2)
+  for request in requests:
+   self.assertIn('/models/gemini-custom-flash:generateContent',request.full_url)
+   payload=json.loads(request.data)
+   self.assertEqual(payload['contents'][-1]['role'],'user')
+   config=payload.get('generationConfig',{})
+   self.assertTrue({'temperature','top_p','top_k'}.isdisjoint(config))
+
+ def test_not_found_model_stops_without_advancing_or_recording_company_failure(self):
+  with tempfile.TemporaryDirectory() as directory:
+   args=self.run_fixture(directory,[])
+   root=Path(directory)
+   before=json.loads((root/'discovery-progress.json').read_text())
+   error=self.d.StageHTTPError('search',404,'NOT_FOUND','model unavailable')
+   stderr=io.StringIO()
+   with patch.object(self.d,'DATA',root),patch.object(self.d,'GEMINI_MODEL','gemini-3.6-flash'),patch.dict('os.environ',{'GEMINI_API_KEY':'TOP-SECRET-KEY'},clear=True),patch.object(self.d,'call_gemini_search',side_effect=error),patch('sys.stderr',stderr):
+    self.assertEqual(self.d.run(args),1)
+   after=json.loads((root/'discovery-progress.json').read_text())
+   self.assertEqual(after,before)
+   self.assertNotIn('130A',after['failed_codes'])
+   self.assertEqual(json.loads((root/'verification-queue.json').read_text()),[])
+   log=stderr.getvalue()
+   self.assertIn('Gemini model: gemini-3.6-flash',log)
+   self.assertIn('指定モデルが利用できません',log)
+   self.assertNotIn('TOP-SECRET-KEY',log)
