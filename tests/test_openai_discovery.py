@@ -389,7 +389,7 @@ class OpenAIDiscoveryTests(unittest.TestCase):
             args = type("Args", (), {"diagnostic_mode": False})()
             self.assertEqual(discovery.run(args), 2)
 
-    def test_429_does_not_mutate_progress_or_failed_codes(self):
+    def test_429_is_persisted_as_a_failed_production_outcome(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory); progress = {"next_index": 7, "processed_codes": ["9999"], "failed_codes": ["8888"]}
             fixtures = {"listed-companies.json": [self.company], "company-domains.json": {}, "benefits.json": [],
@@ -400,7 +400,45 @@ class OpenAIDiscoveryTests(unittest.TestCase):
             with patch.object(discovery, "DATA", root), patch.dict(os.environ, {"OPENAI_API_KEY": "mock"}), \
                  patch.object(discovery, "request_response", side_effect=discovery.APIError(429, "rate limited")):
                 discovery.run(args)
-            self.assertEqual(json.loads((root/"discovery-progress.json").read_text()), progress)
+            saved = json.loads((root/"discovery-progress.json").read_text())
+            self.assertEqual(saved["next_index"], 8)
+            self.assertEqual(saved["failed_codes"], ["8888", "1301"])
+
+    def test_five_production_targets_are_all_persisted_and_accounted_for(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            companies = [{"code": str(1300 + index), "name": f"会社{index}",
+                          "official_domain": "kyokuyo.co.jp"} for index in range(5)]
+            fixtures = {"listed-companies.json": companies, "company-domains.json": {}, "benefits.json": [],
+                        "verification-queue.json": [], "discovery-progress.json": {"next_index": 0},
+                        "openai-api-usage.json": []}
+            for name, value in fixtures.items():
+                (root/name).write_text(json.dumps(value), encoding="utf-8")
+            responses = []
+            for company in companies:
+                item = self.item()
+                item.update({"code": company["code"], "name": company["name"]})
+                responses.append({"output_text": json.dumps(item), "output": [{"type": "web_search_call", "action": {
+                    "sources": [{"url": item["official_source_url"]}]}}], "usage": {}})
+            args = type("Args", (), {"diagnostic_mode": False, "batch_size": 5, "daily_limit": 20,
+                "start_code": "1300", "end_code": "1999", "retry_failed": False, "official_only": False})()
+            output = StringIO()
+            with patch.object(discovery, "DATA", root), patch.dict(os.environ, {"OPENAI_API_KEY": "mock"}), \
+                 patch.object(discovery, "request_response", side_effect=responses), \
+                 patch.object(discovery, "fetch_and_validate", side_effect=lambda url, *_args: url), \
+                 redirect_stdout(output):
+                self.assertEqual(discovery.run(args), 0)
+            benefits = json.loads((root/"benefits.json").read_text())
+            queue = json.loads((root/"verification-queue.json").read_text())
+            progress = json.loads((root/"discovery-progress.json").read_text())
+            confirmed = len(benefits)
+            verification_queue = len(queue)
+            failed = len(progress.get("failed_codes", []))
+            self.assertEqual(confirmed + verification_queue + failed, 5)
+            self.assertIn("Production targets (5):", output.getvalue())
+            self.assertIn("confirmed=5 verification_queue=0 failed=0 skipped=0 selected=5", output.getvalue())
+            for company in companies:
+                self.assertIn(f'Result {company["code"]} {company["name"]}: confirmed', output.getvalue())
 
 
 if __name__ == "__main__": unittest.main()
