@@ -1,5 +1,6 @@
-import csv,json,tempfile,unittest,datetime as dt
+import csv,json,tempfile,unittest,datetime as dt,io
 from unittest.mock import patch
+from urllib.error import HTTPError
 from pathlib import Path
 import sys;sys.path.insert(0,str(Path(__file__).parents[1]/'scripts'))
 from csv_to_json import convert
@@ -159,3 +160,62 @@ class GeminiDiscoveryTests(unittest.TestCase):
  def test_uninvestigated_is_master_minus_unique_processed(self):
   master=['1','2','3','4'];processed=['1','1','3']
   self.assertEqual(len(master)-len(set(processed)),2)
+
+ def test_search_and_structured_extraction_are_separate_requests(self):
+  payloads=[]
+  def request(payload,key,stage,max_retries=5):payloads.append((stage,payload));return {}
+  with patch.object(self.d,'request_gemini',side_effect=request):
+   self.d.call_gemini_search(self.company,'secret')
+   self.d.call_gemini_structured(self.company,'secret','調査回答',['https://example.co.jp/ir'])
+  search=payloads[0][1];structured=payloads[1][1]
+  self.assertEqual(payloads[0][0],'search');self.assertIn('google_search',search['tools'][0])
+  self.assertNotIn('responseMimeType',search['generationConfig']);self.assertNotIn('responseJsonSchema',search['generationConfig'])
+  self.assertEqual(payloads[1][0],'structured_extraction');self.assertNotIn('tools',structured)
+  self.assertEqual(structured['generationConfig']['responseMimeType'],'application/json');self.assertEqual(structured['generationConfig']['responseJsonSchema'],self.d.SCHEMA)
+
+ def http_error(self,status,message='bad request',api_status='INVALID_ARGUMENT'):
+  body=json.dumps({'error':{'status':api_status,'message':message}}).encode()
+  return HTTPError('https://example.invalid',status,'failed',{},io.BytesIO(body))
+
+ def test_http_429_retries_but_400_does_not(self):
+  response=type('Response',(),{'__enter__':lambda s:s,'__exit__':lambda *a:None,'read':lambda s:b'{}'})()
+  with patch.object(self.d,'urlopen',side_effect=[self.http_error(429),response]) as opened,patch.object(self.d.time,'sleep'):
+   self.d.request_gemini({},'secret','search',max_retries=2)
+  self.assertEqual(opened.call_count,2)
+  with patch.object(self.d,'urlopen',side_effect=self.http_error(400)) as opened:
+   with self.assertRaises(self.d.StageHTTPError):self.d.request_gemini({},'secret','search')
+  self.assertEqual(opened.call_count,1)
+
+ def test_http_error_fields_are_bounded_and_secret_is_redacted(self):
+  secret='TOP-SECRET-KEY'
+  with patch.object(self.d,'urlopen',side_effect=self.http_error(403,secret+' '+('x'*600),'PERMISSION_DENIED')):
+   with self.assertRaises(self.d.StageHTTPError) as caught:self.d.request_gemini({},secret,'structured_extraction')
+  record=self.d.error_record(caught.exception,self.company)
+  self.assertEqual(record['http_status'],403);self.assertEqual(record['api_error_status'],'PERMISSION_DENIED');self.assertEqual(record['stage'],'structured_extraction')
+  self.assertLessEqual(len(record['api_error_message']),500);self.assertNotIn(secret,json.dumps(record))
+
+ def run_fixture(self,directory,failed_codes):
+  root=Path(directory);companies=[dict(self.company,code='130A')]+[dict(self.company,code=str(2000+i),name=f'会社{i}') for i in range(12)]
+  (root/'listed-companies.json').write_text(json.dumps(companies),encoding='utf-8')
+  (root/'benefits.json').write_text('[]',encoding='utf-8');(root/'verification-queue.json').write_text('[]',encoding='utf-8')
+  (root/'discovery-progress.json').write_text(json.dumps({'next_index':0,'processed_codes':[],'failed_codes':failed_codes}),encoding='utf-8')
+  (root/'company-domains.json').write_text('{}',encoding='utf-8');(root/'api-usage.json').write_text('[]',encoding='utf-8')
+  return type('Args',(),{'start_code':None,'end_code':None,'retry_failed':True,'official_only':False,'batch_size':100,'daily_limit':100,'diagnostic_mode':False})()
+
+ def test_first_http_400_stops_and_saves_error_fields(self):
+  with tempfile.TemporaryDirectory() as directory:
+   args=self.run_fixture(directory,[])
+   error=self.d.StageHTTPError('search',400,'INVALID_ARGUMENT','bad request')
+   with patch.object(self.d,'DATA',Path(directory)),patch.dict('os.environ',{'GEMINI_API_KEY':'secret'}),patch.object(self.d,'call_gemini_search',side_effect=error):
+    self.assertEqual(self.d.run(args),1)
+   usage=json.loads((Path(directory)/'api-usage.json').read_text())[-1];queue=json.loads((Path(directory)/'verification-queue.json').read_text())
+   self.assertEqual(usage['processed_companies'],1);self.assertEqual(queue[0]['http_status'],400);self.assertEqual(queue[0]['api_error_message'],'bad request')
+
+ def test_success_removes_failed_code_without_duplicate_processed_code(self):
+  with tempfile.TemporaryDirectory() as directory:
+   args=self.run_fixture(directory,['130A'])
+   result={key:None for key in self.d.FIELDS};result.update({'benefit_status':'candidate','confidence_score':20,'code':'130A','name':'実在株式会社'})
+   with patch.object(self.d,'DATA',Path(directory)),patch.dict('os.environ',{'GEMINI_API_KEY':'secret'}),patch.object(self.d,'call_gemini_search',return_value={}),patch.object(self.d,'parse_search_response',return_value=('answer',set(),[],[])),patch.object(self.d,'call_gemini_structured',return_value={}),patch.object(self.d,'parse_structured_response',return_value=result):
+    self.d.run(args)
+   progress=json.loads((Path(directory)/'discovery-progress.json').read_text())
+   self.assertNotIn('130A',progress['failed_codes']);self.assertEqual(progress['processed_codes'].count('130A'),1)

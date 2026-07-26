@@ -8,6 +8,7 @@ on:
       end_code: {description: 'Optional last security code', required: false, type: string}
       retry_failed: {description: 'Retry failed companies', default: false, type: boolean}
       official_only: {description: 'Skip current verification queue', default: false, type: boolean}
+      diagnostic_mode: {description: 'Test both Gemini stages with one company without registering data', default: false, type: boolean}
 permissions: {contents: write}
 concurrency: {group: gemini-benefit-discovery, cancel-in-progress: false}
 jobs:
@@ -38,6 +39,7 @@ jobs:
           ${{ inputs.end_code && format('--end-code {0}', inputs.end_code) || '' }}
           ${{ inputs.retry_failed && '--retry-failed' || '' }}
           ${{ inputs.official_only && '--official-only' || '' }}
+          ${{ inputs.diagnostic_mode && '--diagnostic-mode' || '' }}
       - run: npm test
       - name: Commit checkpoint and results
         if: always()
