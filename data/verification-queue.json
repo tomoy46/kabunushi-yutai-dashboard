@@ -1,1 +1,102 @@
-[]
+[
+  {
+    "code": "1301",
+    "name": "極洋",
+    "confidence_score": 0,
+    "result": "failed",
+    "error_reason": "HTTPError",
+    "verification_reasons": [
+      "fetch_failed"
+    ]
+  },
+  {
+    "code": "130A",
+    "name": "Ｖｅｒｉｔａｓ　Ｉｎ　Ｓｉｌｉｃｏ",
+    "confidence_score": 0,
+    "result": "failed",
+    "error_reason": "HTTPError",
+    "verification_reasons": [
+      "fetch_failed"
+    ]
+  },
+  {
+    "code": "1332",
+    "name": "ニッスイ",
+    "confidence_score": 0,
+    "result": "failed",
+    "error_reason": "HTTPError",
+    "verification_reasons": [
+      "fetch_failed"
+    ]
+  },
+  {
+    "code": "1333",
+    "name": "Ｕｍｉｏｓ",
+    "confidence_score": 0,
+    "result": "failed",
+    "error_reason": "HTTPError",
+    "verification_reasons": [
+      "fetch_failed"
+    ]
+  },
+  {
+    "code": "135A",
+    "name": "ＶＲＡＩＮ　Ｓｏｌｕｔｉｏｎ",
+    "confidence_score": 0,
+    "result": "failed",
+    "error_reason": "HTTPError",
+    "verification_reasons": [
+      "fetch_failed"
+    ]
+  },
+  {
+    "code": "1375",
+    "name": "ユキグニファクトリー",
+    "confidence_score": 0,
+    "result": "failed",
+    "error_reason": "HTTPError",
+    "verification_reasons": [
+      "fetch_failed"
+    ]
+  },
+  {
+    "code": "1376",
+    "name": "カネコ種苗",
+    "confidence_score": 0,
+    "result": "failed",
+    "error_reason": "HTTPError",
+    "verification_reasons": [
+      "fetch_failed"
+    ]
+  },
+  {
+    "code": "1377",
+    "name": "サカタのタネ",
+    "confidence_score": 0,
+    "result": "failed",
+    "error_reason": "HTTPError",
+    "verification_reasons": [
+      "fetch_failed"
+    ]
+  },
+  {
+    "code": "1379",
+    "name": "ホクト",
+    "confidence_score": 0,
+    "result": "failed",
+    "error_reason": "HTTPError",
+    "verification_reasons": [
+      "fetch_failed"
+    ]
+  },
+  {
+    "code": "137A",
+    "name": "Ｃｏｃｏｌｉｖｅ",
+    "confidence_score": 0,
+    "result": "failed",
+    "error_reason": "HTTPError",
+    "verification_reasons": [
+      "fetch_failed"
+    ]
+  }
+]
