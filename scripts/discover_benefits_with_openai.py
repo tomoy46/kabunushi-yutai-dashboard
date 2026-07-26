@@ -7,6 +7,7 @@ uses the standard library and never persists an API key or a complete API respon
 from __future__ import annotations
 
 import argparse
+import csv
 import datetime as dt
 import json
 import os
@@ -530,16 +531,44 @@ def learn_domain_candidate(company, sources, page_fetcher=None):
     return None
 
 
-def choose(companies, args, progress, benefits):
+def choose(companies, args, progress, benefits, queue=None):
     immutable = {x["code"] for x in benefits if x.get("benefit_status") in ("official_confirmed", "abolished")}
     failed = set(progress.get("failed_codes", []))
     candidates = [x for x in companies if x["code"] not in immutable]
     if args.start_code: candidates = [x for x in candidates if x["code"] >= args.start_code]
     if args.end_code: candidates = [x for x in candidates if x["code"] <= args.end_code]
-    if args.retry_failed: candidates.sort(key=lambda x: x["code"] not in failed)
+    pending = {x.get("code") for x in (queue or []) if x.get("result") == "pending"}
+    queued = {x.get("code") for x in (queue or [])}
+    if queued:
+        candidates.sort(key=lambda x: (x["code"] not in pending, x["code"] not in queued))
+    elif args.retry_failed: candidates.sort(key=lambda x: x["code"] not in failed)
     else:
         start = progress.get("next_index", 0) % max(1, len(candidates)); candidates = candidates[start:] + candidates[:start]
     return candidates[:min(args.batch_size, args.daily_limit)]
+
+
+def append_benefit_csv(path, item):
+    """Append one officially verified result without rewriting existing CSV rows."""
+    if not path.exists():
+        # Test/standalone data directories may start without the derived CSV.
+        fieldnames = ["code", "name", "market", "industry", "category", "record_months",
+                      "long_term_condition", "benefit_status", "official_verified_at",
+                      "official_source_url", "abolished_at", "last_record_date", "data_confidence",
+                      "annual_occurrences", "change_or_abolition_note", "benefit_tiers_json"]
+        with path.open("w", encoding="utf-8", newline="") as output:
+            csv.DictWriter(output, fieldnames=fieldnames).writeheader()
+    with path.open(encoding="utf-8", newline="") as source:
+        reader = csv.DictReader(source)
+        fieldnames = reader.fieldnames
+        existing = {row["code"] for row in reader}
+    if item["code"] in existing:
+        return
+    row = {name: "" for name in fieldnames}
+    row.update({name: item.get(name) for name in fieldnames if name in item})
+    row["record_months"] = "|".join(map(str, item.get("record_months") or []))
+    row["benefit_tiers_json"] = json.dumps(item.get("benefit_tiers") or [], ensure_ascii=False)
+    with path.open("a", encoding="utf-8", newline="") as output:
+        csv.DictWriter(output, fieldnames=fieldnames).writerow(row)
 
 
 def run(args):
@@ -561,7 +590,7 @@ def run(args):
         if not companies: companies = [{"code": "1301", "name": "極洋", "official_domain": domains.get("1301")}]
     benefits = load(DATA / "benefits.json", []); queue = load(DATA / "verification-queue.json", [])
     progress = load(DATA / "discovery-progress.json", {"next_index": 0, "processed_codes": [], "failed_codes": []})
-    selected = companies if args.diagnostic_mode else choose(companies, args, progress, benefits)
+    selected = companies if args.diagnostic_mode else choose(companies, args, progress, benefits, queue)
     totals = {"processed_companies": 0, "responses_api_calls": 0, "responses_with_web_search": 0,
               "web_search_output_items": 0, "web_search_calls": 0,
               "input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0,
@@ -674,7 +703,11 @@ def run(args):
             if args.diagnostic_mode:
                 continue
             if reasons: queue = [x for x in queue if x.get("code") != company["code"]] + [item]
-            else: benefits.append(item)
+            else:
+                if not any(x.get("code") == company["code"] for x in benefits):
+                    benefits.append(item)
+                    append_benefit_csv(DATA / "benefits.csv", item)
+                queue = [x for x in queue if x.get("code") != company["code"]]
             progress["processed_codes"] = list(dict.fromkeys(progress.get("processed_codes", []) + [company["code"]]))
             progress["failed_codes"] = [x for x in progress.get("failed_codes", []) if x != company["code"]]
             progress["next_index"] = progress.get("next_index", 0) + 1
@@ -716,7 +749,7 @@ def run(args):
 
 
 def parser():
-    result=argparse.ArgumentParser(); result.add_argument("--batch-size", type=int, default=10); result.add_argument("--daily-limit", type=int, default=20)
+    result=argparse.ArgumentParser(); result.add_argument("--batch-size", type=int, default=5); result.add_argument("--daily-limit", type=int, default=20)
     result.add_argument("--start-code"); result.add_argument("--end-code"); result.add_argument("--retry-failed", action="store_true")
     result.add_argument("--official-only", action="store_true"); result.add_argument("--diagnostic-mode", action="store_true"); return result
 
