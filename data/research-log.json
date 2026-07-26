@@ -55,5 +55,64 @@
       "current_program_not_confirmed"
     ],
     "checked_at": "2026-07-26T22:45:53.438383+00:00"
+  },
+  {
+    "code": "7550",
+    "name": "ゼンショーホールディングス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "source_domain_not_allowed",
+      "low_confidence",
+      "current_program_not_confirmed"
+    ],
+    "checked_at": "2026-07-26T22:59:51.735719+00:00"
+  },
+  {
+    "code": "9861",
+    "name": "吉野家ホールディングス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "source_domain_not_allowed",
+      "low_confidence",
+      "current_program_not_confirmed"
+    ],
+    "checked_at": "2026-07-26T22:59:58.840132+00:00"
+  },
+  {
+    "code": "8163",
+    "name": "ＳＲＳホールディングス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "company_identity_mismatch",
+      "source_domain_not_allowed",
+      "minimum_shares_unknown",
+      "low_confidence",
+      "current_program_not_confirmed"
+    ],
+    "checked_at": "2026-07-26T23:00:07.278263+00:00"
+  },
+  {
+    "code": "7616",
+    "name": "コロワイド",
+    "result": "not_officially_verified",
+    "reasons": [
+      "source_domain_not_allowed",
+      "minimum_shares_unknown",
+      "low_confidence",
+      "current_program_not_confirmed"
+    ],
+    "checked_at": "2026-07-26T23:00:17.277379+00:00"
+  },
+  {
+    "code": "7412",
+    "name": "アトム",
+    "result": "not_officially_verified",
+    "reasons": [
+      "source_domain_not_allowed",
+      "minimum_shares_unknown",
+      "low_confidence",
+      "current_program_not_confirmed"
+    ],
+    "checked_at": "2026-07-26T23:00:26.487583+00:00"
   }
 ]
