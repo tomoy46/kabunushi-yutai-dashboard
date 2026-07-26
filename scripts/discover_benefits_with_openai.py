@@ -14,7 +14,9 @@ import os
 import random
 import re
 import socket
+import subprocess
 import sys
+import tempfile
 import time
 import unicodedata
 from pathlib import Path
@@ -68,6 +70,10 @@ BROWSER_USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                       "AppleWebKit/537.36 (KHTML, like Gecko) "
                       "Chrome/124.0.0.0 Safari/537.36")
 REEXTRACT_REASONS = {"record_date_unknown", "minimum_shares_unknown", "low_confidence", "current_program_not_confirmed"}
+
+
+class OfficialSourceNotFound(Exception):
+    """A maintained official URL returned HTTP 404."""
 
 
 def safe_message(value, key=None):
@@ -389,6 +395,16 @@ def official_page_payload(company, url, text, initial, model):
             "store": False, "reasoning": {"effort": "none"}, "text": {"format": response_format()}}
 
 
+def empty_extraction(company, url):
+    """Supply schema-shaped context when a fixed source replaces web search."""
+    item = {key: None for key in FIELDS}
+    item.update({"code": str(company["code"]), "name": company["name"],
+                 "benefit_status": "candidate", "record_months": [], "benefit_tiers": [],
+                 "valuation_type": "not_calculated", "official_source_url": url,
+                 "official_verified_at": dt.date.today().isoformat(), "confidence_score": 0})
+    return item
+
+
 def page_text(body):
     """Decode a bounded page and turn HTML into searchable plain text."""
     for codec in ("utf-8", "shift_jis", "utf-16"):
@@ -408,6 +424,27 @@ def page_text(body):
     return re.sub(r"\s+", " ", re.sub(r"(?s)<[^>]+>", " ", decoded)).strip()
 
 
+def pdf_text(body):
+    """Extract PDF text with the system utility, retaining a safe fixture fallback."""
+    try:
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "source.pdf"
+            output = Path(directory) / "source.txt"
+            source.write_bytes(body)
+            completed = subprocess.run(
+                ["pdftotext", "-layout", str(source), str(output)], capture_output=True,
+                timeout=20, check=False,
+            )
+            if completed.returncode == 0 and output.exists():
+                text = output.read_text(encoding="utf-8", errors="replace")
+                if text.strip():
+                    return re.sub(r"\s+", " ", text).strip()
+    except (FileNotFoundError, OSError, subprocess.SubprocessError):
+        pass
+    # Unit fixtures and a subset of simple PDFs expose readable text directly.
+    return page_text(body)
+
+
 def source_metadata_text(source_urls, url):
     """Return bounded search/disclosure metadata associated with a URL."""
     if not isinstance(source_urls, dict):
@@ -425,27 +462,35 @@ def security_code_found(text, code):
                           unicodedata.normalize("NFKC", str(text or "")).upper()))
 
 
-def fetch_official_page(url, company, source_urls):
+def fetch_official_page(url, company, source_urls, registered=False):
     normalized = canonical_url(url)
-    if not any(url_identity(normalized) == url_identity(source) for source in source_urls):
+    if not registered and not any(url_identity(normalized) == url_identity(source) for source in source_urls):
         raise ValueError("source_url_not_in_search_results")
     if not allowed_url(normalized, company.get("official_domain")):
         raise ValueError("source_url_not_allowed")
     request = Request(normalized, headers={"User-Agent": BROWSER_USER_AGENT,
                                            "Accept": "text/html,application/xhtml+xml,application/pdf"})
-    with urlopen(request, timeout=25) as response:
-        if response.status != 200: raise ValueError(f"HTTP_status_{response.status}")
-        final = canonical_url(response.geturl())
-        expected = company.get("official_domain")
-        final_is_exchange = final and any(is_subdomain(hostname(final), exchange)
-                                          for exchange in OFFICIAL_HOSTS)
-        if not final or (expected and not is_subdomain(hostname(final), expected) and
-                         not final_is_exchange):
-            raise ValueError(f"redirect_host_not_official_domain:{hostname(final) or 'invalid'}")
-        if not expected and hostname(final) != hostname(normalized):
-            raise ValueError("source_redirected_outside_candidate_domain")
-        body = response.read(2_000_000)
-    text = page_text(body)
+    try:
+        with urlopen(request, timeout=25) as response:
+            if response.status == 404:
+                raise OfficialSourceNotFound("official_source_http_404")
+            if response.status != 200: raise ValueError(f"HTTP_status_{response.status}")
+            final = canonical_url(response.geturl())
+            expected = company.get("official_domain")
+            final_is_exchange = final and any(is_subdomain(hostname(final), exchange)
+                                              for exchange in OFFICIAL_HOSTS)
+            if not final or (expected and not is_subdomain(hostname(final), expected) and
+                             not final_is_exchange):
+                raise ValueError(f"redirect_host_not_official_domain:{hostname(final) or 'invalid'}")
+            if not expected and hostname(final) != hostname(normalized):
+                raise ValueError("source_redirected_outside_candidate_domain")
+            content_type = str(response.headers.get("Content-Type", "")).lower() if hasattr(response, "headers") else ""
+            body = response.read(2_000_000)
+    except HTTPError as error:
+        if error.code == 404:
+            raise OfficialSourceNotFound("official_source_http_404") from None
+        raise
+    text = pdf_text(body) if "pdf" in content_type or urlparse(final).path.lower().endswith(".pdf") else page_text(body)
     identity_text = text + " " + source_metadata_text(source_urls, normalized)
     host, path = hostname(final), urlparse(final).path.lower()
     if is_subdomain(host, "jpx.co.jp") and any(path.startswith(value) for value in JPX_BLOCKED_PATHS):
@@ -453,17 +498,28 @@ def fetch_official_page(url, company, source_urls):
     normalized_text = normalize_company_name(identity_text)
     name_found = normalize_company_name(company["name"]) in normalized_text
     code_found = security_code_found(identity_text, company["code"])
-    if any(is_subdomain(host, exchange) for exchange in OFFICIAL_HOSTS):
+    if any(is_subdomain(host, exchange) for exchange in OFFICIAL_HOSTS) and not registered:
         # The security code is the stable issuer identifier.  Do not reject a
         # valid disclosure merely because its company name uses an old name,
         # brand, HD abbreviation, spacing, punctuation, or width variant.
         if not code_found:
             raise ValueError("exchange_disclosure_identity_mismatch")
-    elif not name_found:
+    elif not registered and not name_found:
         raise ValueError("company_identity_not_found")
     if not any(word in identity_text for word in BENEFIT_WORDS):
         raise ValueError("shareholder_benefit_text_not_found")
     return final, text
+
+
+def load_official_sources(path):
+    """Load code-keyed maintained URLs, accepting extensible object entries."""
+    raw = load(path, {})
+    result = {}
+    for code, entry in raw.items() if isinstance(raw, dict) else []:
+        url = entry if isinstance(entry, str) else entry.get("url") if isinstance(entry, dict) else None
+        if canonical_url(url):
+            result[str(code).upper()] = {"url": canonical_url(url), **(entry if isinstance(entry, dict) else {})}
+    return result
 
 
 def fetch_and_validate(url, company, source_urls):
@@ -704,6 +760,7 @@ def run(args):
     model = os.environ.get("OPENAI_MODEL") or DEFAULT_MODEL
     companies = load(DATA / "listed-companies.json", [])
     domains = load(DATA / "company-domains.json", {})
+    registered_sources = load_official_sources(DATA / "official-benefit-sources.json")
     for company in companies:
         if not company.get("official_domain"): company["official_domain"] = domains.get(company["code"])
     if args.diagnostic_mode:
@@ -741,84 +798,83 @@ def run(args):
         active_failed_stage = "web_search"
         failure_logged = False
         try:
-            if args.diagnostic_mode: diagnostic_stage("Web search + Structured Outputs", "start")
-            totals["responses_api_calls"] += 1
-            totals["responses_with_web_search"] += 1
-            response = request_response(build_payload(company, model), key)
-            search_stats = web_search_stats(response)
-            totals["web_search_output_items"] += search_stats["output_items"]
-            totals["web_search_calls"] += search_stats["unique_calls"]
-            unique_web_search_call_ids.update(search_stats["call_ids"])
-            web_search_action_types.update(search_stats["action_types"])
-            if args.diagnostic_mode and search_stats["output_items"] > 1:
-                print("Warning: multiple web_search_call output items were returned in one Responses API response.")
-                print("The response will continue because max_tool_calls=1 was requested and the API returned HTTP 200.")
-            raw = output_text(response)
-            if args.diagnostic_mode: diagnostic_stage("Web search + Structured Outputs", "success")
-            try:
-                item = json.loads(raw)
-                if args.diagnostic_mode:
-                    diagnostic_stage("Fallback structured output", "start")
-                    diagnostic_stage("Fallback structured output", "success", detail="not required")
-            except (ValueError, TypeError):
-                # Compatibility fallback: it contains no search tool, so search still ran only once.
-                if args.diagnostic_mode: diagnostic_stage("Fallback structured output", "start")
+            registered = registered_sources.get(str(company["code"]).upper())
+            if registered:
+                active_label = "Registered official URL extraction"
+                active_failed_stage = "official_fetch"
+                fixed_url = registered["url"]
+                if not company.get("official_domain"):
+                    company["official_domain"] = normalized_host(fixed_url)
+                final_url, official_text = fetch_official_page(
+                    fixed_url, company, {fixed_url: registered}, registered=True)
                 totals["responses_api_calls"] += 1
+                correction = request_response(official_page_payload(
+                    company, final_url, official_text, empty_extraction(company, final_url), model), key)
+                for key_name, value in usage(correction).items(): totals[key_name] += value
+                item = json.loads(output_text(correction))
+                # The maintained mapping, rather than model spelling, owns issuer identity.
+                item["code"], item["name"], item["official_source_url"] = (
+                    str(company["code"]), company["name"], final_url)
+                item, reasons = validate(item, company, {final_url: registered},
+                                         fetcher=lambda url, _company, _sources: url)
+                if item.get("long_term_required") is None:
+                    reasons = list(dict.fromkeys([*reasons, "long_term_condition_unknown"]))
+                    item["benefit_status"] = "candidate"
+                    item["error_reason"] = ",".join(reasons)
+            else:
+                if args.diagnostic_mode: diagnostic_stage("Web search + Structured Outputs", "start")
+                totals["responses_api_calls"] += 1
+                totals["responses_with_web_search"] += 1
+                response = request_response(build_payload(company, model), key)
+                search_stats = web_search_stats(response)
+                totals["web_search_output_items"] += search_stats["output_items"]
+                totals["web_search_calls"] += search_stats["unique_calls"]
+                unique_web_search_call_ids.update(search_stats["call_ids"])
+                web_search_action_types.update(search_stats["action_types"])
+                if args.diagnostic_mode and search_stats["output_items"] > 1:
+                    print("Warning: multiple web_search_call output items were returned in one Responses API response.")
+                    print("The response will continue because max_tool_calls=1 was requested and the API returned HTTP 200.")
+                raw = output_text(response)
+                if args.diagnostic_mode: diagnostic_stage("Web search + Structured Outputs", "success")
                 try:
+                    item = json.loads(raw)
+                except (ValueError, TypeError):
+                    totals["responses_api_calls"] += 1
                     response2 = request_response(structured_without_search(company, raw, model), key)
                     item = json.loads(output_text(response2))
-                except Exception as error:
-                    if args.diagnostic_mode:
-                        failed_stage = failed_stage or "structured_output"
-                        diagnostic_stage("Fallback structured output", "failure", error, key)
-                        failure_logged = True
-                    raise
-                for key_name, value in usage(response2).items(): totals[key_name] += value
-                if args.diagnostic_mode: diagnostic_stage("Fallback structured output", "success")
-            for key_name, value in usage(response).items(): totals[key_name] += value
-            active_label = "Search source extraction"
-            if args.diagnostic_mode: diagnostic_stage(active_label, "start")
-            sources = search_sources(response)
-            if args.diagnostic_mode: diagnostic_stage(active_label, "success", detail=f"{len(sources)} sources")
-            learned = learn_domain_candidate(company, sources) if not company.get("official_domain") else None
-            if learned:
-                company["official_domain"] = learned
-                if args.diagnostic_mode:
-                    print(f"Learned official domain candidate: {learned}")
-                else:
+                    for key_name, value in usage(response2).items(): totals[key_name] += value
+                for key_name, value in usage(response).items(): totals[key_name] += value
+                sources = search_sources(response)
+                learned = learn_domain_candidate(company, sources) if not company.get("official_domain") else None
+                if learned:
+                    company["official_domain"] = learned
                     domains[company["code"]] = learned
                     atomic(DATA / "company-domains.json", domains)
-            active_label = "Official URL validation"
-            active_failed_stage = "official_validation"
-            if args.diagnostic_mode: diagnostic_stage(active_label, "start")
-            item, reasons = validate(item, company, sources)
-            retry_reasons = set(reasons) & REEXTRACT_REASONS
-            verified_url = canonical_url(item.get("official_source_url"))
-            validation_failed = any(reason in reasons for reason in (
-                "source_not_in_search_results", "source_domain_not_allowed", "official_source_validation_failed"))
-            if retry_reasons and verified_url and not validation_failed:
-                # Fetch only the already validated, search-returned page. The follow-up
-                # request deliberately has no tools and receives a bounded excerpt.
-                try:
-                    final_url, official_text = fetch_official_page(verified_url, company, set(sources))
-                except Exception:
-                    # A page that changed between checks remains a verification item;
-                    # source verification trouble is not an API/program failure.
-                    official_text = ""
-                if official_text:
-                    totals["responses_api_calls"] += 1
-                    correction = request_response(official_page_payload(
-                        company, final_url, official_text, item, model), key)
-                    for key_name, value in usage(correction).items(): totals[key_name] += value
-                    corrected = json.loads(output_text(correction))
-                    corrected["official_source_url"] = final_url
-                    item, reasons = validate(corrected, company, sources,
-                                             fetcher=lambda url, _company, _sources: url)
-            if args.diagnostic_mode:
-                if reasons:
-                    diagnostic_stage("Official URL validation", "verification required",
-                                     detail=",".join(reasons))
-                else: diagnostic_stage("Official URL validation", "success")
+                item, reasons = validate(item, company, sources)
+                retry_reasons = set(reasons) & REEXTRACT_REASONS
+                verified_url = canonical_url(item.get("official_source_url"))
+                validation_failed = any(reason in reasons for reason in (
+                    "source_not_in_search_results", "source_domain_not_allowed",
+                    "official_source_validation_failed"))
+                if retry_reasons and verified_url and not validation_failed:
+                    try:
+                        final_url, official_text = fetch_official_page(
+                            verified_url, company, set(sources))
+                    except Exception:
+                        official_text = ""
+                    if official_text:
+                        totals["responses_api_calls"] += 1
+                        correction = request_response(official_page_payload(
+                            company, final_url, official_text, item, model), key)
+                        for key_name, value in usage(correction).items(): totals[key_name] += value
+                        corrected = json.loads(output_text(correction))
+                        corrected["official_source_url"] = final_url
+                        item, reasons = validate(corrected, company, sources,
+                                                 fetcher=lambda url, _company, _sources: url)
+                if args.diagnostic_mode:
+                    diagnostic_stage("Official URL validation", "verification required" if reasons else "success",
+                                     detail=",".join(reasons) if reasons else None)
+            # Both fixed and searched sources converge on the same persistence path.
             item = normalize_for_storage(item, company)
             totals["processed_companies"] += 1
             if reasons: totals["verification_required"] += 1
@@ -837,13 +893,23 @@ def run(args):
                 outcome = "confirmed"
             persist_production_state(benefits, queue, progress)
             print(f'Result {company["code"]} {company["name"]}: {outcome}')
+            continue
+        except OfficialSourceNotFound as error:
+            totals["processed_companies"] += 1
+            totals["verification_required"] += 1
+            if not args.diagnostic_mode:
+                append_research_log(company, "official_source_not_found", [str(error)])
+                queue = [x for x in queue if x.get("code") != company["code"]]
+                persist_production_state(benefits, queue, progress)
+                print(f'Result {company["code"]} {company["name"]}: research_log')
         except APIError as error:
             if args.diagnostic_mode and not failure_logged:
                 failed_stage = failed_stage or active_failed_stage
                 diagnostic_stage(active_label, "failure", error, key)
             totals["failures"] += 1; errors.append({"code": company["code"], "status": error.status, "error": error.message})
-            if not args.diagnostic_mode:
+            if not args.diagnostic_mode and not registered:
                 append_research_log(company, "api_failed", [error.message])
+            if not args.diagnostic_mode:
                 persist_production_state(benefits, queue, progress)
                 print(f'Result {company["code"]} {company["name"]}: failed')
         except Exception as error:
@@ -851,8 +917,9 @@ def run(args):
                 failed_stage = failed_stage or active_failed_stage
                 diagnostic_stage(active_label, "failure", error, key)
             totals["failures"] += 1; errors.append({"code": company["code"], "error": str(error)[:300]})
-            if not args.diagnostic_mode:
+            if not args.diagnostic_mode and not registered:
                 append_research_log(company, "failed", [safe_message(error)])
+            if not args.diagnostic_mode:
                 persist_production_state(benefits, queue, progress)
                 print(f'Result {company["code"]} {company["name"]}: failed')
     if not args.diagnostic_mode:
