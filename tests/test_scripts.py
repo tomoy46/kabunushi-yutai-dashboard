@@ -70,7 +70,19 @@ class Tests(unittest.TestCase):
   self.assertEqual(kyokuyo['annual_value_yen'],2500)
   queue=json.loads(Path('data/verification-queue.json').read_text())
   self.assertFalse(any(x['code']=='1301' for x in queue))
-  self.assertEqual(len(queue),9)
+  # The queue grows and shrinks as discovery runs.  Check that confirming
+  # Kyokuyo did not discard the entries that were already waiting, without
+  # imposing a total that would reject newly discovered or failed companies.
+  existing_queue_codes={'130A','1332','1333','135A','1375','1376','1377','1379','137A'}
+  self.assertTrue(existing_queue_codes.issubset({x['code'] for x in queue}))
+
+  # Benefits and pending verification form one research data set.  A company
+  # or an official source must not occur twice across that boundary.
+  research_items=items+queue
+  codes=[x['code'] for x in research_items]
+  official_urls=[x['official_source_url'] for x in research_items if x.get('official_source_url')]
+  self.assertEqual(len(codes),len(set(codes)))
+  self.assertEqual(len(official_urls),len(set(official_urls)))
   progress=json.loads(Path('data/discovery-progress.json').read_text())
   self.assertNotIn('1301',progress['processed_codes'])
 
