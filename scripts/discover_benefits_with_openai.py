@@ -48,6 +48,8 @@ FIELDS = {
     "evidence_text": {"type": ["string", "null"]}, "error_reason": {"type": ["string", "null"]},
 }
 SCHEMA = {"type": "object", "properties": FIELDS, "required": list(FIELDS), "additionalProperties": False}
+BENEFIT_WORDS = ("株主優待", "優待制度", "株主優待制度")
+REEXTRACT_REASONS = {"record_date_unknown", "minimum_shares_unknown", "low_confidence", "current_program_not_confirmed"}
 
 
 def safe_message(value, key=None):
@@ -272,7 +274,35 @@ def structured_without_search(company, evidence, model):
             "store": False, "reasoning": {"effort": "none"}, "text": {"format": response_format()}}
 
 
-def fetch_and_validate(url, company, source_urls):
+def official_page_payload(company, url, text, initial, model):
+    """Build the single, tool-free official-page correction request."""
+    prompt = {
+        "company": {"name": company["name"], "code": str(company["code"])},
+        "verified_official_url": url,
+        "official_page_shareholder_benefit_excerpt": text[:20_000],
+        "initial_structured_result": initial,
+    }
+    instructions = ("検証済み企業公式ページの本文だけを使い、株主優待情報を再抽出する。"
+                    "本文にない値は推測しない。株数ごとの全区分と贈呈時期はconditionsに残す。")
+    return {"model": model, "input": instructions + "\n" + json.dumps(prompt, ensure_ascii=False),
+            "store": False, "reasoning": {"effort": "none"}, "text": {"format": response_format()}}
+
+
+def page_text(body):
+    """Decode a bounded page and turn HTML into searchable plain text."""
+    for codec in ("utf-8", "shift_jis", "utf-16"):
+        try:
+            decoded = body.decode(codec)
+            break
+        except (UnicodeDecodeError, UnicodeError):
+            continue
+    else:
+        decoded = body.decode("utf-8", "ignore")
+    decoded = re.sub(r"(?is)<(script|style).*?>.*?</\1>", " ", decoded)
+    return re.sub(r"\s+", " ", re.sub(r"(?s)<[^>]+>", " ", decoded)).strip()
+
+
+def fetch_official_page(url, company, source_urls):
     normalized = canonical_url(url)
     if normalized not in source_urls or not allowed_url(normalized, company.get("official_domain")):
         raise ValueError("source_url_not_allowed")
@@ -280,38 +310,64 @@ def fetch_and_validate(url, company, source_urls):
     with urlopen(request, timeout=25) as response:
         if response.status != 200: raise ValueError("source_http_not_200")
         final = canonical_url(response.geturl())
-        if hostname(final) != hostname(normalized) or not allowed_url(final, company.get("official_domain")):
+        expected = company.get("official_domain")
+        if not final or (expected and not is_subdomain(hostname(final), expected)):
             raise ValueError("source_redirected_outside_official_domain")
+        if not expected and hostname(final) != hostname(normalized):
+            raise ValueError("source_redirected_outside_candidate_domain")
         body = response.read(2_000_000)
-    texts = [body.decode(codec, "ignore") for codec in ("utf-8", "shift_jis", "utf-16")]
+    text = page_text(body)
     names = (company["name"], company["name"].replace("株式会社", ""), str(company["code"]))
-    if not any(needle and needle in text for needle in names for text in texts):
+    if not any(needle and needle in text for needle in names):
         raise ValueError("company_identity_not_found")
-    return final
+    if not any(word in text for word in BENEFIT_WORDS):
+        raise ValueError("shareholder_benefit_text_not_found")
+    return final, text
+
+
+def fetch_and_validate(url, company, source_urls):
+    return fetch_official_page(url, company, source_urls)[0]
+
+
+def candidate_urls(sources, company, selected=None):
+    """Rank only URLs actually returned by search; corporate benefit/IR pages win."""
+    domain = company.get("official_domain")
+    urls = list(sources)
+    def rank(url):
+        host, path = hostname(url), urlparse(url).path.lower()
+        corporate = bool(domain and is_subdomain(host, domain))
+        relevant = bool(re.search(r"ir|benefit|yutai|株主|優待|shareholder", path, re.I))
+        authority = 2 if is_subdomain(host, "jpx.co.jp") else 3 if is_subdomain(host, "tdnet.info") else 4
+        return (0 if corporate and relevant else 1 if corporate else authority,
+                0 if canonical_url(selected) == url else 1)
+    return [url for url in sorted(urls, key=rank) if allowed_url(url, domain)][:5]
+
+
+def select_verified_source(item, company, sources, page_fetcher=None):
+    page_fetcher = page_fetcher or fetch_and_validate
+    for url in candidate_urls(sources, company, item.get("official_source_url")):
+        try:
+            result = page_fetcher(url, company, set(sources))
+            return result if isinstance(result, tuple) else (result, "")
+        except Exception:
+            continue
+    return None, ""
 
 
 def validate(item, company, sources, fetcher=None):
     fetcher = fetcher or fetch_and_validate
     reasons = []
     if item.get("code") != str(company["code"]) or item.get("name") != company["name"]: reasons.append("company_identity_mismatch")
-    url = canonical_url(item.get("official_source_url"))
-    if not url or url not in sources: reasons.append("source_not_in_search_results")
-    elif not allowed_url(url, company.get("official_domain")):
-        # For an unmapped company, accept a new corporate host only when the search
-        # source itself names the company. The fetched page must still pass identity,
-        # HTTPS, same-host redirect and HTTP checks below.
-        source = sources.get(url, {}) if isinstance(sources, dict) else {}
-        source_title = str(source.get("title") or "")
-        bare_name = company["name"].replace("株式会社", "").replace("（株）", "")
-        if company.get("official_domain") or not bare_name or bare_name not in source_title:
-            reasons.append("source_domain_not_allowed")
-        else:
-            company = dict(company, official_domain=hostname(url))
-            try: item["official_source_url"] = fetcher(url, company, set(sources))
-            except Exception: reasons.append("official_source_validation_failed")
+    original = canonical_url(item.get("official_source_url"))
+    url, _ = select_verified_source(item, company, sources, fetcher)
+    if url:
+        item["official_source_url"] = url
+    elif not original or original not in sources:
+        reasons.append("source_not_in_search_results")
+    elif not allowed_url(original, company.get("official_domain")):
+        reasons.append("source_domain_not_allowed")
     else:
-        try: item["official_source_url"] = fetcher(url, company, set(sources))
-        except Exception: reasons.append("official_source_validation_failed")
+        reasons.append("official_source_validation_failed")
     if item.get("minimum_shares") is None: reasons.append("minimum_shares_unknown")
     if not item.get("record_months") and not item.get("record_date"): reasons.append("record_date_unknown")
     if item.get("confidence_score", 0) < 90: reasons.append("low_confidence")
@@ -323,6 +379,27 @@ def validate(item, company, sources, fetcher=None):
         item["benefit_status"] = "candidate"
         item["error_reason"] = ",".join(dict.fromkeys(reasons))
     return item, list(dict.fromkeys(reasons))
+
+
+def learn_domain_candidate(company, sources, page_fetcher=None):
+    """Conservatively identify an unmapped corporate host from returned sources."""
+    if company.get("official_domain"): return None
+    page_fetcher = page_fetcher or fetch_official_page
+    bare_name = company["name"].replace("株式会社", "").replace("（株）", "")
+    for url, metadata in list(sources.items())[:5]:
+        host = hostname(url)
+        if not host or any(is_subdomain(host, value) for value in (*BLOCKED_HOSTS, *OFFICIAL_HOSTS)):
+            continue
+        title = str(metadata.get("title") or "")
+        if bare_name not in title and str(company["code"]) not in title: continue
+        try:
+            # Candidate fetches are constrained to their search-returned host.
+            final, text = page_fetcher(url, dict(company, official_domain=host), set(sources))
+        except Exception:
+            continue
+        if hostname(final) == host and re.search(r"会社概要|企業情報|\bIR\b|投資家", text, re.I):
+            return host
+    return None
 
 
 def choose(companies, args, progress, benefits):
@@ -423,14 +500,44 @@ def run(args):
             if args.diagnostic_mode: diagnostic_stage(active_label, "start")
             sources = search_sources(response)
             if args.diagnostic_mode: diagnostic_stage(active_label, "success", detail=f"{len(sources)} sources")
+            learned = learn_domain_candidate(company, sources) if not company.get("official_domain") else None
+            if learned:
+                company["official_domain"] = learned
+                if args.diagnostic_mode:
+                    print(f"Learned official domain candidate: {learned}")
+                else:
+                    domains[company["code"]] = learned
+                    atomic(DATA / "company-domains.json", domains)
             active_label = "Official URL validation"
             active_failed_stage = "official_validation"
             if args.diagnostic_mode: diagnostic_stage(active_label, "start")
             item, reasons = validate(item, company, sources)
+            retry_reasons = set(reasons) & REEXTRACT_REASONS
+            verified_url = canonical_url(item.get("official_source_url"))
+            validation_failed = any(reason in reasons for reason in (
+                "source_not_in_search_results", "source_domain_not_allowed", "official_source_validation_failed"))
+            if retry_reasons and verified_url and not validation_failed:
+                # Fetch only the already validated, search-returned page. The follow-up
+                # request deliberately has no tools and receives a bounded excerpt.
+                try:
+                    final_url, official_text = fetch_official_page(verified_url, company, set(sources))
+                except Exception:
+                    # A page that changed between checks remains a verification item;
+                    # source verification trouble is not an API/program failure.
+                    official_text = ""
+                if official_text:
+                    totals["responses_api_calls"] += 1
+                    correction = request_response(official_page_payload(
+                        company, final_url, official_text, item, model), key)
+                    for key_name, value in usage(correction).items(): totals[key_name] += value
+                    corrected = json.loads(output_text(correction))
+                    corrected["official_source_url"] = final_url
+                    item, reasons = validate(corrected, company, sources,
+                                             fetcher=lambda url, _company, _sources: url)
             if args.diagnostic_mode:
                 if reasons:
-                    failed_stage = failed_stage or "official_validation"
-                    diagnostic_stage("Official URL validation", "failure", ValueError(",".join(reasons)), key)
+                    diagnostic_stage("Official URL validation", "verification required",
+                                     detail=",".join(reasons))
                 else: diagnostic_stage("Official URL validation", "success")
             totals["processed_companies"] += 1
             if reasons: totals["verification_required"] += 1
@@ -463,8 +570,10 @@ def run(args):
                   "diagnostic_mode": False, **totals, "duration_seconds": round(time.monotonic()-started, 3), "errors": errors}
         usage_log=load(DATA / "openai-api-usage.json", []); usage_log.append(record); atomic(DATA / "openai-api-usage.json", usage_log)
     if args.diagnostic_mode:
-        result = "failure" if failed_stage else "success"
+        verification_required = totals["verification_required"] > 0 and not failed_stage
+        result = "failure" if failed_stage else "success_with_verification_required" if verification_required else "success"
         print(f"Diagnostic result: {result}")
+        if verification_required: print("Official validation: verification required")
         print(f"Failed stage: {failed_stage or 'none'}")
         print(f"Responses API calls: {totals['responses_api_calls']}")
         print(f"Web-search Responses requests: {totals['responses_with_web_search']}")

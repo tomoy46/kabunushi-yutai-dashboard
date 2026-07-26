@@ -65,6 +65,33 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         self.assertEqual(item["benefit_status"], "candidate")
         self.assertIn("source_not_in_search_results", reasons)
 
+    def test_third_party_model_url_is_replaced_by_verified_corporate_source(self):
+        corporate = "https://www.kyokuyo.co.jp/ir/benefit.html"
+        item = self.item("https://kabutan.jp/stock/?code=1301")
+        sources = {discovery.canonical_url(item["official_source_url"]): {}, corporate: {}}
+        checked = []
+        def fetcher(url, *_args):
+            checked.append(url)
+            return url
+        item, reasons = discovery.validate(item, self.company, sources, fetcher=fetcher)
+        self.assertFalse(reasons)
+        self.assertEqual(item["official_source_url"], corporate)
+        self.assertEqual(checked, [corporate])
+
+    def test_official_candidates_are_limited_to_returned_search_sources(self):
+        returned = "https://www.kyokuyo.co.jp/ir/benefit.html"
+        sources = {returned: {}}
+        self.assertEqual(discovery.candidate_urls(sources, self.company,
+                         "https://www.kyokuyo.co.jp/invented.html"), [returned])
+
+    def test_official_page_correction_has_no_web_search_and_is_bounded(self):
+        payload = discovery.official_page_payload(
+            self.company, self.item()["official_source_url"], "株主優待" + "長" * 25_000,
+            self.item(), discovery.DEFAULT_MODEL)
+        self.assertNotIn("tools", payload)
+        self.assertLess(len(payload["input"]), 25_000)
+        self.assertIn("initial_structured_result", payload["input"])
+
     def test_blocked_domains_rejected_and_official_domains_allowed(self):
         self.assertFalse(discovery.allowed_url("https://kabutan.jp/stock/?code=1301", "kyokuyo.co.jp"))
         self.assertFalse(discovery.allowed_url("https://x.com/example", "kyokuyo.co.jp"))
@@ -127,6 +154,30 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                  patch.object(discovery, "fetch_and_validate", return_value=self.item()["official_source_url"]):
                 discovery.run(args)
             self.assertEqual(before, {p.name: p.read_bytes() for p in root.iterdir()})
+
+    def test_diagnostic_verification_required_exits_successfully(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            fixtures = {"listed-companies.json": [self.company], "company-domains.json": {"1301": "kyokuyo.co.jp"},
+                        "benefits.json": [], "verification-queue.json": [],
+                        "discovery-progress.json": {"next_index": 0}, "openai-api-usage.json": []}
+            for name, value in fixtures.items(): (root/name).write_text(json.dumps(value), encoding="utf-8")
+            item = self.item(); item.update({"record_months": [], "record_date": None,
+                                             "minimum_shares": None, "confidence_score": 70})
+            response = {"output_text": json.dumps(item), "output": [{"type": "web_search_call", "action": {
+                "sources": [{"url": item["official_source_url"]}]}}], "usage": {}}
+            args = type("Args", (), {"diagnostic_mode": True, "batch_size": 10, "daily_limit": 20,
+                "start_code": None, "end_code": None, "retry_failed": False, "official_only": False})()
+            output = StringIO()
+            with patch.object(discovery, "DATA", root), patch.dict(os.environ, {"OPENAI_API_KEY": "mock"}), \
+                 patch.object(discovery, "request_response", return_value=response), \
+                 patch.object(discovery, "fetch_and_validate", return_value=item["official_source_url"]), \
+                 patch.object(discovery, "fetch_official_page", side_effect=ValueError("unavailable")), \
+                 redirect_stdout(output):
+                result = discovery.run(args)
+            self.assertEqual(result, 0)
+            self.assertIn("Diagnostic result: success_with_verification_required", output.getvalue())
+            self.assertIn("Official validation: verification required", output.getvalue())
 
     def test_multiple_search_items_continue_through_official_validation(self):
         with tempfile.TemporaryDirectory() as directory:
