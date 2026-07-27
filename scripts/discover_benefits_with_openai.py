@@ -61,12 +61,15 @@ FIELDS = {
     "category": {"type": ["string", "null"]}, "annual_value_yen": {"type": ["integer", "null"]},
     "valuation_type": {"type": "string", "enum": ["official_amount", "not_calculated"]},
     "long_term_required": {"type": ["boolean", "null"]}, "holding_period_months": {"type": ["integer", "null"]},
+    "long_term_condition_verified": {"type": ["boolean", "null"]},
     "conditions": {"type": ["string", "null"]}, "official_source_url": {"type": ["string", "null"]},
     "official_source_title": {"type": ["string", "null"]}, "official_verified_at": {"type": "string"},
     "abolished_at": {"type": ["string", "null"]}, "last_record_date": {"type": ["string", "null"]},
     "change_or_abolition_note": {"type": ["string", "null"]},
     "confidence_score": {"type": "integer", "minimum": 0, "maximum": 100},
     "evidence_text": {"type": ["string", "null"]}, "error_reason": {"type": ["string", "null"]},
+    "source_published_at": {"type": ["string", "null"]},
+    "source_updated_at": {"type": ["string", "null"]},
 }
 SCHEMA = {"type": "object", "properties": FIELDS, "required": list(FIELDS), "additionalProperties": False}
 BENEFIT_WORDS = ("株主優待", "優待制度", "優待券", "優待ポイント")
@@ -308,7 +311,8 @@ def normalize_for_storage(item, company):
     item["benefit_summary"] = summary
     item["last_checked_at"] = item.get("official_verified_at")
     if item.get("long_term_required") is False:
-        item["long_term_condition"] = "なし"
+        item["long_term_condition"] = ("なし" if item.get("long_term_condition_verified") else
+                                       "公式資料に長期保有条件の記載なし")
     elif item.get("long_term_required") is True:
         months = item.get("holding_period_months")
         item["long_term_condition"] = (f"継続保有{months}か月以上" if months else
@@ -456,7 +460,9 @@ def official_page_payload(company, url, text, initial, model):
         "initial_structured_result": initial,
     }
     instructions = ("検証済み企業公式ページの本文だけを使い、株主優待情報を再抽出する。"
-                    "本文にない値は推測しない。株数ごとの全区分と贈呈時期はconditionsに残す。")
+                    "本文にない値は推測しない。株数ごとの全区分と贈呈時期はconditionsに残す。"
+                    "公開日・更新日を確認できればsource_published_at・source_updated_atへ保存する。"
+                    "長期保有条件なしという明記がある場合だけlong_term_condition_verified=trueとする。")
     return {"model": model, "input": instructions + "\n" + json.dumps(prompt, ensure_ascii=False),
             "store": False, "reasoning": {"effort": "none"}, "text": {"format": response_format()}}
 
@@ -583,6 +589,37 @@ def evidence_facts(text):
         "record_month": bool(re.search(r"権利確定|基準日|\d{1,2}\s*月", text)),
         "long_term_condition": bool(re.search(r"継続保有|長期保有|保有期間|保有条件", text)),
     }
+
+
+def apply_official_evidence_policy(item, text, url):
+    """Apply registration policy to already downloaded first-party evidence."""
+    facts = evidence_facts(text)
+    core_ready = all(facts[name] for name in ("required_shares", "benefit_content", "record_month"))
+    normalized = unicodedata.normalize("NFKC", safe_text(text))
+    explicit_no_long_term = bool(re.search(
+        r"(?:長期|継続)保有(?:条件)?(?:は|：|:)?(?:ありません|なし|不要)|保有期間(?:の)?条件(?:は|：|:)?なし",
+        normalized))
+    ended = bool(re.search(r"株主優待.{0,30}(?:廃止|終了)|(?:廃止|終了).{0,30}株主優待|過去の(?:株主)?優待", normalized))
+    years = [int(value) for value in re.findall(r"(?<!\d)(20\d{2})年度?", normalized)]
+    stale_pdf = urlparse(safe_text(url)).path.lower().endswith(".pdf") and bool(years) and max(years) < dt.date.today().year
+
+    if not facts["long_term_condition"]:
+        item["long_term_required"] = False
+        item["long_term_condition_verified"] = False
+    elif explicit_no_long_term:
+        item["long_term_required"] = False
+        item["long_term_condition_verified"] = True
+    elif item.get("long_term_required") is True:
+        item["long_term_condition_verified"] = True
+    else:
+        item["long_term_condition_verified"] = False
+
+    # A current official benefit page is affirmative evidence of the current
+    # programme; a model need not find a separate sentence saying "current".
+    if core_ready and not ended and not stale_pdf:
+        item["benefit_status"] = "official_confirmed"
+        item["confidence_score"] = max(90, int(item.get("confidence_score") or 0))
+    return item, facts, stale_pdf
 
 
 def source_metadata_text(source_urls, url):
@@ -1297,10 +1334,11 @@ def run(args):
                 item = json.loads(output_text(correction))
                 item["code"], item["name"], item["official_source_url"] = (
                     str(company["code"]), company["name"], final_url)
+                item, _facts, stale_pdf = apply_official_evidence_policy(item, official_text, final_url)
                 item, reasons = validate(item, company, {final_url: {}},
                                          fetcher=lambda url, _company, _sources: url)
-                if item.get("long_term_required") is None:
-                    reasons = list(dict.fromkeys([*reasons, "long_term_condition_unknown"]))
+                if stale_pdf:
+                    reasons = list(dict.fromkeys([*reasons, "historical_pdf_not_current_evidence"]))
                     item["benefit_status"] = "candidate"
                     item["error_reason"] = ",".join(reasons)
                 if not args.diagnostic_mode:

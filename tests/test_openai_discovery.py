@@ -58,6 +58,7 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         item = self.item()
         item.update({"benefit_title": "自社製品", "benefit_description": "贈呈",
                      "annual_value_yen": 2500, "long_term_required": False,
+                     "long_term_condition_verified": True,
                      "conditions": "毎年7月贈呈予定",
                      "benefit_tiers": [{"shares": 100, "maximum_shares": 299,
                          "description": "2,500円相当の自社製品", "annual_value_yen": 2500}]})
@@ -319,6 +320,52 @@ class OpenAIDiscoveryTests(unittest.TestCase):
             "必要株数 100株 優待内容 お食事券2,000円 権利確定月 3月 長期保有条件 1年以上")
         self.assertEqual(facts, {"required_shares": True, "benefit_content": True,
                                  "record_month": True, "long_term_condition": True})
+
+    def test_core_official_fixtures_confirm_without_long_term_text_or_openai(self):
+        fixtures = {
+            "7550": ("ゼンショーホールディングス", "100株 優待券1,000円 基準日 3月末"),
+            "9861": ("吉野家ホールディングス", "100株 株主優待券 2月末および8月末"),
+            "7616": ("コロワイド", "500株 優待ポイント 3月末・9月末"),
+            "7412": ("アトム", "100株 優待ポイント 基準日 3月31日、9月30日"),
+        }
+        with patch.object(discovery, "request_response") as openai:
+            for code, (name, evidence) in fixtures.items():
+                with self.subTest(code=code):
+                    item = self.item()
+                    item.update({"code": code, "name": name, "benefit_status": "candidate",
+                                 "confidence_score": 65, "long_term_required": None})
+                    result, facts, stale = discovery.apply_official_evidence_policy(
+                        item, evidence, f"https://example.co.jp/{code}/benefit.html")
+                    self.assertTrue(all(facts[key] for key in
+                                        ("required_shares", "benefit_content", "record_month")))
+                    self.assertFalse(stale)
+                    self.assertEqual(result["benefit_status"], "official_confirmed")
+                    self.assertGreaterEqual(result["confidence_score"], 90)
+                    self.assertFalse(result["long_term_required"])
+                    self.assertFalse(result["long_term_condition_verified"])
+                    stored = discovery.normalize_for_storage(result, {})
+                    self.assertEqual(stored["long_term_condition"],
+                                     "公式資料に長期保有条件の記載なし")
+        openai.assert_not_called()
+
+    def test_only_explicit_no_long_term_wording_is_verified(self):
+        base = self.item()
+        missing, _, _ = discovery.apply_official_evidence_policy(
+            dict(base), "100株 優待券1,000円 基準日3月末", base["official_source_url"])
+        explicit, _, _ = discovery.apply_official_evidence_policy(
+            dict(base), "100株 優待券1,000円 基準日3月末 長期保有条件はありません",
+            base["official_source_url"])
+        self.assertFalse(missing["long_term_condition_verified"])
+        self.assertTrue(explicit["long_term_condition_verified"])
+        self.assertEqual(discovery.normalize_for_storage(explicit, {})["long_term_condition"], "なし")
+
+    def test_old_year_pdf_is_not_current_program_evidence(self):
+        item = self.item("https://example.co.jp/benefit-2024.pdf")
+        item.update({"benefit_status": "candidate", "confidence_score": 70})
+        result, _, stale = discovery.apply_official_evidence_policy(
+            item, "2024年度 株主優待 100株 優待券1,000円 基準日3月末", item["official_source_url"])
+        self.assertTrue(stale)
+        self.assertEqual(result["benefit_status"], "candidate")
 
     def test_research_log_replaces_the_same_pdf_failure(self):
         with tempfile.TemporaryDirectory() as directory:
