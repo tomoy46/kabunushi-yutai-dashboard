@@ -275,6 +275,7 @@ class OpenAIDiscoveryTests(unittest.TestCase):
             output = StringIO()
             with patch.object(discovery, "DATA", root), patch.dict(os.environ, {"OPENAI_API_KEY": "mock"}), \
                  patch.object(discovery, "fetch_official_page", side_effect=fetched), \
+                 patch.object(discovery, "discover_corporate_candidates", return_value=[]), \
                  patch.object(discovery, "request_response", return_value=response), \
                  patch.object(discovery, "build_payload", side_effect=AssertionError("web search must not run")), \
                  redirect_stdout(output):
@@ -511,6 +512,7 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                 "start_code": None, "end_code": None, "retry_failed": False, "official_only": False})()
             with patch.object(discovery, "DATA", root), patch.dict(os.environ, {"OPENAI_API_KEY": "mock-secret"}), \
                  patch.object(discovery, "request_response", return_value=response), \
+                 patch.object(discovery, "discover_corporate_candidates", return_value=[]), \
                  patch.object(discovery, "fetch_and_validate", return_value=self.item()["official_source_url"]):
                 discovery.run(args)
             self.assertEqual(before, {p.name: p.read_bytes() for p in root.iterdir()})
@@ -531,6 +533,7 @@ class OpenAIDiscoveryTests(unittest.TestCase):
             output = StringIO()
             with patch.object(discovery, "DATA", root), patch.dict(os.environ, {"OPENAI_API_KEY": "mock"}), \
                  patch.object(discovery, "request_response", return_value=response), \
+                 patch.object(discovery, "discover_corporate_candidates", return_value=[]), \
                  patch.object(discovery, "fetch_and_validate", return_value=item["official_source_url"]), \
                  patch.object(discovery, "fetch_official_page", side_effect=ValueError("unavailable")), \
                  redirect_stdout(output):
