@@ -236,6 +236,54 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         self.assertIn("extracted_text_preview=株主優待制度 100株", log)
         self.assertIn("openai_body_characters=11", log)
 
+    def test_colowide_and_atom_byte_response_metadata_does_not_reach_text_comparisons(self):
+        """Real urllib metadata may be bytes; the two affected issuers must remain safe."""
+        targets = (
+            ("7616", "コロワイド", "https://www.colowide.co.jp/ir/stock_info/stockholder/"),
+            ("7412", "アトム", "https://www.atom-corp.co.jp/ir/shareholder.html"),
+        )
+
+        class Headers(dict):
+            def get(self, key, default=""): return super().get(key, default)
+
+        class Response:
+            status = 200
+            headers = Headers({"Content-Type": b"text/html; charset=utf-8",
+                               "Content-Encoding": b"identity"})
+            def __init__(self, url): self.url = url
+            def geturl(self): return self.url.encode("utf-8")
+            def read(self, _limit): return bytearray("株主優待制度 100株 3月", "utf-8")
+            def __enter__(self): return self
+            def __exit__(self, *_args): pass
+
+        for code, name, url in targets:
+            with self.subTest(code=code), patch.object(
+                    discovery, "urlopen", return_value=Response(url)):
+                final, text = discovery.fetch_official_page(
+                    url, {"code": code, "name": name,
+                          "official_domain": discovery.normalized_host(url)},
+                    {}, registered=True, follow_links=False)
+                self.assertEqual(final, url)
+                self.assertIn("株主優待制度", text)
+
+    def test_registered_image_is_not_accepted_as_benefit_body(self):
+        url = "https://example.co.jp/ir/images/shareholder-benefit.jpg"
+
+        class Response:
+            status = 200
+            headers = {"Content-Type": "image/jpeg"}
+            def geturl(self): return url
+            def read(self, _limit): return b"stockholder benefit image"
+            def __enter__(self): return self
+            def __exit__(self, *_args): pass
+
+        with patch.object(discovery, "urlopen", return_value=Response()):
+            with self.assertRaisesRegex(ValueError, "image_not_document"):
+                discovery.fetch_official_page(
+                    url, {"code": "9861", "name": "吉野家ホールディングス",
+                          "official_domain": "example.co.jp"},
+                    {}, registered=True, follow_links=False)
+
     def test_pdf_conversion_failure_reports_exit_code_and_stderr(self):
         completed = type("Completed", (), {"returncode": 1, "stderr": b"syntax error"})()
         diagnostics = []

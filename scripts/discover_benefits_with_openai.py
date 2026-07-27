@@ -195,6 +195,7 @@ def atomic(path, value):
 
 
 def canonical_url(value):
+    value = safe_text(value)
     try:
         parsed = urlparse(value)
         if parsed.scheme != "https" or not parsed.hostname:
@@ -234,6 +235,7 @@ def url_identity(value):
 
 def is_subdomain(host, parent):
     host, parent = normalized_host(host), normalized_host(parent)
+    host, parent = safe_text(host), safe_text(parent)
     return bool(host and parent and (host == parent or host.endswith("." + parent)))
 
 
@@ -470,6 +472,8 @@ def empty_extraction(company, url):
 
 def page_text(body, content_type=""):
     """Decode a bounded page and turn HTML into searchable plain text."""
+    if isinstance(body, (bytearray, memoryview)):
+        body = bytes(body)
     if not isinstance(body, bytes):
         body = safe_text(body).encode("utf-8")
     content_type = safe_text(content_type)
@@ -586,6 +590,8 @@ def registered_domains(company):
 
 def registered_link_candidates(body, base_url, company):
     """Extract official detail/PDF/API URLs from one HTML response only."""
+    if not isinstance(body, bytes):
+        body = safe_text(body).encode("utf-8")
     html = body.decode("utf-8", "ignore")
     raw = re.findall(r'''(?is)\b(?:href|src)\s*=\s*["']([^"'#]+)["']''', html)
     # JSON strings cover JSON-LD, Next/Nuxt state and explicit API endpoints.
@@ -595,11 +601,13 @@ def registered_link_candidates(body, base_url, company):
     result = []
     for value in raw:
         linked = canonical_url(urljoin(base_url, value))
-        host, path = hostname(linked), urlparse(linked).path.lower()
+        host, path = hostname(linked), safe_text(urlparse(linked).path).lower()
         official = any(is_subdomain(host, domain) for domain in domains)
         relevant = (path.endswith(".pdf") or bool(re.search(
             r"benefit|yutai|complimentary|shareholder|stockholder|kabunushi|株主|優待|/api/", value, re.I)))
-        if linked and official and relevant and linked != canonical_url(base_url):
+        is_document = not re.search(
+            r"\.(?:png|jpe?g|gif|webp|svg|ico|avif)(?:$|\?)", path, re.I)
+        if linked and official and relevant and is_document and linked != canonical_url(base_url):
             result.append(linked)
     return list(dict.fromkeys(result))[:10]
 
@@ -611,6 +619,8 @@ def document_links(body, base_url):
     IR directory.  Static links, escaped JSON URLs, and API endpoints emitted by a
     hydrated application all go through the same canonicalisation step.
     """
+    if not isinstance(body, bytes):
+        body = safe_text(body).encode("utf-8")
     html = body.decode("utf-8", "ignore")
     values = re.findall(r'''(?is)\b(?:href|src|action)\s*=\s*["']([^"'#]+)["']''', html)
     values += re.findall(r"(?is)<loc>\s*([^<\s]+)\s*</loc>", html)
@@ -665,7 +675,7 @@ def discover_corporate_candidates(company, fetcher=None, max_pages=24):
         if DISCOVERY_TERMS.search(text) or DISCOVERY_TERMS.search(final):
             relevant.append(final)
         for link in links:
-            path = urlparse(link).path.lower()
+            path = safe_text(urlparse(link).path).lower()
             label_relevant = DISCOVERY_TERMS.search(link) or re.search(r"(?:^|/)(?:ir|investor|stock|shareholder)(?:/|$)", path)
             if path.endswith(".pdf"):
                 relevant.append(link)
@@ -674,7 +684,8 @@ def discover_corporate_candidates(company, fetcher=None, max_pages=24):
                 queue.append(link)
     unique = list(dict.fromkeys(relevant))
     # Required global order: corporate HTML before corporate PDF.
-    return sorted(unique, key=lambda url: (urlparse(url).path.lower().endswith(".pdf"), len(url)))
+    return sorted(unique, key=lambda url: (
+        safe_text(urlparse(safe_text(url)).path).lower().endswith(".pdf"), len(safe_text(url))))
 
 
 def exchange_candidates(company, review_items):
@@ -767,7 +778,7 @@ def fetch_official_page(url, company, source_urls, registered=False, follow_link
             if response.status == 404:
                 raise OfficialSourceNotFound("official_source_http_404")
             if response.status != 200: raise ValueError(f"HTTP_status_{response.status}")
-            final = canonical_url(response.geturl())
+            final = canonical_url(safe_text(response.geturl()))
             expected_domains = registered_domains(company)
             final_is_exchange = final and any(is_subdomain(hostname(final), exchange)
                                               for exchange in OFFICIAL_HOSTS)
@@ -776,9 +787,13 @@ def fetch_official_page(url, company, source_urls, registered=False, follow_link
                 raise ValueError(f"redirect_host_not_official_domain:{hostname(final) or 'invalid'}")
             if not expected_domains and hostname(final) != hostname(normalized):
                 raise ValueError("source_redirected_outside_candidate_domain")
-            content_type = str(response.headers.get("Content-Type", "")).lower() if hasattr(response, "headers") else ""
+            content_type = safe_text(response.headers.get("Content-Type", "")).lower() if hasattr(response, "headers") else ""
             body = response.read(2_000_000)
-            content_encoding = (str(response.headers.get("Content-Encoding", ""))
+            if isinstance(body, (bytearray, memoryview)):
+                body = bytes(body)
+            elif not isinstance(body, bytes):
+                body = safe_text(body).encode("utf-8")
+            content_encoding = (safe_text(response.headers.get("Content-Encoding", ""))
                                 if hasattr(response, "headers") else "")
             if not all(value.strip().lower() in ("gzip", "br", "deflate", "identity")
                        for value in content_encoding.split(",") if value.strip()):
@@ -818,7 +833,13 @@ def fetch_official_page(url, company, source_urls, registered=False, follow_link
                                 exception_class=type(error.original).__name__,
                                 exception_message=error.original)
         raise
-    is_pdf = "pdf" in content_type or urlparse(final).path.lower().endswith(".pdf")
+    final = safe_text(final)
+    content_type = safe_text(content_type).lower()
+    path = safe_text(urlparse(final).path).lower()
+    if content_type.startswith("image/") or re.search(
+            r"\.(?:png|jpe?g|gif|webp|svg|ico|avif)$", path, re.I):
+        raise ValueError("official_source_is_image_not_document")
+    is_pdf = "pdf" in content_type or path.endswith(".pdf")
     pdf_diagnostic = (lambda **values: official_source_log(
         company, normalized, http_status=status, final_url=final, content_type=content_type,
         body_characters=len(body), document_type="PDF", **values)) if registered else None
@@ -922,7 +943,7 @@ def linked_official_sources(sources, company):
     expanded = dict(sources)
     domain = company.get("official_domain")
     for overview in list(sources)[:5]:
-        host, path = hostname(overview), urlparse(overview).path.lower()
+        host, path = hostname(overview), safe_text(urlparse(safe_text(overview)).path).lower()
         if not (is_subdomain(host, "jpx.co.jp") and
                 any(path.startswith(value) for value in JPX_BLOCKED_PATHS)):
             continue
@@ -940,7 +961,8 @@ def linked_official_sources(sources, company):
         for match in re.finditer(r'''(?is)\bhref\s*=\s*["']([^"'#]+)["']''', html):
             linked = canonical_url(urljoin(final, match.group(1)))
             linked_host = hostname(linked)
-            is_exchange_pdf = (linked and urlparse(linked).path.lower().endswith(".pdf") and
+            linked_path = safe_text(urlparse(safe_text(linked)).path).lower()
+            is_exchange_pdf = (linked and linked_path.endswith(".pdf") and
                                any(is_subdomain(linked_host, exchange) for exchange in OFFICIAL_HOSTS))
             is_corporate = bool(domain and is_subdomain(linked_host, domain))
             if linked and (is_exchange_pdf or is_corporate):
