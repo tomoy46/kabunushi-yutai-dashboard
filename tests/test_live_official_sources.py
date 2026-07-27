@@ -43,6 +43,8 @@ class LiveOfficialSourceTests(unittest.TestCase):
 
         print(f"Live official sources: confirmed={len(confirmed)} warning={len(warnings)}")
         print("Successfully fetched companies: " + (", ".join(confirmed) or "none"))
+        for code in ("7550", "7616", "7412"):
+            self.assertIn(code, confirmed, f"official PDF/detail extraction failed for {code}")
 
 
 if __name__ == "__main__":

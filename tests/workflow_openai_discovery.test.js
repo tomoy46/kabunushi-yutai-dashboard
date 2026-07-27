@@ -51,10 +51,15 @@ test('commit step reports staged changes and explains an empty diff', () => {
 });
 
 test('tests run before discovery and a failed test blocks API use and commit', () => {
+  const installIndex = steps.findIndex((step) => step.name === 'Install and verify PDF text extraction');
   const testIndex = steps.findIndex((step) => step.name === 'Test before using the production API');
   const discoveryIndex = steps.findIndex((step) => step.name === 'Discover from official sources');
   const commitIndex = steps.findIndex((step) => step.name === 'Commit verified results');
-  assert.ok(testIndex > 0 && testIndex < discoveryIndex && discoveryIndex < commitIndex);
+  assert.ok(installIndex > 0 && installIndex < testIndex && testIndex < discoveryIndex && discoveryIndex < commitIndex);
+  const install = stepNamed('Install and verify PDF text extraction').run;
+  assert.ok(install.includes('sudo apt-get update'));
+  assert.ok(install.includes('sudo apt-get install -y poppler-utils'));
+  assert.ok(install.includes('pdftotext -v'));
   assert.equal(stepNamed('Commit verified results').if, '${{ success() && inputs.diagnostic_mode != true }}');
 });
 
@@ -82,6 +87,9 @@ test('workflow reports all saved outcomes and commit status', () => {
   for (const text of ['confirmed saved=', 'research-log saved=', 'failed=', 'git committed=']) {
     assert.ok(command.includes(text));
   }
+  assert.equal(report.env.OPENAI_CALLS, '${{ steps.discovery.outputs.openai_calls }}');
+  assert.equal(report.env.ZERO_CONFIRMED_CAUSE, '${{ steps.discovery.outputs.zero_confirmed_cause }}');
+  assert.ok(command.includes('confirmed=0; OpenAI calls='));
 });
 
 test('production inputs and startup log are wired to workflow_dispatch values', () => {

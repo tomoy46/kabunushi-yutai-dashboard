@@ -20,6 +20,11 @@ jobs:
         with: {node-version: 22}
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
+      - name: Install and verify PDF text extraction
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y poppler-utils
+          pdftotext -v
       - name: Log workflow inputs
         env:
           DIAGNOSTIC_MODE: ${{ inputs.diagnostic_mode }}
@@ -114,14 +119,21 @@ jobs:
           CONFIRMED_COUNT: ${{ steps.discovery.outputs.confirmed }}
           RESEARCH_LOG_COUNT: ${{ steps.discovery.outputs.research_log }}
           FAILED_COUNT: ${{ steps.discovery.outputs.failed }}
+          OPENAI_CALLS: ${{ steps.discovery.outputs.openai_calls }}
+          ZERO_CONFIRMED_CAUSE: ${{ steps.discovery.outputs.zero_confirmed_cause }}
           COMMITTED: ${{ steps.commit_results.outputs.committed }}
         run: |
           committed="${COMMITTED:-no}"
           echo "WORKFLOW SUMMARY: confirmed saved=${CONFIRMED_COUNT:-0} research-log saved=${RESEARCH_LOG_COUNT:-0} failed=${FAILED_COUNT:-0} git committed=${committed}"
+          if [ "${CONFIRMED_COUNT:-0}" = 0 ]; then
+            echo "::warning::confirmed=0; OpenAI calls=${OPENAI_CALLS:-0}; cause=${ZERO_CONFIRMED_CAUSE:-not_reported}"
+          fi
           {
             echo "### Shareholder benefit discovery"
             echo "- confirmedとして保存: ${CONFIRMED_COUNT:-0}"
             echo "- research-logへ保存: ${RESEARCH_LOG_COUNT:-0}"
             echo "- failed: ${FAILED_COUNT:-0}"
+            echo "- OpenAI API calls: ${OPENAI_CALLS:-0}"
+            echo "- confirmed=0 の原因: ${ZERO_CONFIRMED_CAUSE:-該当なし}"
             echo "- Gitへコミット: ${committed}"
           } >> "$GITHUB_STEP_SUMMARY"
