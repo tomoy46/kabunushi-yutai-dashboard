@@ -20,7 +20,7 @@ test('production workflow commits verified results after a partial failure', () 
   assert.equal(dispatchInputs.diagnostic_mode.default, false);
   assert.equal(
     stepNamed('Commit verified results').if,
-    '${{ always() && !cancelled() && inputs.diagnostic_mode != true }}',
+    '${{ success() && inputs.diagnostic_mode != true }}',
   );
 });
 
@@ -46,7 +46,24 @@ test('commit step reports staged changes and explains an empty diff', () => {
   assert.ok(command.includes('added={added} updated={updated}'));
   assert.ok(command.includes('git diff --cached --numstat'));
   assert.ok(command.includes('::warning::No data files changed'));
-  assert.ok(command.includes('Production targets and Production summary logs'));
+  assert.ok(command.includes('No commit was created'));
+});
+
+test('tests run before discovery and a failed test blocks API use and commit', () => {
+  const testIndex = steps.findIndex((step) => step.name === 'Test before using the production API');
+  const discoveryIndex = steps.findIndex((step) => step.name === 'Discover from official sources');
+  const commitIndex = steps.findIndex((step) => step.name === 'Commit verified results');
+  assert.ok(testIndex > 0 && testIndex < discoveryIndex && discoveryIndex < commitIndex);
+  assert.equal(stepNamed('Commit verified results').if, '${{ success() && inputs.diagnostic_mode != true }}');
+});
+
+test('workflow reports all saved outcomes and commit status', () => {
+  const report = stepNamed('Report workflow outcome');
+  assert.equal(report.if, '${{ always() }}');
+  const command = report.run;
+  for (const text of ['confirmed saved=', 'research-log saved=', 'failed=', 'git committed=']) {
+    assert.ok(command.includes(text));
+  }
 });
 
 test('production inputs and startup log are wired to workflow_dispatch values', () => {

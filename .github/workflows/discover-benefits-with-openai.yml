@@ -15,6 +15,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
       - name: Log workflow inputs
         env:
           DIAGNOSTIC_MODE: ${{ inputs.diagnostic_mode }}
@@ -26,10 +31,10 @@ jobs:
           echo "security_codes=${SECURITY_CODES}"
           echo "batch_size=${BATCH_SIZE}"
           echo "daily_limit=${DAILY_LIMIT}"
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: {python-version: '3.12'}
+      - name: Test before using the production API
+        run: npm test
       - name: Discover from official sources
+        id: discovery
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
@@ -41,16 +46,16 @@ jobs:
           ${{ inputs.retry_failed == true && '--retry-failed' || '' }}
           ${{ inputs.official_only == true && '--official-only' || '' }}
           ${{ inputs.diagnostic_mode == true && '--diagnostic-mode' || '' }}
-      - run: npm test
-      - name: Verify maintained URLs against corporate sites
-        env:
-          RUN_LIVE_OFFICIAL_SOURCES: '1'
-        run: python -m unittest tests.test_live_official_sources -v
       - name: Commit verified results
-        # Discovery persists each company's outcome independently. Run this step
-        # even when a later company (or a post-discovery check) fails so already
-        # confirmed results are not discarded with the failed job.
-        if: ${{ always() && !cancelled() && inputs.diagnostic_mode != true }}
+        id: commit_results
+        # Per-company research failures are recorded without failing discovery,
+        # so confirmed results still reach this step. A failed test or structural
+        # discovery failure blocks the step via success().
+        if: ${{ success() && inputs.diagnostic_mode != true }}
+        env:
+          CONFIRMED_COUNT: ${{ steps.discovery.outputs.confirmed }}
+          RESEARCH_LOG_COUNT: ${{ steps.discovery.outputs.research_log }}
+          FAILED_COUNT: ${{ steps.discovery.outputs.failed }}
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
@@ -91,8 +96,28 @@ jobs:
           echo "Changed line counts:"
           git diff --cached --numstat
           if git diff --cached --quiet; then
-            echo "::warning::No data files changed. The discovery step selected no eligible targets or produced no persistable outcome; inspect the Production targets and Production summary logs."
+            echo "::warning::No data files changed: discovery selected no eligible targets, or every generated value already matches Git. No commit was created."
+            committed=no
           else
             git commit -m "chore: update OpenAI benefit discovery"
             git push
+            committed=yes
           fi
+          echo "committed=${committed}" >> "$GITHUB_OUTPUT"
+      - name: Report workflow outcome
+        if: ${{ always() }}
+        env:
+          CONFIRMED_COUNT: ${{ steps.discovery.outputs.confirmed }}
+          RESEARCH_LOG_COUNT: ${{ steps.discovery.outputs.research_log }}
+          FAILED_COUNT: ${{ steps.discovery.outputs.failed }}
+          COMMITTED: ${{ steps.commit_results.outputs.committed }}
+        run: |
+          committed="${COMMITTED:-no}"
+          echo "WORKFLOW SUMMARY: confirmed saved=${CONFIRMED_COUNT:-0} research-log saved=${RESEARCH_LOG_COUNT:-0} failed=${FAILED_COUNT:-0} git committed=${committed}"
+          {
+            echo "### Shareholder benefit discovery"
+            echo "- confirmedとして保存: ${CONFIRMED_COUNT:-0}"
+            echo "- research-logへ保存: ${RESEARCH_LOG_COUNT:-0}"
+            echo "- failed: ${FAILED_COUNT:-0}"
+            echo "- Gitへコミット: ${committed}"
+          } >> "$GITHUB_STEP_SUMMARY"

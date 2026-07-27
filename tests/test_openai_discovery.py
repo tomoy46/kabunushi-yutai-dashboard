@@ -272,15 +272,23 @@ class OpenAIDiscoveryTests(unittest.TestCase):
             def fetched(url, _company, _sources, registered=False):
                 self.assertTrue(registered)
                 return url, "株主優待制度 100株 3月 9月 長期保有条件なし"
+            output = StringIO()
             with patch.object(discovery, "DATA", root), patch.dict(os.environ, {"OPENAI_API_KEY": "mock"}), \
                  patch.object(discovery, "fetch_official_page", side_effect=fetched), \
                  patch.object(discovery, "request_response", return_value=response), \
-                 patch.object(discovery, "build_payload", side_effect=AssertionError("web search must not run")):
+                 patch.object(discovery, "build_payload", side_effect=AssertionError("web search must not run")), \
+                 redirect_stdout(output):
                 self.assertEqual(discovery.run(args), 0)
             benefits = json.loads((root / "benefits.json").read_text())
             self.assertEqual({item["code"] for item in benefits}, {code for code, _name in targets})
             self.assertTrue(all(item["benefit_status"] == "official_confirmed" for item in benefits))
             self.assertEqual(json.loads((root / "research-log.json").read_text()), [])
+            log = output.getvalue()
+            self.assertTrue(log.startswith("TEST FIXTURE\n"))
+            self.assertNotIn("PRODUCTION TARGETS", log)
+            self.assertNotIn("PRODUCTION RESULT", log)
+            self.assertNotIn("PRODUCTION SUMMARY", log)
+            self.assertIn("FIXTURE SUMMARY: confirmed=5", log)
 
     def test_stale_candidate_falls_through_to_another_official_url(self):
         stale = "https://kyokuyo.co.jp/ir/old.pdf"
