@@ -4,6 +4,7 @@ const path = require('node:path');
 const test = require('node:test');
 
 const workflowPath = path.join(__dirname, '..', '.github', 'workflows', 'discover-benefits-with-openai.yml');
+const packagePath = path.join(__dirname, '..', 'package.json');
 const parsedWorkflow = JSON.parse(execFileSync(
   'ruby',
   ['-ryaml', '-rjson', '-e', 'puts JSON.generate(YAML.safe_load(File.read(ARGV[0]), aliases: true))', workflowPath],
@@ -55,6 +56,16 @@ test('tests run before discovery and a failed test blocks API use and commit', (
   const commitIndex = steps.findIndex((step) => step.name === 'Commit verified results');
   assert.ok(testIndex > 0 && testIndex < discoveryIndex && discoveryIndex < commitIndex);
   assert.equal(stepNamed('Commit verified results').if, '${{ success() && inputs.diagnostic_mode != true }}');
+});
+
+test('preflight is offline and excludes the opt-in live official-source suite', () => {
+  const preflight = stepNamed('Test before using the production API');
+  const testCommand = JSON.parse(require('node:fs').readFileSync(packagePath, 'utf8')).scripts.test;
+  assert.equal(preflight.run, 'npm test');
+  assert.equal(preflight.env, undefined);
+  assert.ok(!testCommand.includes('test_live_official_sources.py'));
+  assert.ok(!testCommand.includes('RUN_LIVE_OFFICIAL_SOURCES'));
+  assert.ok(testCommand.includes('tests/run_unit_tests.py'));
 });
 
 test('workflow reports all saved outcomes and commit status', () => {
