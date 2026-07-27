@@ -122,3 +122,9 @@ GEMINI_API_KEY='...' python scripts/discover_benefits_with_gemini.py --diagnosti
 - 入力済み会社のGemini調査、公式URL検証、再開、キュー表示、利用量記録が動作します。
 - TDnetのキーワード検出は既存の `fetch_tdnet.py` が確認キューを作るところまでです。TDnet API/フィードの恒久的な取得先や、検出銘柄を自動的に最優先する統合は未実装です。
 - Google Search groundingや企業サイト側のアクセス制限により、取得不能・PDF解析不能になる場合は人手確認が必要です。APIキーがない開発環境では実API試験は実施できません。
+
+## 公式株主優待資料の探索
+
+OpenAI版の更新処理は、全銘柄を同じパイプラインで処理します。`data/official-benefit-sources.json` の検証済み優先URLを最初に試し、失敗または未登録なら企業公式ドメインのトップページ・サイトマップ・そこから到達できるIRリンクを巡回します。候補は公式HTML、公式PDF、`fetch_tdnet.py` が `review-queue.json` に収集したTDnet・JPX開示PDFの順です。企業別のURLパターンは使用しません。
+
+HTML巡回では通常のリンクに加え、JSON-LD、`application/json` の埋め込みデータ、フレームワークの状態JSON、同一公式ドメインのAPI/PDFリンクも候補にします。検証済みURLは優先URLファイルへ自動保存されます。公式性または優待本文を確認できない結果はダッシュボードに入れず、`research-log.json` に記録します。OpenAI APIへ渡すのはローカルで取得・抽出済みの公式本文だけで、検索・URL選定・HTML/PDF取得には使用しません。
