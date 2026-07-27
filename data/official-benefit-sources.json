@@ -3,19 +3,19 @@
     "url": "https://www.zensho.co.jp/jp/ir/investor/complimentary/"
   },
   "9861": {
-    "url": "https://www.yoshinoya-holdings.com/ir/stock/benefit/",
+    "url": "https://www.yoshinoya-holdings.com/ir/info/dividend/",
     "allowed_domains": [
       "yoshinoya-holdings.com",
       "yoshinoya-holdings.jp"
     ]
   },
   "8163": {
-    "url": "https://srs-holdings.co.jp/ir/individual/benefit/"
+    "url": "https://srs-holdings.co.jp/ir/stock/benefit/"
   },
   "7616": {
-    "url": "https://www.colowide.co.jp/ir/stock_info/stockholder.php"
+    "url": "https://www.colowide.co.jp/ir/stock_info/stockholder/"
   },
   "7412": {
-    "url": "https://www.atom-corp.co.jp/ir/stockholder/benefit.html"
+    "url": "https://www.atom-corp.co.jp/ir/shareholder.html"
   }
 }
