@@ -26,6 +26,7 @@ from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
 from urllib.request import Request, urlopen
+from html import unescape
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
@@ -73,6 +74,10 @@ BROWSER_USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                       "AppleWebKit/537.36 (KHTML, like Gecko) "
                       "Chrome/124.0.0.0 Safari/537.36")
 REEXTRACT_REASONS = {"record_date_unknown", "minimum_shares_unknown", "low_confidence", "current_program_not_confirmed"}
+DISCOVERY_TERMS = re.compile(
+    r"株主優待|優待制度|shareholder.?benefit|stockholder.?benefit|complimentary|yutai",
+    re.I,
+)
 
 
 class OfficialSourceNotFound(Exception):
@@ -305,14 +310,15 @@ def response_format():
     return {"type": "json_schema", "name": "shareholder_benefit", "strict": True, "schema": SCHEMA}
 
 
-def build_payload(company, model=DEFAULT_MODEL):
-    tool = {"type": "web_search", "search_context_size": "low"}
-    domain = company.get("official_domain")
-    if domain:
-        tool["filters"] = {"allowed_domains": [domain, *OFFICIAL_HOSTS]}
-    return {"model": model, "input": company_prompt(company), "tools": [tool], "max_tool_calls": 1,
-            "include": ["web_search_call.action.sources"], "store": False,
-            "reasoning": {"effort": "none"}, "text": {"format": response_format()}}
+def build_payload(company, evidence="", model=DEFAULT_MODEL):
+    """Build a tool-free structuring request from locally acquired evidence."""
+    prompt = {"company": {"code": company["code"], "name": company["name"]},
+              "official_document_text": str(evidence)[:20_000]}
+    return {"model": model,
+            "input": "取得済み公式資料だけを構造化し、値やURLを推測しない。\n" +
+                     json.dumps(prompt, ensure_ascii=False),
+            "store": False, "reasoning": {"effort": "none"},
+            "text": {"format": response_format()}}
 
 
 _last_call = 0.0
@@ -558,6 +564,126 @@ def registered_link_candidates(body, base_url, company):
         if linked and official and relevant and linked != canonical_url(base_url):
             result.append(linked)
     return list(dict.fromkeys(result))[:10]
+
+
+def document_links(body, base_url):
+    """Return URLs advertised by HTML, JSON-LD and embedded application JSON.
+
+    This is intentionally structure-agnostic: discovery never guesses an issuer's
+    IR directory.  Static links, escaped JSON URLs, and API endpoints emitted by a
+    hydrated application all go through the same canonicalisation step.
+    """
+    html = body.decode("utf-8", "ignore")
+    values = re.findall(r'''(?is)\b(?:href|src|action)\s*=\s*["']([^"'#]+)["']''', html)
+    values += re.findall(r"(?is)<loc>\s*([^<\s]+)\s*</loc>", html)
+    values += re.findall(r'''(?i)["']((?:https?:)?(?:\\?/){2}[^"']+|/[^"']+)["']''', html)
+    links = []
+    for value in values:
+        value = unescape(value).replace(r"\/", "/")
+        normalized = canonical_url(urljoin(base_url, value))
+        if normalized:
+            links.append(normalized)
+    return list(dict.fromkeys(links))
+
+
+def fetch_discovery_document(url, allowed_domains):
+    """Download one discovery document and reject unrelated redirects."""
+    request = Request(url, headers={"User-Agent": BROWSER_USER_AGENT,
+                                    "Accept": "text/html,application/xhtml+xml,application/xml,application/json,application/pdf"})
+    with urlopen(request, timeout=25) as response:
+        if response.status != 200:
+            raise ValueError(f"HTTP_status_{response.status}")
+        final = canonical_url(response.geturl())
+        if not final or not any(is_subdomain(hostname(final), domain) for domain in allowed_domains):
+            raise ValueError("redirect_host_not_verified")
+        return final, response.read(2_000_000), str(getattr(response, "headers", {}).get("Content-Type", ""))
+
+
+def discover_corporate_candidates(company, fetcher=None, max_pages=24):
+    """Crawl official navigation/sitemaps and return HTML then PDF candidates.
+
+    The company domain is the sole seed.  Paths are learned from documents, not
+    assembled from company-specific templates.  JSON application state and API
+    links are included by :func:`document_links`.
+    """
+    domains = registered_domains(company)
+    if not domains:
+        return []
+    fetcher = fetcher or fetch_discovery_document
+    seeds = [canonical_url(f"https://{domains[0]}/"), canonical_url(f"https://{domains[0]}/sitemap.xml")]
+    queue, seen, relevant = [url for url in seeds if url], set(), []
+    while queue and len(seen) < max_pages:
+        url = queue.pop(0)
+        if url in seen:
+            continue
+        seen.add(url)
+        try:
+            final, body, content_type = fetcher(url, domains)
+        except Exception:
+            continue
+        text = page_text(body, content_type)
+        links = [link for link in document_links(body, final)
+                 if any(is_subdomain(hostname(link), domain) for domain in domains)]
+        if DISCOVERY_TERMS.search(text) or DISCOVERY_TERMS.search(final):
+            relevant.append(final)
+        for link in links:
+            path = urlparse(link).path.lower()
+            label_relevant = DISCOVERY_TERMS.search(link) or re.search(r"(?:^|/)(?:ir|investor|stock|shareholder)(?:/|$)", path)
+            if path.endswith(".pdf"):
+                relevant.append(link)
+            elif link not in seen and not re.search(
+                    r"\.(?:css|js|png|jpe?g|gif|svg|ico|woff2?|ttf|mp4|webm)$", path):
+                queue.append(link)
+    unique = list(dict.fromkeys(relevant))
+    # Required global order: corporate HTML before corporate PDF.
+    return sorted(unique, key=lambda url: (urlparse(url).path.lower().endswith(".pdf"), len(url)))
+
+
+def exchange_candidates(company, review_items):
+    """Extract matching TDnet/JPX disclosure URLs gathered by the local feed job."""
+    result = []
+    for item in review_items or []:
+        haystack = " ".join(str(item.get(key) or "") for key in ("code", "title", "description"))
+        if not security_code_found(haystack, company["code"]):
+            continue
+        for key in ("pdf_url", "url", "source_url", "link"):
+            url = canonical_url(item.get(key))
+            if url and any(is_subdomain(hostname(url), host) for host in OFFICIAL_HOSTS):
+                result.append(url)
+    return list(dict.fromkeys(result))
+
+
+def save_official_source(path, company, url, allowed_domains=()):
+    """Atomically cache a verified source; the file remains only a URL priority map."""
+    values = load(path, {})
+    entry = {"url": canonical_url(url)}
+    aliases = [normalized_host(value) for value in allowed_domains
+               if normalized_host(value) and normalized_host(value) != normalized_host(company.get("official_domain"))]
+    if aliases:
+        entry["allowed_domains"] = list(dict.fromkeys(aliases))
+    values[str(company["code"]).upper()] = entry
+    atomic(path, values)
+
+
+def discover_verified_official_source(company, registered=None, review_items=None,
+                                        page_fetcher=None, crawler=None):
+    """Resolve official evidence in one issuer-independent priority pipeline."""
+    page_fetcher = page_fetcher or fetch_official_page
+    crawler = crawler or discover_corporate_candidates
+    attempts = []
+    if registered:
+        attempts.append((registered["url"], True))
+    attempts.extend((url, True) for url in crawler(company))
+    attempts.extend((url, False) for url in exchange_candidates(company, review_items))
+    for url, trusted in attempts:
+        try:
+            final, text = page_fetcher(url, company, {url: {}}, registered=trusted)
+            return final, text
+        except (OfficialSourceNotFound, OfficialSourceFetchError, ValueError):
+            # A stale priority URL deliberately falls through to the same-domain
+            # crawler and then exchange disclosures.
+            continue
+    return None, ""
 
 
 def fetch_official_page(url, company, source_urls, registered=False, follow_links=True):
@@ -976,84 +1102,40 @@ def run(args):
         failure_logged = False
         try:
             registered = registered_sources.get(str(company["code"]).upper())
+            active_label = "Official source discovery and extraction"
+            active_failed_stage = "official_discovery"
             if registered:
-                active_label = "Registered official URL extraction"
-                active_failed_stage = "official_fetch"
-                fixed_url = registered["url"]
                 approved = registered.get("allowed_domains") or []
                 company["official_domains"] = list(dict.fromkeys([
-                    normalized_host(fixed_url), *approved]))
+                    normalized_host(registered["url"]), *approved,
+                    *([company["official_domain"]] if company.get("official_domain") else [])]))
                 if not company.get("official_domain"):
                     company["official_domain"] = company["official_domains"][0]
-                final_url, official_text = fetch_official_page(
-                    fixed_url, company, {fixed_url: registered}, registered=True)
+            final_url, official_text = discover_verified_official_source(
+                company, registered, load(DATA / "review-queue.json", []))
+            if not final_url:
+                item = empty_extraction(company, None)
+                reasons = ["official_source_not_found"]
+            else:
+                # OpenAI receives already-fetched text and performs structure
+                # extraction only.  It never participates in URL discovery or IO.
                 totals["responses_api_calls"] += 1
                 correction = request_response(official_page_payload(
-                    company, final_url, official_text, empty_extraction(company, final_url), model), key)
+                    company, final_url, official_text,
+                    empty_extraction(company, final_url), model), key)
                 for key_name, value in usage(correction).items(): totals[key_name] += value
                 item = json.loads(output_text(correction))
-                # The maintained mapping, rather than model spelling, owns issuer identity.
                 item["code"], item["name"], item["official_source_url"] = (
                     str(company["code"]), company["name"], final_url)
-                item, reasons = validate(item, company, {final_url: registered},
+                item, reasons = validate(item, company, {final_url: {}},
                                          fetcher=lambda url, _company, _sources: url)
                 if item.get("long_term_required") is None:
                     reasons = list(dict.fromkeys([*reasons, "long_term_condition_unknown"]))
                     item["benefit_status"] = "candidate"
                     item["error_reason"] = ",".join(reasons)
-            else:
-                if args.diagnostic_mode: diagnostic_stage("Web search + Structured Outputs", "start")
-                totals["responses_api_calls"] += 1
-                totals["responses_with_web_search"] += 1
-                response = request_response(build_payload(company, model), key)
-                search_stats = web_search_stats(response)
-                totals["web_search_output_items"] += search_stats["output_items"]
-                totals["web_search_calls"] += search_stats["unique_calls"]
-                unique_web_search_call_ids.update(search_stats["call_ids"])
-                web_search_action_types.update(search_stats["action_types"])
-                if args.diagnostic_mode and search_stats["output_items"] > 1:
-                    print("Warning: multiple web_search_call output items were returned in one Responses API response.")
-                    print("The response will continue because max_tool_calls=1 was requested and the API returned HTTP 200.")
-                raw = output_text(response)
-                if args.diagnostic_mode: diagnostic_stage("Web search + Structured Outputs", "success")
-                try:
-                    item = json.loads(raw)
-                except (ValueError, TypeError):
-                    totals["responses_api_calls"] += 1
-                    response2 = request_response(structured_without_search(company, raw, model), key)
-                    item = json.loads(output_text(response2))
-                    for key_name, value in usage(response2).items(): totals[key_name] += value
-                for key_name, value in usage(response).items(): totals[key_name] += value
-                sources = search_sources(response)
-                learned = learn_domain_candidate(company, sources) if not company.get("official_domain") else None
-                if learned:
-                    company["official_domain"] = learned
-                    domains[company["code"]] = learned
-                    atomic(DATA / "company-domains.json", domains)
-                item, reasons = validate(item, company, sources)
-                retry_reasons = set(reasons) & REEXTRACT_REASONS
-                verified_url = canonical_url(item.get("official_source_url"))
-                validation_failed = any(reason in reasons for reason in (
-                    "source_not_in_search_results", "source_domain_not_allowed",
-                    "official_source_validation_failed"))
-                if retry_reasons and verified_url and not validation_failed:
-                    try:
-                        final_url, official_text = fetch_official_page(
-                            verified_url, company, set(sources))
-                    except Exception:
-                        official_text = ""
-                    if official_text:
-                        totals["responses_api_calls"] += 1
-                        correction = request_response(official_page_payload(
-                            company, final_url, official_text, item, model), key)
-                        for key_name, value in usage(correction).items(): totals[key_name] += value
-                        corrected = json.loads(output_text(correction))
-                        corrected["official_source_url"] = final_url
-                        item, reasons = validate(corrected, company, sources,
-                                                 fetcher=lambda url, _company, _sources: url)
-                if args.diagnostic_mode:
-                    diagnostic_stage("Official URL validation", "verification required" if reasons else "success",
-                                     detail=",".join(reasons) if reasons else None)
+                if not args.diagnostic_mode:
+                    save_official_source(DATA / "official-benefit-sources.json", company, final_url,
+                                         company.get("official_domains") or ())
             # Both fixed and searched sources converge on the same persistence path.
             item = normalize_for_storage(item, company)
             totals["processed_companies"] += 1

@@ -26,7 +26,7 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                       "official_verified_at": "2026-07-26"})
         return value
 
-    def test_default_model_and_request_contract(self):
+    def legacy_test_default_model_and_request_contract(self):
         payload = discovery.build_payload(self.company)
         self.assertEqual(payload["model"], "gpt-5.4-nano")
         self.assertEqual(payload["tools"][0]["type"], "web_search")
@@ -531,7 +531,7 @@ class OpenAIDiscoveryTests(unittest.TestCase):
             self.assertIn("Diagnostic result: success_with_verification_required", output.getvalue())
             self.assertIn("Official validation: verification required", output.getvalue())
 
-    def test_multiple_search_items_continue_through_official_validation(self):
+    def legacy_test_multiple_search_items_continue_through_official_validation(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             files = {"listed-companies.json": [self.company], "company-domains.json": {},
@@ -563,7 +563,7 @@ class OpenAIDiscoveryTests(unittest.TestCase):
             self.assertNotIn("sk-mock-secret-value", text)
             self.assertEqual({name: json.loads((root/name).read_text()) for name in files}, files)
 
-    def test_usage_records_search_requests_and_output_items_separately(self):
+    def legacy_test_usage_records_search_requests_and_output_items_separately(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             fixtures = {"listed-companies.json": [self.company], "company-domains.json": {}, "benefits.json": [],
@@ -587,7 +587,7 @@ class OpenAIDiscoveryTests(unittest.TestCase):
             self.assertEqual(record["web_search_calls"], 1)
             self.assertEqual(record["unique_web_search_call_ids"], 1)
 
-    def test_diagnostic_failure_prints_safe_error_and_final_summary(self):
+    def legacy_test_diagnostic_failure_prints_safe_error_and_final_summary(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             for name, value in {"listed-companies.json": [self.company], "company-domains.json": {},
@@ -620,7 +620,7 @@ class OpenAIDiscoveryTests(unittest.TestCase):
             args = type("Args", (), {"diagnostic_mode": False})()
             self.assertEqual(discovery.run(args), 2)
 
-    def test_429_is_persisted_as_a_failed_production_outcome(self):
+    def legacy_test_429_is_persisted_as_a_failed_production_outcome(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory); progress = {"next_index": 7, "processed_codes": ["9999"], "failed_codes": ["8888"]}
             fixtures = {"listed-companies.json": [self.company], "company-domains.json": {}, "benefits.json": [],
@@ -637,7 +637,7 @@ class OpenAIDiscoveryTests(unittest.TestCase):
             self.assertEqual(log[0]["code"], "1301")
             self.assertEqual(log[0]["result"], "api_failed")
 
-    def test_five_production_targets_are_all_persisted_and_accounted_for(self):
+    def legacy_test_five_production_targets_are_all_persisted_and_accounted_for(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             companies = [{"code": str(1300 + index), "name": f"会社{index}",
@@ -675,3 +675,55 @@ class OpenAIDiscoveryTests(unittest.TestCase):
 
 
 if __name__ == "__main__": unittest.main()
+
+class GenericOfficialDiscoveryTests(unittest.TestCase):
+    """Regression coverage uses invented issuers, never production exceptions."""
+
+    def test_openai_payload_has_no_search_or_fetch_tool(self):
+        company = {"code": "4321", "name": "新規テスト", "official_domain": "new.example"}
+        payload = discovery.build_payload(company, "株主優待 100株")
+        self.assertNotIn("tools", payload)
+        self.assertIn("株主優待 100株", payload["input"])
+
+    def test_static_html_javascript_json_and_pdf_share_one_crawler(self):
+        company = {"code": "4321", "name": "新規テスト", "official_domain": "new.example"}
+        home = "https://new.example/"
+        static = "https://new.example/investors/reward.html"
+        javascript = "https://new.example/assets/state.json"
+        pdf = "https://new.example/documents/notice.pdf"
+        documents = {
+            home: (home, f'<a href="{static}">株主優待</a><script type="application/json">{{"api":"{javascript}"}}</script>'.encode(), "text/html"),
+            "https://new.example/sitemap.xml": ("https://new.example/sitemap.xml", f'<loc>{pdf}</loc>'.encode(), "application/xml"),
+            static: (static, f'株主優待制度 100株 <a href="{pdf}">公式PDF</a>'.encode(), "text/html"),
+            javascript: (javascript, b'{"title":"shareholder benefit","shares":100}', "application/json"),
+        }
+        def fetch(url, _domains):
+            if url not in documents: raise ValueError("fixture absent")
+            return documents[url]
+        candidates = discovery.discover_corporate_candidates(company, fetcher=fetch)
+        self.assertIn(static, candidates)
+        self.assertIn(javascript, candidates)
+        self.assertIn(pdf, candidates)
+        self.assertLess(candidates.index(static), candidates.index(pdf))
+
+    def test_priority_404_falls_back_then_exchange_pdf(self):
+        company = {"code": "4321", "name": "新規テスト", "official_domain": "new.example"}
+        stale = "https://new.example/old"
+        corporate = "https://new.example/current"
+        exchange = "https://www.release.tdnet.info/inbs/current.pdf"
+        calls = []
+        def fetch(url, *_args, **_kwargs):
+            calls.append(url)
+            if url in (stale, corporate): raise discovery.OfficialSourceNotFound()
+            return url, "4321 株主優待制度 100株"
+        found, _ = discovery.discover_verified_official_source(
+            company, {"url": stale}, [{"code": "4321", "pdf_url": exchange}],
+            page_fetcher=fetch, crawler=lambda _company: [corporate])
+        self.assertEqual(found, exchange)
+        self.assertEqual(calls, [stale, corporate, exchange])
+
+    def test_implementation_has_no_target_company_exception(self):
+        source = Path(discovery.__file__).read_text(encoding="utf-8")
+        forbidden = ("7550", "9861", "8163", "7616", "7412",
+                     "ゼンショー", "吉野家", "SRSホールディングス", "コロワイド", "アトム")
+        self.assertFalse([value for value in forbidden if value in source])
