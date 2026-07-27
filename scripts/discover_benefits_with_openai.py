@@ -9,6 +9,8 @@ from __future__ import annotations
 import argparse
 import csv
 import datetime as dt
+import gzip
+import importlib
 import json
 import os
 import random
@@ -19,6 +21,7 @@ import sys
 import tempfile
 import time
 import unicodedata
+import zlib
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
@@ -74,6 +77,47 @@ REEXTRACT_REASONS = {"record_date_unknown", "minimum_shares_unknown", "low_confi
 
 class OfficialSourceNotFound(Exception):
     """A maintained official URL returned HTTP 404."""
+
+
+class OfficialSourceFetchError(Exception):
+    """A classified failure while downloading or decoding a maintained URL."""
+
+    def __init__(self, reason, error):
+        self.reason = reason
+        self.original = error
+        super().__init__(f"{reason}: {type(error).__name__}: {safe_message(error)}")
+
+
+def official_source_log(company, url, **fields):
+    """Emit grep-friendly production diagnostics for a maintained source URL."""
+    values = {"security_code": company["code"], "registered_url": url, **fields}
+    print("Official source diagnostic: " + " | ".join(
+        f"{key}={safe_message(value)}" for key, value in values.items()))
+
+
+def decode_content(body, encoding):
+    """Decode HTTP content codings advertised by the server."""
+    encoding = str(encoding or "").lower().strip()
+    if not encoding or encoding == "identity":
+        return body
+    # Decode in reverse order when a server applied multiple codings.
+    for coding in reversed([value.strip() for value in encoding.split(",")]):
+        if coding == "gzip":
+            body = gzip.decompress(body)
+        elif coding == "deflate":
+            try:
+                body = zlib.decompress(body)
+            except zlib.error:
+                body = zlib.decompress(body, -zlib.MAX_WBITS)
+        elif coding == "br":
+            try:
+                brotli = importlib.import_module("brotli")
+            except ImportError as error:
+                raise OfficialSourceFetchError("brotli_decoder_unavailable", error) from error
+            body = brotli.decompress(body)
+        else:
+            raise OfficialSourceFetchError("unsupported_content_encoding", ValueError(coding))
+    return body
 
 
 def safe_message(value, key=None):
@@ -405,16 +449,21 @@ def empty_extraction(company, url):
     return item
 
 
-def page_text(body):
+def page_text(body, content_type=""):
     """Decode a bounded page and turn HTML into searchable plain text."""
-    for codec in ("utf-8", "shift_jis", "utf-16"):
+    declared = re.search(r"charset\s*=\s*['\"]?([^;'\"\s]+)", content_type, re.I)
+    codecs = [declared.group(1)] if declared else []
+    codecs.extend(codec for codec in ("utf-8", "cp932", "shift_jis", "utf-16") if codec not in codecs)
+    last_error = None
+    for codec in codecs:
         try:
             decoded = body.decode(codec)
             break
-        except (UnicodeDecodeError, UnicodeError):
+        except (LookupError, UnicodeDecodeError, UnicodeError) as error:
+            last_error = error
             continue
     else:
-        decoded = body.decode("utf-8", "ignore")
+        raise OfficialSourceFetchError("character_encoding_failure", last_error or UnicodeError())
     # Meta values are not text nodes, but are important corporate identity
     # evidence (description, og:title and og:site_name).
     meta = " ".join(match.group(1) for tag in re.findall(r"(?is)<meta\b[^>]*>", decoded)
@@ -424,7 +473,7 @@ def page_text(body):
     return re.sub(r"\s+", " ", re.sub(r"(?s)<[^>]+>", " ", decoded)).strip()
 
 
-def pdf_text(body):
+def pdf_text(body, diagnostic=None):
     """Extract PDF text with the system utility, retaining a safe fixture fallback."""
     try:
         with tempfile.TemporaryDirectory() as directory:
@@ -435,12 +484,26 @@ def pdf_text(body):
                 ["pdftotext", "-layout", str(source), str(output)], capture_output=True,
                 timeout=20, check=False,
             )
+            if diagnostic:
+                diagnostic(returncode=completed.returncode,
+                           stderr=safe_message(completed.stderr.decode("utf-8", "replace")))
             if completed.returncode == 0 and output.exists():
                 text = output.read_text(encoding="utf-8", errors="replace")
                 if text.strip():
                     return re.sub(r"\s+", " ", text).strip()
-    except (FileNotFoundError, OSError, subprocess.SubprocessError):
-        pass
+            if completed.returncode != 0:
+                raise OfficialSourceFetchError(
+                    "pdf_conversion_failure",
+                    RuntimeError(completed.stderr.decode("utf-8", "replace")))
+    except OfficialSourceFetchError:
+        raise
+    except (FileNotFoundError, OSError, subprocess.SubprocessError) as error:
+        if diagnostic:
+            diagnostic(returncode="not_available", stderr=safe_message(error))
+        # Preserve the readable fixture fallback, but never hide a real PDF
+        # conversion failure.
+        if body.startswith(b"%PDF"):
+            raise OfficialSourceFetchError("pdf_conversion_failure", error) from error
     # Unit fixtures and a subset of simple PDFs expose readable text directly.
     return page_text(body)
 
@@ -469,9 +532,12 @@ def fetch_official_page(url, company, source_urls, registered=False):
     if not allowed_url(normalized, company.get("official_domain")):
         raise ValueError("source_url_not_allowed")
     request = Request(normalized, headers={"User-Agent": BROWSER_USER_AGENT,
-                                           "Accept": "text/html,application/xhtml+xml,application/pdf"})
+                                           "Accept": "text/html,application/xhtml+xml,application/pdf",
+                                           "Accept-Encoding": "gzip, br, deflate"})
+    status = None
     try:
         with urlopen(request, timeout=25) as response:
+            status = response.status
             if response.status == 404:
                 raise OfficialSourceNotFound("official_source_http_404")
             if response.status != 200: raise ValueError(f"HTTP_status_{response.status}")
@@ -486,11 +552,68 @@ def fetch_official_page(url, company, source_urls, registered=False):
                 raise ValueError("source_redirected_outside_candidate_domain")
             content_type = str(response.headers.get("Content-Type", "")).lower() if hasattr(response, "headers") else ""
             body = response.read(2_000_000)
+            content_encoding = (str(response.headers.get("Content-Encoding", ""))
+                                if hasattr(response, "headers") else "")
+            if not all(value.strip().lower() in ("gzip", "br", "deflate", "identity")
+                       for value in content_encoding.split(",") if value.strip()):
+                content_encoding = ""
+            body = decode_content(body, content_encoding)
     except HTTPError as error:
+        if registered:
+            official_source_log(company, normalized, http_status=error.code, final_url=error.geturl(),
+                                reason="http_404" if error.code == 404 else ("http_403" if error.code == 403 else f"http_{error.code}"),
+                                exception_class=type(error).__name__, exception_message=error)
         if error.code == 404:
             raise OfficialSourceNotFound("official_source_http_404") from None
+        reason = "http_403" if error.code == 403 else f"http_{error.code}"
+        raise OfficialSourceFetchError(reason, error) from error
+    except OfficialSourceNotFound:
+        if registered:
+            official_source_log(company, normalized, http_status=404, final_url=normalized,
+                                reason="http_404")
         raise
-    text = pdf_text(body) if "pdf" in content_type or urlparse(final).path.lower().endswith(".pdf") else page_text(body)
+    except (socket.timeout, TimeoutError) as error:
+        if registered:
+            official_source_log(company, normalized, http_status=status or "unavailable",
+                                final_url="unavailable", reason="timeout",
+                                exception_class=type(error).__name__, exception_message=error)
+        raise OfficialSourceFetchError("timeout", error) from error
+    except URLError as error:
+        reason = "tls_failure" if isinstance(error.reason, Exception) and "ssl" in type(error.reason).__name__.lower() else "network_failure"
+        if registered:
+            official_source_log(company, normalized, http_status=status or "unavailable",
+                                final_url="unavailable", reason=reason,
+                                exception_class=type(error).__name__, exception_message=error)
+        raise OfficialSourceFetchError(reason, error) from error
+    except OfficialSourceFetchError as error:
+        if registered:
+            official_source_log(company, normalized, http_status=status or "unavailable",
+                                final_url=locals().get("final") or "unavailable", reason=error.reason,
+                                exception_class=type(error.original).__name__,
+                                exception_message=error.original)
+        raise
+    is_pdf = "pdf" in content_type or urlparse(final).path.lower().endswith(".pdf")
+    pdf_diagnostic = (lambda **values: official_source_log(
+        company, normalized, http_status=status, final_url=final, content_type=content_type,
+        body_characters=len(body), document_type="PDF", **values)) if registered else None
+    try:
+        text = pdf_text(body, pdf_diagnostic) if is_pdf else page_text(body, content_type)
+    except Exception as error:
+        if registered:
+            official_source_log(company, normalized, http_status=status, final_url=final,
+                                content_type=content_type, body_characters=len(body),
+                                document_type="PDF" if is_pdf else "HTML", reason=getattr(error, "reason", "extraction_failure"),
+                                exception_class=type(error).__name__, exception_message=error)
+        raise
+    if registered:
+        javascript_empty = bool(not text and not is_pdf and re.search(rb"(?i)<script\b", body))
+        official_source_log(company, normalized, http_status=status, final_url=final,
+                            content_type=content_type or "unavailable", body_characters=len(body),
+                            document_type="PDF" if is_pdf else "HTML",
+                            extracted_text_preview=text[:200] or "(empty)",
+                            javascript_dependent_empty=javascript_empty,
+                            openai_body_characters=len(text),
+                            fetch_reason="javascript_dependent_empty" if javascript_empty else ("extracted_text_empty" if not text else "success"))
     identity_text = text + " " + source_metadata_text(source_urls, normalized)
     host, path = hostname(final), urlparse(final).path.lower()
     if is_subdomain(host, "jpx.co.jp") and any(path.startswith(value) for value in JPX_BLOCKED_PATHS):
@@ -891,6 +1014,9 @@ def run(args):
                 queue = [x for x in queue if x.get("code") != company["code"]]
                 save_progress(progress, company["code"])
                 outcome = "confirmed"
+            if registered:
+                official_source_log(company, registered["url"], final_outcome=outcome,
+                                    final_reason=",".join(reasons) if reasons else "officially_confirmed")
             persist_production_state(benefits, queue, progress)
             print(f'Result {company["code"]} {company["name"]}: {outcome}')
             continue
@@ -898,6 +1024,10 @@ def run(args):
             totals["processed_companies"] += 1
             totals["verification_required"] += 1
             if not args.diagnostic_mode:
+                if registered:
+                    official_source_log(company, registered["url"], final_outcome="research_log",
+                                        final_reason="http_404",
+                                        exception_class=type(error).__name__, exception_message=error)
                 append_research_log(company, "official_source_not_found", [str(error)])
                 queue = [x for x in queue if x.get("code") != company["code"]]
                 persist_production_state(benefits, queue, progress)
@@ -910,6 +1040,10 @@ def run(args):
             if not args.diagnostic_mode and not registered:
                 append_research_log(company, "api_failed", [error.message])
             if not args.diagnostic_mode:
+                if registered:
+                    official_source_log(company, registered["url"], final_outcome="failed",
+                                        final_reason="openai_api_failure",
+                                        exception_class=type(error).__name__, exception_message=error)
                 persist_production_state(benefits, queue, progress)
                 print(f'Result {company["code"]} {company["name"]}: failed')
         except Exception as error:
@@ -920,6 +1054,10 @@ def run(args):
             if not args.diagnostic_mode and not registered:
                 append_research_log(company, "failed", [safe_message(error)])
             if not args.diagnostic_mode:
+                if registered:
+                    official_source_log(company, registered["url"], final_outcome="failed",
+                                        final_reason=getattr(error, "reason", "unhandled_exception"),
+                                        exception_class=type(error).__name__, exception_message=error)
                 persist_production_state(benefits, queue, progress)
                 print(f'Result {company["code"]} {company["name"]}: failed')
     if not args.diagnostic_mode:
