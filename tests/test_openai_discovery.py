@@ -752,6 +752,44 @@ class GenericOfficialDiscoveryTests(unittest.TestCase):
         self.assertEqual(found, exchange)
         self.assertEqual(calls, [stale, corporate, exchange])
 
+    def test_discovery_logs_every_attempt_and_adopted_url(self):
+        company = {"code": "4321", "name": "新規テスト", "official_domain": "new.example"}
+        stale = "https://new.example/old"
+        current = "https://new.example/current"
+        def fetch(url, *_args, **_kwargs):
+            if url == stale:
+                raise discovery.OfficialSourceNotFound("official_source_http_404")
+            return current, "株主優待制度 100株"
+        output = StringIO()
+        with redirect_stdout(output):
+            found, _ = discovery.discover_verified_official_source(
+                company, {"url": stale}, page_fetcher=fetch,
+                crawler=lambda _company: [current])
+        self.assertEqual(found, current)
+        log = output.getvalue()
+        self.assertIn("exploration_url=" + stale, log)
+        self.assertIn("exploration_url=" + current, log)
+        self.assertIn("adopted_url=" + current, log)
+
+    def test_regex_inputs_are_safely_coerced(self):
+        for value in (None, b"code 4321", {"code": "4321"}, ["4321"]):
+            with self.subTest(value=value):
+                result = discovery.security_code_found(value, "4321")
+                self.assertIsInstance(result, bool)
+        self.assertTrue(discovery.security_code_found(b"code 4321", "4321"))
+        self.assertIn("株主優待", discovery.page_text({"title": "株主優待"}))
+
+    def test_page_text_uses_content_type_bom_meta_and_encoding_fallbacks(self):
+        html = '<meta charset="shift_jis"><p>株主優待制度</p>'
+        self.assertIn("株主優待制度", discovery.page_text(html.encode("cp932")))
+        utf16 = '<meta charset="utf-16-le"><p>株主優待制度</p>'.encode("utf-16-le")
+        self.assertIn("株主優待制度", discovery.page_text(b"\xff\xfe" + utf16))
+        # A lying UTF-16LE header must fall through to UTF-8.
+        self.assertIn("株主優待制度", discovery.page_text(
+            "<p>株主優待制度</p>x".encode(), "text/html; charset=utf-16-le"))
+        # Even wholly invalid input is retained using replacement characters.
+        self.assertTrue(discovery.page_text(b"<p>\x81</p>", "text/html; charset=unknown"))
+
     def test_implementation_has_no_target_company_exception(self):
         source = Path(discovery.__file__).read_text(encoding="utf-8")
         forbidden = ("7550", "9861", "8163", "7616", "7412",
