@@ -1051,7 +1051,29 @@ def append_research_log(company, result, reasons):
     atomic(path, entries)
 
 
+def is_test_fixture():
+    """Distinguish isolated test data from the repository's production data."""
+    try:
+        return DATA.resolve() != (ROOT / "data").resolve()
+    except OSError:
+        return True
+
+
+def publish_workflow_counts(totals):
+    """Expose durable outcome counts without making the workflow parse logs."""
+    output = os.environ.get("GITHUB_OUTPUT")
+    if not output:
+        return
+    with open(output, "a", encoding="utf-8") as stream:
+        stream.write(f"confirmed={totals['successes']}\n")
+        stream.write(f"research_log={totals['research_log_saved']}\n")
+        stream.write(f"failed={totals['failures']}\n")
+
+
 def run(args):
+    fixture = is_test_fixture()
+    if fixture:
+        print("TEST FIXTURE")
     key = os.environ.get("OPENAI_API_KEY")
     if not key:
         if args.diagnostic_mode:
@@ -1072,13 +1094,15 @@ def run(args):
     benefits = load(DATA / "benefits.json", []); queue = load(DATA / "verification-queue.json", [])
     progress = load(DATA / "discovery-progress.json", {"next_index": 0, "processed_codes": [], "failed_codes": []})
     selected = companies if args.diagnostic_mode else choose(companies, args, progress, benefits, queue)
-    if not args.diagnostic_mode:
+    if not args.diagnostic_mode and not fixture:
         targets = ", ".join(f'{company["code"]} {company["name"]}' for company in selected) or "none"
-        print(f"Production targets ({len(selected)}): {targets}")
+        print(f"PRODUCTION TARGETS ({len(selected)}): {targets}")
     totals = {"processed_companies": 0, "responses_api_calls": 0, "responses_with_web_search": 0,
               "web_search_output_items": 0, "web_search_calls": 0,
               "input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0,
-              "successes": 0, "verification_required": 0, "failures": 0}
+              "successes": 0, "verification_required": 0, "research_log_saved": 0,
+              "failures": 0}
+    confirmed_codes = []
     unique_web_search_call_ids = set()
     web_search_action_types = set()
     errors=[]; started=time.monotonic(); failed_stage = None
@@ -1145,6 +1169,7 @@ def run(args):
                 continue
             if reasons:
                 append_research_log(company, "not_officially_verified", reasons)
+                totals["research_log_saved"] += 1
                 queue = [x for x in queue if x.get("code") != company["code"]]
                 outcome = "research_log"
             else:
@@ -1152,12 +1177,14 @@ def run(args):
                 upsert_benefit_csv(DATA / "benefits.csv", item)
                 queue = [x for x in queue if x.get("code") != company["code"]]
                 save_progress(progress, company["code"])
+                confirmed_codes.append(company["code"])
                 outcome = "confirmed"
             if registered:
                 official_source_log(company, registered["url"], final_outcome=outcome,
                                     final_reason=",".join(reasons) if reasons else "officially_confirmed")
             persist_production_state(benefits, queue, progress)
-            print(f'Result {company["code"]} {company["name"]}: {outcome}')
+            label = "FIXTURE RESULT" if fixture else "PRODUCTION RESULT"
+            print(f'{label} {company["code"]} {company["name"]}: {outcome}')
             continue
         except OfficialSourceNotFound as error:
             totals["processed_companies"] += 1
@@ -1168,9 +1195,11 @@ def run(args):
                                         final_reason="http_404",
                                         exception_class=type(error).__name__, exception_message=error)
                 append_research_log(company, "official_source_not_found", [str(error)])
+                totals["research_log_saved"] += 1
                 queue = [x for x in queue if x.get("code") != company["code"]]
                 persist_production_state(benefits, queue, progress)
-                print(f'Result {company["code"]} {company["name"]}: research_log')
+                label = "FIXTURE RESULT" if fixture else "PRODUCTION RESULT"
+                print(f'{label} {company["code"]} {company["name"]}: research_log')
         except APIError as error:
             if args.diagnostic_mode and not failure_logged:
                 failed_stage = failed_stage or active_failed_stage
@@ -1178,13 +1207,15 @@ def run(args):
             totals["failures"] += 1; errors.append({"code": company["code"], "status": error.status, "error": error.message})
             if not args.diagnostic_mode and not registered:
                 append_research_log(company, "api_failed", [error.message])
+                totals["research_log_saved"] += 1
             if not args.diagnostic_mode:
                 if registered:
                     official_source_log(company, registered["url"], final_outcome="failed",
                                         final_reason="openai_api_failure",
                                         exception_class=type(error).__name__, exception_message=error)
                 persist_production_state(benefits, queue, progress)
-                print(f'Result {company["code"]} {company["name"]}: failed')
+                label = "FIXTURE RESULT" if fixture else "PRODUCTION RESULT"
+                print(f'{label} {company["code"]} {company["name"]}: failed')
         except Exception as error:
             if args.diagnostic_mode and not failure_logged:
                 failed_stage = failed_stage or active_failed_stage
@@ -1192,22 +1223,33 @@ def run(args):
             totals["failures"] += 1; errors.append({"code": company["code"], "error": str(error)[:300]})
             if not args.diagnostic_mode and not registered:
                 append_research_log(company, "failed", [safe_message(error)])
+                totals["research_log_saved"] += 1
             if not args.diagnostic_mode:
                 if registered:
                     official_source_log(company, registered["url"], final_outcome="failed",
                                         final_reason=getattr(error, "reason", "unhandled_exception"),
                                         exception_class=type(error).__name__, exception_message=error)
                 persist_production_state(benefits, queue, progress)
-                print(f'Result {company["code"]} {company["name"]}: failed')
+                label = "FIXTURE RESULT" if fixture else "PRODUCTION RESULT"
+                print(f'{label} {company["code"]} {company["name"]}: failed')
     if not args.diagnostic_mode:
         totals["unique_web_search_call_ids"] = len(unique_web_search_call_ids)
         record = {"executed_at": dt.datetime.now(dt.timezone.utc).isoformat(), "model": model,
                   "diagnostic_mode": False, **totals, "duration_seconds": round(time.monotonic()-started, 3), "errors": errors}
         usage_log=load(DATA / "openai-api-usage.json", []); usage_log.append(record); atomic(DATA / "openai-api-usage.json", usage_log)
         accounted = totals["successes"] + totals["verification_required"] + totals["failures"]
-        print("Production summary: "
+        summary_label = "FIXTURE SUMMARY" if fixture else "PRODUCTION SUMMARY"
+        print(f"{summary_label}: "
               f"confirmed={totals['successes']} verification_queue={totals['verification_required']} "
-              f"failed={totals['failures']} skipped=0 selected={len(selected)}")
+              f"research_log={totals['research_log_saved']} failed={totals['failures']} "
+              f"skipped=0 selected={len(selected)}")
+        if not fixture:
+            changed = subprocess.run(
+                ["git", "diff", "--name-only", "--", "data"], cwd=ROOT,
+                check=False, capture_output=True, text=True).stdout.splitlines()
+            print("PRODUCTION SAVED CODES: " + (", ".join(confirmed_codes) or "none"))
+            print("PRODUCTION CHANGED FILES: " + (", ".join(changed) or "none"))
+        publish_workflow_counts(totals)
         if accounted != len(selected):
             print(f"ERROR: selected {len(selected)} companies but persisted outcomes for {accounted}", file=sys.stderr)
             return 1
