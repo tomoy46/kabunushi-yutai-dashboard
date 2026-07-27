@@ -33,6 +33,10 @@ jobs:
           echo "daily_limit=${DAILY_LIMIT}"
       - name: Test before using the production API
         run: npm test
+      - name: Verify maintained official sources over real HTTP
+        env:
+          RUN_LIVE_OFFICIAL_SOURCES: '1'
+        run: python -m unittest discover -s tests -p 'test_live_official_sources.py' -v
       - name: Discover from official sources
         id: discovery
         env:
@@ -59,7 +63,7 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add data/benefits.csv data/benefits.json data/verification-queue.json data/discovery-progress.json data/research-log.json data/openai-api-usage.json
+          git add data/benefits.csv data/benefits.json data/verification-queue.json data/discovery-progress.json data/research-log.json data/openai-api-usage.json data/official-benefit-sources.json
           echo "Changed files and added/updated record counts before commit:"
           python - <<'PY'
           import csv, io, json, pathlib, subprocess

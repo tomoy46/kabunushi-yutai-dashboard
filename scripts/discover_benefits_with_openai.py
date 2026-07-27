@@ -136,6 +136,19 @@ def safe_message(value, key=None):
     return message[:500]
 
 
+def safe_text(value):
+    """Coerce untrusted HTTP/API values to text before regex processing."""
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, bytes):
+        return value.decode("utf-8", "replace")
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False, default=str)
+    return str(value)
+
+
 class APIError(Exception):
     def __init__(self, status, message, error_type=None, code=None, param=None, request_id=None):
         self.status = status
@@ -457,19 +470,44 @@ def empty_extraction(company, url):
 
 def page_text(body, content_type=""):
     """Decode a bounded page and turn HTML into searchable plain text."""
+    if not isinstance(body, bytes):
+        body = safe_text(body).encode("utf-8")
+    content_type = safe_text(content_type)
     declared = re.search(r"charset\s*=\s*['\"]?([^;'\"\s]+)", content_type, re.I)
-    codecs = [declared.group(1)] if declared else []
-    codecs.extend(codec for codec in ("utf-8", "cp932", "shift_jis", "utf-16") if codec not in codecs)
-    last_error = None
+    bom_codec = ("utf-8-sig" if body.startswith(b"\xef\xbb\xbf") else
+                 "utf-16-le" if body.startswith(b"\xff\xfe") else
+                 "utf-16-be" if body.startswith(b"\xfe\xff") else None)
+    # Meta charset can itself be UTF-16, so inspect both the byte-compatible and
+    # UTF-16 views.  Failed declarations then use the mandated Japanese order.
+    probes = [body[:8192].decode("ascii", "ignore")]
+    for probe_codec in ("utf-16-le", "utf-16-be"):
+        try:
+            probes.append(body[:8192].decode(probe_codec))
+        except UnicodeError:
+            pass
+    meta_codec = None
+    for probe in probes:
+        meta = re.search(r"(?is)<meta\b[^>]*(?:charset\s*=\s*['\"]?\s*([^\s'\"/>;]+)|content\s*=\s*['\"][^'\"]*charset\s*=\s*([^\s'\";]+))", probe)
+        if meta:
+            meta_codec = next((part for part in meta.groups() if part), None)
+            break
+    codecs = [value for value in (declared.group(1) if declared else None, bom_codec, meta_codec,
+                                   "utf-8", "shift_jis", "cp932", "euc_jp") if value]
+    codecs = list(dict.fromkeys(codec.lower().replace("shift-jis", "shift_jis") for codec in codecs))
     for codec in codecs:
+        if codec.replace("_", "-").startswith("utf-16") and not bom_codec and b"\x00" not in body[:512]:
+            # A surprisingly common broken header says UTF-16LE for ordinary
+            # UTF-8.  Decoding may technically succeed into CJK gibberish, so
+            # reject it unless the bytes have a UTF-16 signal.
+            continue
         try:
             decoded = body.decode(codec)
             break
-        except (LookupError, UnicodeDecodeError, UnicodeError) as error:
-            last_error = error
+        except (LookupError, UnicodeDecodeError, UnicodeError):
             continue
     else:
-        raise OfficialSourceFetchError("character_encoding_failure", last_error or UnicodeError())
+        # Never discard a successfully downloaded body solely due to encoding.
+        decoded = body.decode("utf-8", errors="replace")
     # Meta values are not text nodes, but are important corporate identity
     # evidence (description, og:title and og:site_name).
     meta = " ".join(match.group(1) for tag in re.findall(r"(?is)<meta\b[^>]*>", decoded)
@@ -537,7 +575,7 @@ def source_metadata_text(source_urls, url):
 def security_code_found(text, code):
     """Match a listed code without confusing it with part of a longer number."""
     return bool(re.search(rf"(?<![0-9A-Z]){re.escape(str(code).upper())}(?![0-9A-Z])",
-                          unicodedata.normalize("NFKC", str(text or "")).upper()))
+                          unicodedata.normalize("NFKC", safe_text(text)).upper()))
 
 
 def registered_domains(company):
@@ -670,19 +708,46 @@ def discover_verified_official_source(company, registered=None, review_items=Non
     """Resolve official evidence in one issuer-independent priority pipeline."""
     page_fetcher = page_fetcher or fetch_official_page
     crawler = crawler or discover_corporate_candidates
-    attempts = []
-    if registered:
-        attempts.append((registered["url"], True))
-    attempts.extend((url, True) for url in crawler(company))
-    attempts.extend((url, False) for url in exchange_candidates(company, review_items))
-    for url, trusted in attempts:
+    # Keep this lazy: the corporate crawl must start *after* a maintained URL
+    # has actually returned 404/invalid content, rather than prefetching it.
+    attempts = [(registered["url"], True)] if registered else []
+    explored = []
+    index = 0
+    corporate_added = False
+    exchange_added = False
+    while True:
+        if index >= len(attempts):
+            if not corporate_added:
+                corporate_added = True
+                try:
+                    attempts.extend((url, True) for url in crawler(company))
+                except (OfficialSourceFetchError, ValueError, TypeError):
+                    pass
+                continue
+            if not exchange_added:
+                exchange_added = True
+                attempts.extend((url, False) for url in exchange_candidates(company, review_items))
+                continue
+            break
+        url, trusted = attempts[index]
+        index += 1
+        explored.append(url)
+        official_source_log(company, registered["url"] if registered else url,
+                            exploration_url=url, exploration_state="trying")
         try:
             final, text = page_fetcher(url, company, {url: {}}, registered=trusted)
+            official_source_log(company, registered["url"] if registered else url,
+                                explored_urls=explored, adopted_url=final)
             return final, text
-        except (OfficialSourceNotFound, OfficialSourceFetchError, ValueError):
+        except (OfficialSourceNotFound, OfficialSourceFetchError, ValueError, TypeError) as error:
             # A stale priority URL deliberately falls through to the same-domain
             # crawler and then exchange disclosures.
+            official_source_log(company, registered["url"] if registered else url,
+                                exploration_url=url, exploration_state="rejected",
+                                exception_class=type(error).__name__, exception_message=error)
             continue
+    official_source_log(company, registered["url"] if registered else "none",
+                        explored_urls=explored, adopted_url="none")
     return None, ""
 
 
@@ -787,13 +852,16 @@ def fetch_official_page(url, company, source_urls, registered=False, follow_link
                 official_source_log(company, linked, reason="linked_source_rejected",
                                     exception_class=type(error).__name__, exception_message=error)
                 continue
+            linked_text = safe_text(linked_text)
+            best_text = safe_text(best[1])
             facts = sum(bool(re.search(pattern, linked_text)) for pattern in
                         (r"\d[\d,]*\s*株", r"\d[\d,]*\s*(?:円|ポイント)", r"(?:基準日|権利確定|\d{1,2}月)", r"(?:継続保有|長期保有|保有期間)"))
-            best_facts = sum(bool(re.search(pattern, best[1])) for pattern in
+            best_facts = sum(bool(re.search(pattern, best_text)) for pattern in
                              (r"\d[\d,]*\s*株", r"\d[\d,]*\s*(?:円|ポイント)", r"(?:基準日|権利確定|\d{1,2}月)", r"(?:継続保有|長期保有|保有期間)"))
-            if facts > best_facts or (facts == best_facts and len(linked_text) > len(best[1])):
+            if facts > best_facts or (facts == best_facts and len(linked_text) > len(best_text)):
                 best = linked_final, linked_text
         final, text = best
+    text = safe_text(text)
     identity_text = text + " " + source_metadata_text(source_urls, normalized)
     host, path = hostname(final), urlparse(final).path.lower()
     if is_subdomain(host, "jpx.co.jp") and any(path.startswith(value) for value in JPX_BLOCKED_PATHS):
