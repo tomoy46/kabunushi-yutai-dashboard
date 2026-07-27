@@ -47,7 +47,10 @@ jobs:
           RUN_LIVE_OFFICIAL_SOURCES: '1'
         run: python -m unittest tests.test_live_official_sources -v
       - name: Commit verified results
-        if: ${{ success() && inputs.diagnostic_mode != true }}
+        # Discovery persists each company's outcome independently. Run this step
+        # even when a later company (or a post-discovery check) fails so already
+        # confirmed results are not discarded with the failed job.
+        if: ${{ always() && !cancelled() && inputs.diagnostic_mode != true }}
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
