@@ -1,4 +1,5 @@
 import copy
+import gzip
 import json
 import os
 import tempfile
@@ -208,6 +209,40 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         with patch.object(discovery, "urlopen", side_effect=error):
             with self.assertRaisesRegex(discovery.OfficialSourceNotFound, "official_source_http_404"):
                 discovery.fetch_official_page(url, company, {}, registered=True)
+
+    def test_registered_source_logs_http_metadata_preview_and_decodes_gzip(self):
+        url = "https://example.co.jp/ir/benefit/"
+        company = {"code": "7550", "name": "テスト", "official_domain": "example.co.jp"}
+        html = "<main>株主優待制度 100株</main>".encode()
+        class Headers(dict):
+            def get(self, key, default=""): return super().get(key, default)
+        class Response:
+            status = 200
+            headers = Headers({"Content-Type": "text/html; charset=utf-8", "Content-Encoding": "gzip"})
+            def geturl(self): return url
+            def read(self, _limit): return gzip.compress(html)
+            def __enter__(self): return self
+            def __exit__(self, *_args): pass
+        output = StringIO()
+        with patch.object(discovery, "urlopen", return_value=Response()), redirect_stdout(output):
+            _, text = discovery.fetch_official_page(url, company, {}, registered=True)
+        self.assertIn("株主優待制度", text)
+        log = output.getvalue()
+        self.assertIn("security_code=7550", log)
+        self.assertIn("http_status=200", log)
+        self.assertIn("final_url=" + url, log)
+        self.assertIn("content_type=text/html; charset=utf-8", log)
+        self.assertIn("document_type=HTML", log)
+        self.assertIn("extracted_text_preview=株主優待制度 100株", log)
+        self.assertIn("openai_body_characters=11", log)
+
+    def test_pdf_conversion_failure_reports_exit_code_and_stderr(self):
+        completed = type("Completed", (), {"returncode": 1, "stderr": b"syntax error"})()
+        diagnostics = []
+        with patch.object(discovery.subprocess, "run", return_value=completed):
+            with self.assertRaisesRegex(discovery.OfficialSourceFetchError, "pdf_conversion_failure"):
+                discovery.pdf_text(b"%PDF-broken", lambda **values: diagnostics.append(values))
+        self.assertEqual(diagnostics, [{"returncode": 1, "stderr": "syntax error"}])
 
     def test_registered_sources_are_confirmed_without_web_search(self):
         targets = [
