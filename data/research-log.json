@@ -244,5 +244,32 @@
       "official_source_not_found"
     ],
     "checked_at": "2026-07-27T08:50:16.960490+00:00"
+  },
+  {
+    "code": "7550",
+    "name": "ゼンショーホールディングス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-27T09:19:15.285538+00:00"
+  },
+  {
+    "code": "9861",
+    "name": "吉野家ホールディングス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-27T09:19:15.872747+00:00"
+  },
+  {
+    "code": "8163",
+    "name": "ＳＲＳホールディングス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-27T09:19:18.524685+00:00"
   }
 ]

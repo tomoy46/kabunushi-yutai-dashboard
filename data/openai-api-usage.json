@@ -292,5 +292,34 @@
         "error": "character_encoding_failure: UnicodeDecodeError: 'utf-16-le' codec can't decode bytes in position 694-695: illegal encoding"
       }
     ]
+  },
+  {
+    "executed_at": "2026-07-27T09:19:32.906730+00:00",
+    "model": "gpt-5.4-nano",
+    "diagnostic_mode": false,
+    "processed_companies": 3,
+    "responses_api_calls": 0,
+    "responses_with_web_search": 0,
+    "web_search_output_items": 0,
+    "web_search_calls": 0,
+    "input_tokens": 0,
+    "cached_input_tokens": 0,
+    "output_tokens": 0,
+    "successes": 0,
+    "verification_required": 3,
+    "research_log_saved": 3,
+    "failures": 2,
+    "unique_web_search_call_ids": 0,
+    "duration_seconds": 18.527,
+    "errors": [
+      {
+        "code": "7616",
+        "error": "endswith first arg must be bytes or a tuple of bytes, not str"
+      },
+      {
+        "code": "7412",
+        "error": "character_encoding_failure: UnicodeDecodeError: 'utf-16-le' codec can't decode bytes in position 694-695: illegal encoding"
+      }
+    ]
   }
 ]
