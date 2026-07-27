@@ -15,6 +15,7 @@ import json
 import os
 import random
 import re
+import shutil
 import socket
 import subprocess
 import sys
@@ -552,6 +553,9 @@ def pdf_text(body, diagnostic=None):
                 raise OfficialSourceFetchError(
                     "pdf_conversion_failure",
                     RuntimeError(completed.stderr.decode("utf-8", "replace")))
+            if body.startswith(b"%PDF"):
+                raise OfficialSourceFetchError(
+                    "pdf_conversion_failure", RuntimeError("pdftotext produced no text"))
     except OfficialSourceFetchError:
         raise
     except (FileNotFoundError, OSError, subprocess.SubprocessError) as error:
@@ -563,6 +567,22 @@ def pdf_text(body, diagnostic=None):
             raise OfficialSourceFetchError("pdf_conversion_failure", error) from error
     # Unit fixtures and a subset of simple PDFs expose readable text directly.
     return page_text(body)
+
+
+def pdf_extractor_available():
+    """Return whether the mandatory production PDF extractor is executable."""
+    return shutil.which("pdftotext") is not None
+
+
+def evidence_facts(text):
+    """Report the four facts required before structured extraction."""
+    text = safe_text(text)
+    return {
+        "required_shares": bool(re.search(r"\d[\d,]*\s*株", text)),
+        "benefit_content": bool(re.search(r"優待(?:券|内容|品|ポイント|食事)|\d[\d,]*\s*(?:円|ポイント)", text)),
+        "record_month": bool(re.search(r"権利確定|基準日|\d{1,2}\s*月", text)),
+        "long_term_condition": bool(re.search(r"継続保有|長期保有|保有期間|保有条件", text)),
+    }
 
 
 def source_metadata_text(source_urls, url):
@@ -883,6 +903,10 @@ def fetch_official_page(url, company, source_urls, registered=False, follow_link
                 best = linked_final, linked_text
         final, text = best
     text = safe_text(text)
+    official_source_log(company, normalized, **{
+        f"evidence_{name}": "found" if found else "missing"
+        for name, found in evidence_facts(text).items()
+    })
     identity_text = text + " " + source_metadata_text(source_urls, normalized)
     host, path = hostname(final), urlparse(final).path.lower()
     if is_subdomain(host, "jpx.co.jp") and any(path.startswith(value) for value in JPX_BLOCKED_PATHS):
@@ -1059,6 +1083,9 @@ def choose(companies, args, progress, benefits, queue=None):
     by_code = {str(company["code"]): company for company in companies}
     ordered = manual + sorted(eligible - set(manual))
     candidates = [by_code[code] for code in ordered if code in by_code and code not in immutable]
+    if not getattr(args, "retry_failed", False):
+        researched = {str(item.get("code")) for item in load(DATA / "research-log.json", [])}
+        candidates = [company for company in candidates if str(company["code"]) not in researched]
     return candidates[:min(args.batch_size, args.daily_limit)]
 
 
@@ -1131,13 +1158,21 @@ def persist_production_state(benefits, queue, progress):
     atomic(DATA / "discovery-progress.json", progress)
 
 
-def append_research_log(company, result, reasons):
+def append_research_log(company, result, reasons, source_url=None):
     """Keep non-official outcomes out of dashboard queues and counters."""
     path = DATA / "research-log.json"
     entries = load(path, [])
-    entries.append({"code": company["code"], "name": company["name"],
-                    "result": result, "reasons": list(reasons),
-                    "checked_at": dt.datetime.now(dt.timezone.utc).isoformat()})
+    entry = {"code": company["code"], "name": company["name"],
+             "result": result, "reasons": list(reasons),
+             "checked_at": dt.datetime.now(dt.timezone.utc).isoformat()}
+    if source_url:
+        entry["source_url"] = canonical_url(source_url)
+    # One source failure is one durable outcome.  Retrying requires the explicit
+    # --retry-failed switch and replaces, rather than duplicates, that outcome.
+    entries = [value for value in entries if not (
+        value.get("code") == entry["code"] and value.get("result") == result and
+        value.get("source_url") == entry.get("source_url"))]
+    entries.append(entry)
     atomic(path, entries)
 
 
@@ -1158,6 +1193,9 @@ def publish_workflow_counts(totals):
         stream.write(f"confirmed={totals['successes']}\n")
         stream.write(f"research_log={totals['research_log_saved']}\n")
         stream.write(f"failed={totals['failures']}\n")
+        stream.write(f"openai_calls={totals['responses_api_calls']}\n")
+        cause = totals.get("zero_confirmed_cause") or "none"
+        stream.write(f"zero_confirmed_cause={cause}\n")
 
 
 def diagnostic_outcome(totals, failed_stage):
@@ -1181,6 +1219,12 @@ def run(args):
             print("Diagnostic result: failure\nFailed stage: plain\nResponses API calls: 0\nWeb-search Responses requests: 0\nWeb-search output items: 0\nUnique web-search call IDs: 0\nWeb-search action types: none\nInput tokens: 0\nOutput tokens: 0")
             return 1
         print("OPENAI_API_KEY is required", file=sys.stderr); return 2
+    if not fixture and not pdf_extractor_available():
+        print("PDF PREFLIGHT FAILED: pdftotext is unavailable; OpenAI API calls: 0", file=sys.stderr)
+        publish_workflow_counts({"successes": 0, "research_log_saved": 0, "failures": 1,
+                                 "responses_api_calls": 0,
+                                 "zero_confirmed_cause": "pdftotext_unavailable"})
+        return 1
     model = os.environ.get("OPENAI_MODEL") or DEFAULT_MODEL
     companies = load(DATA / "listed-companies.json", [])
     domains = load(DATA / "company-domains.json", {})
@@ -1240,6 +1284,9 @@ def run(args):
                 item = empty_extraction(company, None)
                 reasons = ["official_source_not_found"]
             else:
+                facts = evidence_facts(official_text)
+                print("Evidence readiness " + str(company["code"]) + ": " + " ".join(
+                    f"{name}={'found' if value else 'missing'}" for name, value in facts.items()))
                 # OpenAI receives already-fetched text and performs structure
                 # extraction only.  It never participates in URL discovery or IO.
                 totals["responses_api_calls"] += 1
@@ -1267,7 +1314,7 @@ def run(args):
             if args.diagnostic_mode:
                 continue
             if reasons:
-                append_research_log(company, "not_officially_verified", reasons)
+                append_research_log(company, "not_officially_verified", reasons, final_url)
                 totals["research_log_saved"] += 1
                 queue = [x for x in queue if x.get("code") != company["code"]]
                 outcome = "research_log"
@@ -1320,8 +1367,9 @@ def run(args):
                 failed_stage = failed_stage or active_failed_stage
                 diagnostic_stage(active_label, "failure", error, key)
             totals["failures"] += 1; errors.append({"code": company["code"], "error": str(error)[:300]})
-            if not args.diagnostic_mode and not registered:
-                append_research_log(company, "failed", [safe_message(error)])
+            if not args.diagnostic_mode:
+                append_research_log(company, "failed", [safe_message(error)],
+                                    registered.get("url") if registered else None)
                 totals["research_log_saved"] += 1
             if not args.diagnostic_mode:
                 if registered:
@@ -1348,6 +1396,13 @@ def run(args):
                 check=False, capture_output=True, text=True).stdout.splitlines()
             print("PRODUCTION SAVED CODES: " + (", ".join(confirmed_codes) or "none"))
             print("PRODUCTION CHANGED FILES: " + (", ".join(changed) or "none"))
+        if totals["successes"] == 0:
+            causes = sorted({safe_text(error.get("error")) for error in errors if error.get("error")})
+            totals["zero_confirmed_cause"] = "; ".join(causes)[:500] or (
+                "all_results_require_research" if totals["verification_required"] else "no_eligible_targets")
+            print(f"ZERO CONFIRMED: OpenAI API calls={totals['responses_api_calls']} "
+                  f"input_tokens={totals['input_tokens']} output_tokens={totals['output_tokens']} "
+                  f"cause={totals['zero_confirmed_cause']}")
         publish_workflow_counts(totals)
         if accounted != len(selected):
             print(f"ERROR: selected {len(selected)} companies but persisted outcomes for {accounted}", file=sys.stderr)

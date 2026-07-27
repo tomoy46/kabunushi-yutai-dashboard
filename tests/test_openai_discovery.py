@@ -1,4 +1,5 @@
 import copy
+import csv
 import gzip
 import json
 import os
@@ -292,6 +293,38 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                 discovery.pdf_text(b"%PDF-broken", lambda **values: diagnostics.append(values))
         self.assertEqual(diagnostics, [{"returncode": 1, "stderr": "syntax error"}])
 
+    def test_real_pdf_with_empty_conversion_is_not_sent_as_binary_text(self):
+        completed = type("Completed", (), {"returncode": 0, "stderr": b""})()
+        with patch.object(discovery.subprocess, "run", return_value=completed):
+            with self.assertRaisesRegex(discovery.OfficialSourceFetchError, "produced no text"):
+                discovery.pdf_text(b"%PDF-1.7 binary only")
+
+    def test_pdf_evidence_fact_diagnostics_cover_required_fields(self):
+        facts = discovery.evidence_facts(
+            "必要株数 100株 優待内容 お食事券2,000円 権利確定月 3月 長期保有条件 1年以上")
+        self.assertEqual(facts, {"required_shares": True, "benefit_content": True,
+                                 "record_month": True, "long_term_condition": True})
+
+    def test_research_log_replaces_the_same_pdf_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(discovery, "DATA", Path(directory)):
+                company = {"code": "7550", "name": "ゼンショー"}
+                url = "https://example.co.jp/benefit.pdf"
+                discovery.append_research_log(company, "failed", ["first"], url)
+                discovery.append_research_log(company, "failed", ["second"], url)
+                entries = json.loads((Path(directory) / "research-log.json").read_text())
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0]["reasons"], ["second"])
+
+    def test_production_preflight_stops_before_openai_when_pdftotext_is_missing(self):
+        args = type("Args", (), {"diagnostic_mode": False})()
+        with patch.object(discovery, "is_test_fixture", return_value=False), \
+             patch.object(discovery, "pdf_extractor_available", return_value=False), \
+             patch.object(discovery, "request_response") as request, \
+             patch.dict(os.environ, {"OPENAI_API_KEY": "mock"}), redirect_stdout(StringIO()):
+            self.assertEqual(discovery.run(args), 1)
+        request.assert_not_called()
+
     def test_registered_sources_are_confirmed_without_web_search(self):
         targets = [
             ("7550", "ゼンショーホールディングス"), ("9861", "吉野家ホールディングス"),
@@ -330,6 +363,9 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                 self.assertEqual(discovery.run(args), 0)
             benefits = json.loads((root / "benefits.json").read_text())
             self.assertEqual({item["code"] for item in benefits}, {code for code, _name in targets})
+            with (root / "benefits.csv").open(encoding="utf-8", newline="") as stream:
+                csv_codes = {row["code"] for row in csv.DictReader(stream)}
+            self.assertEqual(csv_codes, {code for code, _name in targets})
             self.assertTrue(all(item["benefit_status"] == "official_confirmed" for item in benefits))
             self.assertEqual(json.loads((root / "research-log.json").read_text()), [])
             log = output.getvalue()
