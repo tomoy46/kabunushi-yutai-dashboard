@@ -16,9 +16,12 @@ const dispatchInputs = triggers.workflow_dispatch.inputs;
 const steps = parsedWorkflow.jobs.discover.steps;
 const stepNamed = (name) => steps.find((step) => step.name === name);
 
-test('normal workflow runs persist verified results', () => {
+test('production workflow commits verified results after a partial failure', () => {
   assert.equal(dispatchInputs.diagnostic_mode.default, false);
-  assert.equal(stepNamed('Commit verified results').if, '${{ success() && inputs.diagnostic_mode != true }}');
+  assert.equal(
+    stepNamed('Commit verified results').if,
+    '${{ always() && !cancelled() && inputs.diagnostic_mode != true }}',
+  );
 });
 
 test('diagnostic mode is enabled only by the checked input', () => {
