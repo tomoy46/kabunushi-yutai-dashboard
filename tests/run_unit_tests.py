@@ -2,6 +2,7 @@
 
 import os
 import socket
+import subprocess
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -25,14 +26,20 @@ def load_unit_suite():
 
 def main():
     outbound_attempts = []
+    external_command_attempts = []
 
     def reject_outbound(*args, **kwargs):
         outbound_attempts.append((args, kwargs))
         raise AssertionError("unit tests must not open network connections")
 
+    def reject_external_command(*args, **kwargs):
+        external_command_attempts.append((args, kwargs))
+        raise AssertionError("unit tests must not execute external commands")
+
     class NetworkIsolationTest(unittest.TestCase):
-        def test_fixture_suite_made_zero_external_connections(self):
+        def test_fixture_suite_made_zero_external_connections_or_commands(self):
             self.assertEqual(outbound_attempts, [])
+            self.assertEqual(external_command_attempts, [])
 
     suite = load_unit_suite()
     suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(NetworkIsolationTest))
@@ -42,7 +49,8 @@ def main():
     with patch.dict(os.environ, clean_environment, clear=True), \
             patch.object(socket, "create_connection", side_effect=reject_outbound), \
             patch.object(socket.socket, "connect", side_effect=reject_outbound), \
-            patch.object(socket.socket, "connect_ex", side_effect=reject_outbound):
+            patch.object(socket.socket, "connect_ex", side_effect=reject_outbound), \
+            patch.object(subprocess, "Popen", side_effect=reject_external_command):
         result = unittest.TextTestRunner(verbosity=1, buffer=True).run(suite)
     return 0 if result.wasSuccessful() else 1
 
