@@ -212,5 +212,29 @@
         "error": "redirect_host_not_official_domain:invalid"
       }
     ]
+  },
+  {
+    "executed_at": "2026-07-27T08:19:58.712495+00:00",
+    "model": "gpt-5.4-nano",
+    "diagnostic_mode": false,
+    "processed_companies": 4,
+    "responses_api_calls": 2,
+    "responses_with_web_search": 0,
+    "web_search_output_items": 0,
+    "web_search_calls": 0,
+    "input_tokens": 5912,
+    "cached_input_tokens": 0,
+    "output_tokens": 1647,
+    "successes": 0,
+    "verification_required": 4,
+    "failures": 1,
+    "unique_web_search_call_ids": 0,
+    "duration_seconds": 16.195,
+    "errors": [
+      {
+        "code": "9861",
+        "error": "redirect_host_not_official_domain:invalid"
+      }
+    ]
   }
 ]
