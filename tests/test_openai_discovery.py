@@ -27,6 +27,16 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                       "official_verified_at": "2026-07-26"})
         return value
 
+    @staticmethod
+    def successful_pdf_conversion(text="株主優待制度 100株 3月 長期保有条件なし"):
+        """Return a pdftotext mock that writes deterministic extracted fixture text."""
+        def convert(command, **_kwargs):
+            Path(command[-1]).write_text(text, encoding="utf-8")
+            return type("Completed", (), {
+                "returncode": 0, "stdout": b"", "stderr": b"",
+            })()
+        return convert
+
     def legacy_test_default_model_and_request_contract(self):
         payload = discovery.build_payload(self.company)
         self.assertEqual(payload["model"], "gpt-5.4-nano")
@@ -153,13 +163,15 @@ class OpenAIDiscoveryTests(unittest.TestCase):
             def read(self, _limit): return "極洋 株主優待制度".encode()
             def __enter__(self): return self
             def __exit__(self, *_args): pass
-        with patch.object(discovery, "urlopen", return_value=Response()):
+        convert = self.successful_pdf_conversion()
+        with patch.object(discovery, "urlopen", return_value=Response()), \
+             patch.object(discovery.subprocess, "run", side_effect=convert):
             with self.assertRaisesRegex(ValueError, "exchange_disclosure_identity_mismatch"):
                 discovery.fetch_official_page(url, company, {url})
-        response = Response()
-        response.read = lambda _limit: "旧社名・ブランド名 証券コード1301 株主優待制度".encode()
-        with patch.object(discovery, "urlopen", return_value=response):
-            self.assertEqual(discovery.fetch_official_page(url, company, {url})[0], url)
+        with patch.object(discovery, "urlopen", return_value=Response()), \
+             patch.object(discovery.subprocess, "run", side_effect=convert):
+            metadata = {url: {"title": "旧社名・ブランド名 証券コード1301"}}
+            self.assertEqual(discovery.fetch_official_page(url, company, metadata)[0], url)
 
     def test_target_exchange_pdfs_accept_matching_code_in_disclosure_metadata(self):
         for code in ("7550", "9861", "8163", "7616", "7412"):
@@ -173,7 +185,9 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                     def __enter__(self): return self
                     def __exit__(self, *_args): pass
                 metadata = {url: {"title": f"旧社名（証券コード {code}）"}}
-                with patch.object(discovery, "urlopen", return_value=Response()):
+                with patch.object(discovery, "urlopen", return_value=Response()), \
+                     patch.object(discovery.subprocess, "run", side_effect=
+                                  self.successful_pdf_conversion()):
                     self.assertEqual(discovery.fetch_official_page(url, company, metadata)[0], url)
 
     def test_registered_source_html_ignores_name_variant_and_pdf_is_extracted(self):
@@ -196,9 +210,10 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         with patch.object(discovery, "urlopen", return_value=Response(html_url, html, "text/html")):
             self.assertIn("100株", discovery.fetch_official_page(
                 html_url, company, {}, registered=True)[1])
-        pdf = "ブランド表記のみ 株主優待制度 100株 3月".encode()
+        pdf = b"%PDF-test-fixture"
         with patch.object(discovery, "urlopen", return_value=Response(pdf_url, pdf, "application/pdf")), \
-             patch.object(discovery.subprocess, "run", side_effect=FileNotFoundError):
+             patch.object(discovery.subprocess, "run", side_effect=
+                          self.successful_pdf_conversion("ブランド表記のみ 株主優待制度 100株 3月")):
             self.assertIn("3月", discovery.fetch_official_page(
                 pdf_url, company, {}, registered=True)[1])
 
@@ -436,11 +451,12 @@ class OpenAIDiscoveryTests(unittest.TestCase):
             def __exit__(self, *_args): pass
         responses = [
             Response(overview, f'<a href="{pdf}">株主優待制度 PDF</a>'.encode(), "text/html"),
-            Response(pdf, "株主優待制度 500株 20,000ポイント 3月末 9月末 長期保有条件なし".encode(),
+            Response(pdf, b"%PDF-test-fixture",
                      "application/pdf"),
         ]
         with patch.object(discovery, "urlopen", side_effect=responses), \
-             patch.object(discovery.subprocess, "run", side_effect=FileNotFoundError):
+             patch.object(discovery.subprocess, "run", side_effect=self.successful_pdf_conversion(
+                 "株主優待制度 500株 20,000ポイント 3月末 9月末 長期保有条件なし")):
             final, text = discovery.fetch_official_page(overview, company, {}, registered=True)
         self.assertEqual(final, pdf)
         self.assertIn("500株", text)
