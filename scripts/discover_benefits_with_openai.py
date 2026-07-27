@@ -468,7 +468,16 @@ def page_text(body, content_type=""):
     # evidence (description, og:title and og:site_name).
     meta = " ".join(match.group(1) for tag in re.findall(r"(?is)<meta\b[^>]*>", decoded)
                     if (match := re.search(r'''(?is)\bcontent\s*=\s*["']([^"']*)["']''', tag)))
+    # Hydrated IR sites often put the only useful copy in JSON-LD, a framework
+    # bootstrap object, or an application/json script.  Keep those payloads as
+    # evidence while still dropping executable JavaScript and CSS.
+    embedded = " ".join(re.findall(
+        r'''(?is)<script\b[^>]*type\s*=\s*["'](?:application/ld\+json|application/json)["'][^>]*>(.*?)</script>''',
+        decoded))
+    next_data = " ".join(re.findall(
+        r'''(?is)<script\b[^>]*id\s*=\s*["']__NEXT_DATA__["'][^>]*>(.*?)</script>''', decoded))
     decoded = re.sub(r"(?is)<(script|style).*?>.*?</\1>", " ", decoded)
+    decoded = embedded + " " + next_data + " " + decoded
     decoded = meta + " " + decoded
     return re.sub(r"\s+", " ", re.sub(r"(?s)<[^>]+>", " ", decoded)).strip()
 
@@ -525,11 +534,37 @@ def security_code_found(text, code):
                           unicodedata.normalize("NFKC", str(text or "")).upper()))
 
 
-def fetch_official_page(url, company, source_urls, registered=False):
+def registered_domains(company):
+    """Return the issuer domains explicitly approved for redirects and links."""
+    values = [company.get("official_domain"), *(company.get("official_domains") or [])]
+    return tuple(dict.fromkeys(normalized_host(value) for value in values if normalized_host(value)))
+
+
+def registered_link_candidates(body, base_url, company):
+    """Extract official detail/PDF/API URLs from one HTML response only."""
+    html = body.decode("utf-8", "ignore")
+    raw = re.findall(r'''(?is)\b(?:href|src)\s*=\s*["']([^"'#]+)["']''', html)
+    # JSON strings cover JSON-LD, Next/Nuxt state and explicit API endpoints.
+    raw += [value.replace(r"\/", "/") for value in re.findall(
+        r'''(?i)["']((?:https?:)?\\?/\\?/[^"']+|/[^"']+)["']''', html)]
+    domains = registered_domains(company)
+    result = []
+    for value in raw:
+        linked = canonical_url(urljoin(base_url, value))
+        host, path = hostname(linked), urlparse(linked).path.lower()
+        official = any(is_subdomain(host, domain) for domain in domains)
+        relevant = (path.endswith(".pdf") or bool(re.search(
+            r"benefit|yutai|complimentary|shareholder|stockholder|kabunushi|株主|優待|/api/", value, re.I)))
+        if linked and official and relevant and linked != canonical_url(base_url):
+            result.append(linked)
+    return list(dict.fromkeys(result))[:10]
+
+
+def fetch_official_page(url, company, source_urls, registered=False, follow_links=True):
     normalized = canonical_url(url)
     if not registered and not any(url_identity(normalized) == url_identity(source) for source in source_urls):
         raise ValueError("source_url_not_in_search_results")
-    if not allowed_url(normalized, company.get("official_domain")):
+    if not any(allowed_url(normalized, domain) for domain in registered_domains(company) or (None,)):
         raise ValueError("source_url_not_allowed")
     request = Request(normalized, headers={"User-Agent": BROWSER_USER_AGENT,
                                            "Accept": "text/html,application/xhtml+xml,application/pdf",
@@ -542,13 +577,13 @@ def fetch_official_page(url, company, source_urls, registered=False):
                 raise OfficialSourceNotFound("official_source_http_404")
             if response.status != 200: raise ValueError(f"HTTP_status_{response.status}")
             final = canonical_url(response.geturl())
-            expected = company.get("official_domain")
+            expected_domains = registered_domains(company)
             final_is_exchange = final and any(is_subdomain(hostname(final), exchange)
                                               for exchange in OFFICIAL_HOSTS)
-            if not final or (expected and not is_subdomain(hostname(final), expected) and
+            if not final or (expected_domains and not any(is_subdomain(hostname(final), value) for value in expected_domains) and
                              not final_is_exchange):
                 raise ValueError(f"redirect_host_not_official_domain:{hostname(final) or 'invalid'}")
-            if not expected and hostname(final) != hostname(normalized):
+            if not expected_domains and hostname(final) != hostname(normalized):
                 raise ValueError("source_redirected_outside_candidate_domain")
             content_type = str(response.headers.get("Content-Type", "")).lower() if hasattr(response, "headers") else ""
             body = response.read(2_000_000)
@@ -614,6 +649,25 @@ def fetch_official_page(url, company, source_urls, registered=False):
                             javascript_dependent_empty=javascript_empty,
                             openai_body_characters=len(text),
                             fetch_reason="javascript_dependent_empty" if javascript_empty else ("extracted_text_empty" if not text else "success"))
+    # Exactly one recursive level: prefer a maintained site's linked PDF/detail
+    # page when it supplies more benefit facts than a JavaScript shell/overview.
+    if registered and follow_links and not is_pdf:
+        best = (final, text)
+        for linked in registered_link_candidates(body, final, company):
+            try:
+                linked_final, linked_text = fetch_official_page(
+                    linked, company, {linked: {}}, registered=True, follow_links=False)
+            except Exception as error:
+                official_source_log(company, linked, reason="linked_source_rejected",
+                                    exception_class=type(error).__name__, exception_message=error)
+                continue
+            facts = sum(bool(re.search(pattern, linked_text)) for pattern in
+                        (r"\d[\d,]*\s*株", r"\d[\d,]*\s*(?:円|ポイント)", r"(?:基準日|権利確定|\d{1,2}月)", r"(?:継続保有|長期保有|保有期間)"))
+            best_facts = sum(bool(re.search(pattern, best[1])) for pattern in
+                             (r"\d[\d,]*\s*株", r"\d[\d,]*\s*(?:円|ポイント)", r"(?:基準日|権利確定|\d{1,2}月)", r"(?:継続保有|長期保有|保有期間)"))
+            if facts > best_facts or (facts == best_facts and len(linked_text) > len(best[1])):
+                best = linked_final, linked_text
+        final, text = best
     identity_text = text + " " + source_metadata_text(source_urls, normalized)
     host, path = hostname(final), urlparse(final).path.lower()
     if is_subdomain(host, "jpx.co.jp") and any(path.startswith(value) for value in JPX_BLOCKED_PATHS):
@@ -926,8 +980,11 @@ def run(args):
                 active_label = "Registered official URL extraction"
                 active_failed_stage = "official_fetch"
                 fixed_url = registered["url"]
+                approved = registered.get("allowed_domains") or []
+                company["official_domains"] = list(dict.fromkeys([
+                    normalized_host(fixed_url), *approved]))
                 if not company.get("official_domain"):
-                    company["official_domain"] = normalized_host(fixed_url)
+                    company["official_domain"] = company["official_domains"][0]
                 final_url, official_text = fetch_official_page(
                     fixed_url, company, {fixed_url: registered}, registered=True)
                 totals["responses_api_calls"] += 1
