@@ -42,6 +42,10 @@ jobs:
           ${{ inputs.official_only == true && '--official-only' || '' }}
           ${{ inputs.diagnostic_mode == true && '--diagnostic-mode' || '' }}
       - run: npm test
+      - name: Verify maintained URLs against corporate sites
+        env:
+          RUN_LIVE_OFFICIAL_SOURCES: '1'
+        run: python -m unittest tests.test_live_official_sources -v
       - name: Commit verified results
         if: ${{ success() && inputs.diagnostic_mode != true }}
         run: |

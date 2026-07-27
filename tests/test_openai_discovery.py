@@ -317,6 +317,59 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         text = discovery.page_text(html.encode())
         self.assertIn("株式会社 極洋", text)
 
+    def test_json_ld_and_next_data_are_searchable(self):
+        html = '''<script type="application/ld+json">{"description":"株主優待 100株"}</script>
+                  <script id="__NEXT_DATA__" type="application/json">{"record":"3月末"}</script>
+                  <script>document.write("discard me")</script>'''
+        text = discovery.page_text(html.encode())
+        self.assertIn("株主優待 100株", text)
+        self.assertIn("3月末", text)
+        self.assertNotIn("discard me", text)
+
+    def test_registered_overview_follows_official_pdf_exactly_one_level(self):
+        overview = "https://example.co.jp/ir/stockholder/"
+        pdf = "https://example.co.jp/ir/library/benefit.pdf"
+        company = {"code": "7616", "name": "コロワイド", "official_domain": "example.co.jp"}
+        class Headers(dict):
+            def get(self, key, default=""): return super().get(key, default)
+        class Response:
+            status = 200
+            def __init__(self, url, body, content_type):
+                self.url, self.body = url, body
+                self.headers = Headers({"Content-Type": content_type})
+            def geturl(self): return self.url
+            def read(self, _limit): return self.body
+            def __enter__(self): return self
+            def __exit__(self, *_args): pass
+        responses = [
+            Response(overview, f'<a href="{pdf}">株主優待制度 PDF</a>'.encode(), "text/html"),
+            Response(pdf, "株主優待制度 500株 20,000ポイント 3月末 9月末 長期保有条件なし".encode(),
+                     "application/pdf"),
+        ]
+        with patch.object(discovery, "urlopen", side_effect=responses), \
+             patch.object(discovery.subprocess, "run", side_effect=FileNotFoundError):
+            final, text = discovery.fetch_official_page(overview, company, {}, registered=True)
+        self.assertEqual(final, pdf)
+        self.assertIn("500株", text)
+        self.assertEqual(len(responses), 2)
+
+    def test_registered_redirect_accepts_explicit_official_alias(self):
+        source = "https://yoshinoya-holdings.com/ir/stock/benefit/"
+        final = "https://yoshinoya-holdings.jp/ir/stock/benefit/"
+        company = {"code": "9861", "name": "吉野家ホールディングス",
+                   "official_domain": "yoshinoya-holdings.com",
+                   "official_domains": ["yoshinoya-holdings.com", "yoshinoya-holdings.jp"]}
+        class Response:
+            status = 200
+            headers = {}
+            def geturl(self): return final
+            def read(self, _limit): return "株主優待制度 100株 2月 8月 長期保有条件なし".encode()
+            def __enter__(self): return self
+            def __exit__(self, *_args): pass
+        with patch.object(discovery, "urlopen", return_value=Response()):
+            self.assertEqual(discovery.fetch_official_page(
+                source, company, {}, registered=True, follow_links=False)[0], final)
+
     def test_jpx_own_ir_page_is_never_company_disclosure(self):
         url = "https://jpx.co.jp/corporate/investor-relations/shareholders/incentives/index.html"
         company = {"code": "1301", "name": "極洋", "official_domain": None}
