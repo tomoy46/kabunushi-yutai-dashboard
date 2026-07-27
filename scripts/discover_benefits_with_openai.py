@@ -68,7 +68,7 @@ FIELDS = {
     "evidence_text": {"type": ["string", "null"]}, "error_reason": {"type": ["string", "null"]},
 }
 SCHEMA = {"type": "object", "properties": FIELDS, "required": list(FIELDS), "additionalProperties": False}
-BENEFIT_WORDS = ("株主優待", "優待制度", "株主優待制度")
+BENEFIT_WORDS = ("株主優待", "優待制度", "優待券", "優待ポイント")
 TRACKING_QUERY_KEYS = {"fbclid", "gclid", "yclid", "mc_cid", "mc_eid"}
 BROWSER_USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                       "AppleWebKit/537.36 (KHTML, like Gecko) "

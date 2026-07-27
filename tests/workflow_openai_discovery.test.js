@@ -58,6 +58,13 @@ test('tests run before discovery and a failed test blocks API use and commit', (
   assert.equal(stepNamed('Commit verified results').if, '${{ success() && inputs.diagnostic_mode != true }}');
 });
 
+test('live source verification allows one stale issuer before production discovery', () => {
+  const liveCheck = stepNamed('Verify maintained official sources over real HTTP');
+  assert.equal(liveCheck.env.RUN_LIVE_OFFICIAL_SOURCES, '1');
+  assert.ok(liveCheck.run.includes('test_live_official_sources.py'));
+  assert.equal(liveCheck['continue-on-error'], undefined);
+});
+
 test('preflight is offline and excludes the opt-in live official-source suite', () => {
   const preflight = stepNamed('Test before using the production API');
   const testCommand = JSON.parse(require('node:fs').readFileSync(packagePath, 'utf8')).scripts.test;
