@@ -190,5 +190,32 @@
       "official_source_http_404"
     ],
     "checked_at": "2026-07-27T08:19:58.711065+00:00"
+  },
+  {
+    "code": "7550",
+    "name": "ゼンショーホールディングス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-27T08:46:29.464273+00:00"
+  },
+  {
+    "code": "9861",
+    "name": "吉野家ホールディングス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-27T08:46:30.162081+00:00"
+  },
+  {
+    "code": "8163",
+    "name": "ＳＲＳホールディングス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-27T08:46:32.743691+00:00"
   }
 ]
