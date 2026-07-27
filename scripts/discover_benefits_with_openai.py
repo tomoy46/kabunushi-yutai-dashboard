@@ -1070,6 +1070,15 @@ def publish_workflow_counts(totals):
         stream.write(f"failed={totals['failures']}\n")
 
 
+def diagnostic_outcome(totals, failed_stage):
+    """Classify a diagnostic run without treating manual review as an error."""
+    if failed_stage or totals["failures"]:
+        return "failure", 1
+    if totals["verification_required"]:
+        return "success_with_verification_required", 0
+    return "success", 0
+
+
 def run(args):
     fixture = is_test_fixture()
     if fixture:
@@ -1254,8 +1263,8 @@ def run(args):
             print(f"ERROR: selected {len(selected)} companies but persisted outcomes for {accounted}", file=sys.stderr)
             return 1
     if args.diagnostic_mode:
-        verification_required = totals["verification_required"] > 0 and not failed_stage
-        result = "failure" if failed_stage else "success_with_verification_required" if verification_required else "success"
+        result, exit_code = diagnostic_outcome(totals, failed_stage)
+        verification_required = result == "success_with_verification_required"
         print(f"Diagnostic result: {result}")
         if verification_required: print("Official validation: verification required")
         print(f"Failed stage: {failed_stage or 'none'}")
@@ -1266,7 +1275,7 @@ def run(args):
         print(f"Web-search action types: {', '.join(sorted(web_search_action_types)) or 'none'}")
         print(f"Input tokens: {totals['input_tokens']}")
         print(f"Output tokens: {totals['output_tokens']}")
-        return 1 if failed_stage else 0
+        return exit_code
     # Per-company failures are durable discovery outcomes, not a reason to skip
     # the commit step. Structural/accounting and diagnostic failures return early.
     return 0

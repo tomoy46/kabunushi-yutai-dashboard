@@ -539,6 +539,25 @@ class OpenAIDiscoveryTests(unittest.TestCase):
             self.assertIn("Diagnostic result: success_with_verification_required", output.getvalue())
             self.assertIn("Official validation: verification required", output.getvalue())
 
+    def test_diagnostic_outcomes_fail_only_for_actual_errors(self):
+        with tempfile.TemporaryDirectory() as directory:
+            fixture = Path(directory) / "diagnostic-outcomes.json"
+            cases = [
+                ({"verification_required": 1, "failures": 0}, None,
+                 "success_with_verification_required", 0),
+                ({"verification_required": 0, "failures": 0}, None, "success", 0),
+                ({"verification_required": 0, "failures": 1}, None, "failure", 1),
+                ({"verification_required": 1, "failures": 0}, "official_discovery", "failure", 1),
+            ]
+            fixture.write_text(json.dumps(cases), encoding="utf-8")
+            for totals, failed_stage, expected_result, expected_exit_code in json.loads(
+                    fixture.read_text(encoding="utf-8")):
+                with self.subTest(result=expected_result, failed_stage=failed_stage):
+                    self.assertEqual(
+                        discovery.diagnostic_outcome(totals, failed_stage),
+                        (expected_result, expected_exit_code),
+                    )
+
     def legacy_test_multiple_search_items_continue_through_official_validation(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
