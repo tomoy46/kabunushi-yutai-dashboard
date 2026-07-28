@@ -158,6 +158,35 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                 self.assertEqual(discovery.official_url_decision(url, self.company),
                                  (False, "rejected_non_official"))
 
+    def test_corporate_homepage_is_accepted_without_benefit_word(self):
+        html = """<html><title>株式会社極洋 公式サイト</title>
+        <body><nav>企業情報 IR 投資家情報</nav><p>証券コード 1301</p></body></html>"""
+        self.assertTrue(discovery.corporate_identity_matches(
+            self.company, "https://www.kyokuyo.co.jp/", html.encode()))
+
+    def test_identity_can_use_corporate_number_or_address(self):
+        company = {**self.company, "corporate_number": "1234567890123"}
+        html = "<html><title>企業情報</title><body>法人番号 1234567890123 company profile</body></html>"
+        self.assertTrue(discovery.corporate_identity_matches(
+            company, "https://example.co.jp/company/", html.encode()))
+
+    def test_group_domain_must_name_listed_holding_company(self):
+        company = {"code": "9999", "name": "サンプルホールディングス"}
+        subsidiary = "<html><title>サンプル株式会社</title><body>会社概要 IR 証券コード9999</body></html>"
+        listed = "<html><title>サンプルホールディングス</title><body>会社概要 IR</body></html>"
+        self.assertFalse(discovery.corporate_identity_matches(
+            company, "https://sample.example/", subsidiary.encode()))
+        self.assertTrue(discovery.corporate_identity_matches(
+            company, "https://sample.example/ir/", listed.encode()))
+
+    def test_verified_company_domain_cache_is_reusable(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "official-company-domains.json"
+            discovery.save_company_domain(path, self.company, "https://www.kyokuyo.co.jp/")
+            saved = json.loads(path.read_text(encoding="utf-8"))
+            self.assertEqual(saved["1301"]["domain"], "kyokuyo.co.jp")
+            self.assertEqual(saved["1301"]["url"], "https://www.kyokuyo.co.jp/")
+
     def test_official_candidate_reasons_distinguish_company_ir_and_exchange(self):
         company = dict(self.company, official_domains=["ir.kyokuyo.co.jp"])
         self.assertEqual(discovery.official_url_decision(

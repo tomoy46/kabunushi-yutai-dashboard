@@ -80,7 +80,7 @@ BENEFIT_WORDS = ("株主優待", "株主ご優待", "株主優待制度", "優�
                  "株主優待カード", "株主優待ポイント", "株主様ご優待",
                  "株主特典", "株主還元", "商品贈呈", "割引券", "クーポン")
 PRIORITY_MEDIUM_TERMS = ("株主優待", "株主ご優待", "株主様ご優待", "優待制度", "優待券")
-RESEARCH_REASONS = ("official_site_discovery_failed", "required_shares_missing",
+RESEARCH_REASONS = ("official_site_discovery_failed", "benefit_page_not_found", "required_shares_missing",
                     "benefit_content_missing", "record_month_missing", "confidence_low",
                     "redirect_domain_rejected", "pdf_parse_failed")
 TRACKING_QUERY_KEYS = {"fbclid", "gclid", "yclid", "mc_cid", "mc_eid"}
@@ -92,6 +92,9 @@ DISCOVERY_TERMS = re.compile(
     r"株主優待|優待制度|shareholder.?benefit|stockholder.?benefit|complimentary|yutai",
     re.I,
 )
+IR_TERMS = re.compile(r"IR|投資家情報|株式情報|株主情報|investor|shareholder|stock", re.I)
+CORPORATE_STRUCTURE_TERMS = re.compile(
+    r"会社概要|企業情報|corporate|company|profile|about|IR|investor", re.I)
 
 
 class OfficialSourceNotFound(Exception):
@@ -806,6 +809,42 @@ def fetch_discovery_document(url, allowed_domains):
         return final, response.read(2_000_000), str(getattr(response, "headers", {}).get("Content-Type", ""))
 
 
+def corporate_identity_matches(company, url, body, content_type="text/html"):
+    """Verify a search landing page without weakening the third-party denylist.
+
+    A legal/listed name is sufficient when it occurs in the title or a corporate
+    page.  Otherwise a stable issuer attribute (security/corporate number or the
+    configured address) may establish identity.  Group sites still have to name
+    the listed issuer on an IR/company page.
+    """
+    text = page_text(body, content_type)
+    html = safe_text(body.decode("utf-8", "ignore") if isinstance(body, bytes) else body)
+    title_match = re.search(r"(?is)<title[^>]*>(.*?)</title>", html)
+    title = normalize_company_name(title_match.group(1)) if title_match else ""
+    normalized = normalize_company_name(text)
+    name = normalize_company_name(company["name"])
+    name_found = bool(name and (name in title or name in normalized))
+    code_found = security_code_found(text, company["code"])
+    corporate_number = safe_text(company.get("corporate_number"))
+    number_found = bool(corporate_number and corporate_number in unicodedata.normalize("NFKC", text))
+    address = normalize_japanese_text(company.get("address"))
+    address_found = bool(address and address in normalize_japanese_text(text))
+    structure = bool(CORPORATE_STRUCTURE_TERMS.search(text + " " + url))
+    group_name = bool(re.search(r"ホールディングス|HD|グループ", normalize_japanese_text(company["name"]), re.I))
+    if group_name:
+        return name_found and structure
+    return (name_found and structure) or code_found or number_found or address_found
+
+
+def save_company_domain(path, company, url):
+    """Persist a verified issuer homepage for reuse by later workflow runs."""
+    values = load(path, {})
+    code = str(company["code"]).upper()
+    values[code] = {"domain": normalized_host(url), "url": canonical_url(url),
+                    "verified_at": dt.datetime.now(dt.timezone.utc).isoformat()}
+    atomic(path, values)
+
+
 def discover_corporate_candidates(company, fetcher=None, max_pages=24):
     """Crawl official navigation/sitemaps and return HTML then PDF candidates.
 
@@ -834,7 +873,7 @@ def discover_corporate_candidates(company, fetcher=None, max_pages=24):
         text = page_text(body, content_type)
         links = [link for link in document_links(body, final)
                  if any(is_subdomain(hostname(link), domain) for domain in domains)]
-        if DISCOVERY_TERMS.search(text) or DISCOVERY_TERMS.search(final):
+        if DISCOVERY_TERMS.search(text) or DISCOVERY_TERMS.search(final) or IR_TERMS.search(text + " " + final):
             relevant.append(final)
         for link in links:
             path = safe_text(urlparse(link).path).lower()
@@ -928,14 +967,17 @@ def discover_verified_official_source(company, registered=None, review_items=Non
     return None, ""
 
 
-def free_search_official_source(company, opener=None, decisions_out=None, previously_rejected=()):
+def free_search_official_source(company, opener=None, decisions_out=None, previously_rejected=(),
+                                document_fetcher=None):
     """Use a free HTML search result only to locate and verify an issuer page.
 
     Search snippets are never evidence.  Every returned URL is downloaded and
     must contain the issuer identity and a benefit term before it is accepted.
     """
     opener = opener or urlopen
-    query = urlencode({"q": f'{company["code"]} {company["name"]} 株主優待'})
+    # Search for the issuer first, not only a benefit page.  A verified homepage
+    # becomes the trusted seed from which IR and benefit material is crawled.
+    query = urlencode({"q": f'{company["code"]} {company["name"]} 公式 会社概要 IR'})
     request = Request(f"https://html.duckduckgo.com/html/?{query}", headers={"User-Agent": BROWSER_USER_AGENT})
     try:
         with opener(request, timeout=20) as response:
@@ -962,10 +1004,9 @@ def free_search_official_source(company, opener=None, decisions_out=None, previo
             continue
         candidate = dict(company, official_domain=host, official_domains=[host])
         try:
-            final, text = fetch_official_page(url, candidate, {url: {}}, registered=False)
-            identity = normalize_company_name(text[:20_000])
-            if not (normalize_company_name(company["name"]) in identity and
-                    security_code_found(text[:20_000], company["code"])):
+            fetch = document_fetcher or fetch_discovery_document
+            final, body, content_type = fetch(url, (host,))
+            if not corporate_identity_matches(company, final, body, content_type):
                 if decisions_out is not None:
                     decisions_out.append((url, False, "rejected_non_official"))
                 log_url_decision(company, url, False, "rejected_non_official", "identity_mismatch")
@@ -973,7 +1014,7 @@ def free_search_official_source(company, opener=None, decisions_out=None, previo
             log_url_decision(company, url, True, "official_company_domain", "identity_verified_search_result")
             if decisions_out is not None:
                 decisions_out.append((url, True, "official_company_domain"))
-            return final, text
+            return final, page_text(body, content_type)
         except (OfficialSourceNotFound, OfficialSourceFetchError, ValueError, TypeError):
             continue
     return None, ""
@@ -1595,8 +1636,9 @@ def append_unresolved(company, reasons, explored_urls=()):
     """Persist issuer-site discovery failures separately from sparse benefits."""
     path = DATA / "unresolved.json"
     entries = load(path, [])
+    result = "benefit_page_not_found" if "benefit_page_not_found" in reasons else "official_site_discovery_failed"
     entry = {"code": str(company["code"]), "name": company["name"],
-             "result": "official_site_discovery_failed", "reasons": list(reasons),
+             "result": result, "reasons": list(reasons),
              "explored_urls": list(dict.fromkeys(canonical_url(url) for url in explored_urls
                                                   if canonical_url(url))),
              "checked_at": dt.datetime.now(dt.timezone.utc).isoformat()}
@@ -1665,7 +1707,9 @@ def publish_workflow_counts(totals):
                      "official_domains_found", "official_url_candidates_found",
                      "official_company_url_candidates", "non_official_urls_excluded",
                      "official_material_fetch_success", "post_official_fetch_openai_calls",
-                     "pre_openai_excluded", "unresolved"):
+                     "pre_openai_excluded", "unresolved", "official_homepages_found",
+                     "official_ir_pages_found", "benefit_pages_found",
+                     "benefit_page_not_found", "official_domains_saved"):
             stream.write(f"{name}={totals.get(name, 0)}\n")
         stream.write("research_reasons=" + json.dumps(totals.get("research_reasons", {}),
                                                        ensure_ascii=False, separators=(",", ":")) + "\n")
@@ -1707,7 +1751,8 @@ def run(args):
         print(str(error), file=sys.stderr)
         return 2
     companies = load(DATA / "listed-companies.json", [])
-    domains = load(DATA / "company-domains.json", {})
+    domains = load(DATA / "official-company-domains.json",
+                   load(DATA / "company-domains.json", {}))
     registered_sources = load_official_sources(DATA / "official-benefit-sources.json")
     for company in companies:
         master_candidate = (company.get("official_url") or company.get("official_url_candidate") or
@@ -1744,6 +1789,9 @@ def run(args):
               "official_url_candidates_found": 0, "official_company_url_candidates": 0,
               "non_official_urls_excluded": 0, "official_material_fetch_success": 0,
               "post_official_fetch_openai_calls": 0, "pre_openai_excluded": 0, "unresolved": 0}
+    totals.update({"official_homepages_found": 0, "official_ir_pages_found": 0,
+                   "benefit_pages_found": 0, "benefit_page_not_found": 0,
+                   "official_domains_saved": 0})
     company_usage = []
     budget_deferred = 0
     low_sent = 0
@@ -1810,18 +1858,59 @@ def run(args):
                 if final_url and not company.get("official_domain"):
                     company["official_domain"] = normalized_host(final_url)
                 if final_url:
+                    totals["official_homepages_found"] += 1
+                    save_company_domain(DATA / "official-company-domains.json", company, final_url)
+                    totals["official_domains_saved"] += 1
                     explored_urls.append(final_url)
+                    # The homepage proves the domain.  It need not itself mention
+                    # benefits: crawl its navigation and use an IR/share/PDF page
+                    # as the extraction candidate.
+                    corporate_urls = discover_corporate_candidates(company)
+                    explored_urls.extend(corporate_urls)
+                    for material_url in corporate_urls:
+                        if not (IR_TERMS.search(material_url) or
+                                urlparse(material_url).path.lower().endswith(".pdf")):
+                            continue
+                        try:
+                            fetched, body, content_type = fetch_discovery_document(
+                                material_url, registered_domains(company))
+                            material_text = page_text(body, content_type)
+                        except Exception:
+                            continue
+                        final_url, official_text = fetched, material_text
+                        totals["official_ir_pages_found"] += 1
+                        break
             # A known issuer host is useful provenance even when a benefit page
             # cannot be text-extracted.  Give discovery at least the mandated
             # top/IR/stock/shareholder/sitemap/robots candidate set.
             if company.get("official_domain"):
                 totals["official_domains_found"] += 1
+                if not final_url:
+                    totals["official_homepages_found"] += 1
                 host = company["official_domain"]
                 explored_urls.extend(canonical_url(f"https://{host}{path}") for path in
                                      ("/", "/ir/", "/ir/stock/", "/ir/shareholder/",
                                       "/sitemap.xml", "/robots.txt"))
             explored_urls.extend(exchange_candidates(company, review_items))
             explored_urls = list(dict.fromkeys(url for url in explored_urls if url))
+            # A cached/JPX-provided official domain is already trusted.  If no
+            # benefit-specific page was accepted, retain an official IR/stock
+            # page as useful OpenAI input rather than failing domain discovery.
+            if not final_url and company.get("official_domain") and not fixture:
+                for material_url in explored_urls:
+                    if not (IR_TERMS.search(material_url) or
+                            urlparse(material_url).path.lower().endswith(".pdf")):
+                        continue
+                    try:
+                        fetched, body, content_type = fetch_discovery_document(
+                            material_url, registered_domains(company))
+                        material_text = page_text(body, content_type)
+                    except Exception:
+                        continue
+                    if material_text:
+                        final_url, official_text = fetched, material_text
+                        totals["official_ir_pages_found"] += 1
+                        break
             totals["official_url_candidates_found"] += len(explored_urls)
             accepted_urls = []
             for explored in explored_urls:
@@ -1837,7 +1926,10 @@ def run(args):
                 company, final_url, official_text, load(DATA / "review-queue.json", []))
             totals[fetched_priority] += 1
             candidate_url = final_url or (explored_urls[0] if explored_urls else None)
-            if not candidate_url:
+            has_analysis_material = bool(final_url and (official_text or
+                any(IR_TERMS.search(url) or urlparse(url).path.lower().endswith(".pdf")
+                    for url in explored_urls)))
+            if not company.get("official_domain"):
                 totals["processed_companies"] += 1
                 totals["verification_required"] += 1
                 totals["pre_openai_excluded"] += 1
@@ -1849,11 +1941,26 @@ def run(args):
                 print(f'{"FIXTURE RESULT" if fixture else "PRODUCTION RESULT"} '
                       f'{company["code"]} {company["name"]}: unresolved')
                 continue
+            if not has_analysis_material:
+                totals["processed_companies"] += 1
+                totals["verification_required"] += 1
+                totals["pre_openai_excluded"] += 1
+                totals["unresolved"] += 1
+                totals["benefit_page_not_found"] += 1
+                totals["research_reasons"]["benefit_page_not_found"] += 1
+                if not args.diagnostic_mode:
+                    append_unresolved(company, ["benefit_page_not_found"], explored_urls)
+                    persist_production_state(benefits, queue, progress)
+                print(f'{"FIXTURE RESULT" if fixture else "PRODUCTION RESULT"} '
+                      f'{company["code"]} {company["name"]}: unresolved (benefit_page_not_found)')
+                continue
             else:
                 final_url = candidate_url
                 totals["official_material_fetch_success"] += 1
                 totals["benefit_candidates"] += 1
                 facts = evidence_facts(official_text)
+                if DISCOVERY_TERMS.search(official_text + " " + candidate_url):
+                    totals["benefit_pages_found"] += 1
                 print("Evidence readiness " + str(company["code"]) + ": " + " ".join(
                     f"{name}={'found' if value else 'missing'}" for name, value in facts.items()))
                 core_count = sum(facts[name] for name in
@@ -2024,6 +2131,11 @@ def run(args):
               f"non_official_urls_excluded={totals['non_official_urls_excluded']} "
               f"official_material_fetch_success={totals['official_material_fetch_success']} "
               f"post_official_fetch_openai_calls={totals['post_official_fetch_openai_calls']} "
+              f"official_homepages_found={totals['official_homepages_found']} "
+              f"official_ir_pages_found={totals['official_ir_pages_found']} "
+              f"benefit_pages_found={totals['benefit_pages_found']} "
+              f"benefit_page_not_found={totals['benefit_page_not_found']} "
+              f"official_domains_saved={totals['official_domains_saved']} "
               f"pre_openai_excluded={totals['pre_openai_excluded']} unresolved={totals['unresolved']}")
         print("RESEARCH-LOG REASONS: " + " ".join(
             f"{reason}={totals['research_reasons'][reason]}" for reason in RESEARCH_REASONS))

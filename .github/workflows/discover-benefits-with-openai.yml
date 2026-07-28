@@ -177,6 +177,11 @@ jobs:
           POST_OFFICIAL_FETCH_OPENAI_CALLS: ${{ steps.discovery.outputs.post_official_fetch_openai_calls }}
           PRE_OPENAI_EXCLUDED: ${{ steps.discovery.outputs.pre_openai_excluded }}
           UNRESOLVED_COUNT: ${{ steps.discovery.outputs.unresolved }}
+          OFFICIAL_HOMEPAGES_FOUND: ${{ steps.discovery.outputs.official_homepages_found }}
+          OFFICIAL_IR_PAGES_FOUND: ${{ steps.discovery.outputs.official_ir_pages_found }}
+          BENEFIT_PAGES_FOUND: ${{ steps.discovery.outputs.benefit_pages_found }}
+          BENEFIT_PAGE_NOT_FOUND: ${{ steps.discovery.outputs.benefit_page_not_found }}
+          OFFICIAL_DOMAINS_SAVED: ${{ steps.discovery.outputs.official_domains_saved }}
           RESEARCH_REASONS: ${{ steps.discovery.outputs.research_reasons }}
           ZERO_CONFIRMED_CAUSE: ${{ steps.discovery.outputs.zero_confirmed_cause }}
           COMMITTED: ${{ steps.commit_results.outputs.committed }}
@@ -201,6 +206,11 @@ jobs:
             echo "- 企業公式URL候補数: ${OFFICIAL_COMPANY_URL_CANDIDATES:-0}"
             echo "- 非公式URL除外数: ${NON_OFFICIAL_URLS_EXCLUDED:-0}"
             echo "- 公式資料取得成功数: ${OFFICIAL_MATERIAL_FETCH_SUCCESS:-0}"
+            echo "- 公式トップページ発見数: ${OFFICIAL_HOMEPAGES_FOUND:-0}"
+            echo "- 公式IRページ発見数: ${OFFICIAL_IR_PAGES_FOUND:-0}"
+            echo "- 優待ページ発見数: ${BENEFIT_PAGES_FOUND:-0}"
+            echo "- benefit_page_not_found数: ${BENEFIT_PAGE_NOT_FOUND:-0}"
+            echo "- 公式ドメイン保存数: ${OFFICIAL_DOMAINS_SAVED:-0}"
             echo "- 公式資料取得後のOpenAI calls: ${POST_OFFICIAL_FETCH_OPENAI_CALLS:-0}"
             if [ "${POST_OFFICIAL_FETCH_OPENAI_CALLS:-0}" -gt 0 ]; then
               echo "- confirmed/OpenAI call率: $((100 * ${CONFIRMED_COUNT:-0} / ${POST_OFFICIAL_FETCH_OPENAI_CALLS:-1}))%"
