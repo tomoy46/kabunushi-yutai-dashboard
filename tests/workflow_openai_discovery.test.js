@@ -111,7 +111,12 @@ test('a successful data commit deploys and verifies GitHub Pages without relying
   const verify = stepNamed('Verify deployed shareholder benefits');
   assert.equal(verify.if, "${{ steps.commit_results.outputs.committed == 'yes' }}");
   assert.ok(verify.run.includes("{'7550', '7616', '7412'}"));
-  assert.ok(verify.run.includes('confirmed != 14'));
+  assert.ok(verify.run.includes("open('data/benefits.json'"));
+  assert.ok(verify.run.includes("item.get('benefit_status') == 'official_confirmed' for item in local_benefits"));
+  assert.ok(verify.run.includes('confirmed != expected_confirmed'));
+  assert.ok(verify.run.includes('expected official_confirmed={expected_confirmed}'));
+  assert.ok(verify.run.includes('actual official_confirmed={confirmed}'));
+  assert.ok(!verify.run.includes('confirmed != 14'));
   assert.ok(verify.run.includes('/data/benefits.json?v='));
 });
 
