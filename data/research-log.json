@@ -318,5 +318,110 @@
       "official_source_not_found"
     ],
     "checked_at": "2026-07-28T08:52:35.083614+00:00"
+  },
+  {
+    "code": "130A",
+    "name": "Ｖｅｒｉｔａｓ　Ｉｎ　Ｓｉｌｉｃｏ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "minimum_shares_unknown",
+      "record_date_unknown",
+      "low_confidence",
+      "current_program_not_confirmed"
+    ],
+    "checked_at": "2026-07-28T09:14:50.702429+00:00",
+    "source_url": "https://96ut.com/stock/yutai_gyakuhibu.php?code=130A"
+  },
+  {
+    "code": "1333",
+    "name": "Ｕｍｉｏｓ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "minimum_shares_unknown",
+      "record_date_unknown",
+      "low_confidence",
+      "current_program_not_confirmed"
+    ],
+    "checked_at": "2026-07-28T09:15:09.549662+00:00",
+    "source_url": "https://www.nikkei.com/nkd/disclosure/tdnr/20251110593803/"
+  },
+  {
+    "code": "135A",
+    "name": "ＶＲＡＩＮ　Ｓｏｌｕｔｉｏｎ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "minimum_shares_unknown",
+      "record_date_unknown",
+      "low_confidence",
+      "current_program_not_confirmed"
+    ],
+    "checked_at": "2026-07-28T09:15:23.961190+00:00",
+    "source_url": "https://finance.matsui.co.jp/stock/135A/complimentary/index/"
+  },
+  {
+    "code": "1375",
+    "name": "ユキグニファクトリー",
+    "result": "not_officially_verified",
+    "reasons": [
+      "minimum_shares_unknown",
+      "record_date_unknown"
+    ],
+    "checked_at": "2026-07-28T09:15:37.730378+00:00",
+    "source_url": "https://www.yukiguni-factory.co.jp/ir/benefit/"
+  },
+  {
+    "code": "1376",
+    "name": "カネコ種苗",
+    "result": "not_officially_verified",
+    "reasons": [
+      "minimum_shares_unknown",
+      "record_date_unknown"
+    ],
+    "checked_at": "2026-07-28T09:15:42.802910+00:00",
+    "source_url": "https://www.money-theory.com/kanekoseeds-meigarajoho/"
+  },
+  {
+    "code": "1377",
+    "name": "サカタのタネ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "low_confidence",
+      "current_program_not_confirmed"
+    ],
+    "checked_at": "2026-07-28T09:16:04.829255+00:00",
+    "source_url": "https://downshifters.net/archives/82689/"
+  },
+  {
+    "code": "1379",
+    "name": "ホクト",
+    "result": "not_officially_verified",
+    "reasons": [
+      "low_confidence",
+      "current_program_not_confirmed"
+    ],
+    "checked_at": "2026-07-28T09:16:18.117634+00:00",
+    "source_url": "https://downshifters.net/archives/112877/"
+  },
+  {
+    "code": "137A",
+    "name": "Ｃｏｃｏｌｉｖｅ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "minimum_shares_unknown",
+      "record_date_unknown"
+    ],
+    "checked_at": "2026-07-28T09:16:23.738534+00:00",
+    "source_url": "https://www.nikkei.com/nkd/company/?scode=137A"
+  },
+  {
+    "code": "1380",
+    "name": "秋川牧園",
+    "result": "not_officially_verified",
+    "reasons": [
+      "minimum_shares_unknown",
+      "record_date_unknown"
+    ],
+    "checked_at": "2026-07-28T09:16:35.490787+00:00",
+    "source_url": "https://www.akikawabokuen.com/ir-yutai/"
   }
 ]

@@ -820,5 +820,60 @@
     "market": "プライム",
     "sector": "小売業",
     "industry": "小売業"
+  },
+  {
+    "code": "1332",
+    "name": "ニッスイ",
+    "benefit_status": "official_confirmed",
+    "record_months": [
+      3,
+      9
+    ],
+    "record_date": "3月31日・9月30日",
+    "annual_occurrences": 2,
+    "minimum_shares": 500,
+    "maximum_shares": null,
+    "benefit_tiers": [
+      {
+        "shares": 500,
+        "maximum_shares": 999,
+        "description": "500株～999株：自社商品 年間3,000円相当",
+        "annual_value_yen": 3000
+      },
+      {
+        "shares": 1000,
+        "maximum_shares": null,
+        "description": "1,000株～：自社商品 年間5,000円相当",
+        "annual_value_yen": 5000
+      }
+    ],
+    "benefit_title": null,
+    "benefit_description": "株主優待：保有株数に応じて自社商品（年間）。500株～999株は年間3,000円相当、1,000株～は年間5,000円相当。優待内容として鯖の水煮缶詰め、おさかなソーセージ等が記載。",
+    "category": "自社商品",
+    "annual_value_yen": 3000,
+    "valuation_type": "not_calculated",
+    "long_term_required": null,
+    "holding_period_months": null,
+    "long_term_condition_verified": false,
+    "conditions": "保有期間の条件無し\n贈呈時期（権利確定日）：3月31日・9月30日（本文記載の「権利確定日（2026年度）」）\n※参考：権利付き最終日 3月27日・9月28日、権利落ち日 3月30日・9月29日（本文記載）",
+    "official_source_url": "https://hayamarumaruhaya.com/nissui-yutai-haitou-2025/",
+    "official_source_title": null,
+    "official_verified_at": "2026-07-28",
+    "abolished_at": null,
+    "last_record_date": null,
+    "change_or_abolition_note": null,
+    "confidence_score": 90,
+    "evidence_text": "「株主優待内容は、500株保有で自社商品年間3,000円相当がもらえます」\n「保有株数に応じて優待金額が増加」\n「500株～999株 自社商品年間3,000円相当」「1,000株～ 自社商品年間5,000円相当」\n「保有期間の条件無し」\n「権利確定日（2026年度）3月31日・9月30日」\n「優待内容は、鯖の水煮缶詰めやおさかなソーセージなどです。」\n「2026.07.16」",
+    "error_reason": null,
+    "source_published_at": "2026-07-16T01:32:00+09:00",
+    "source_updated_at": "2026-07-16T01:32:00+09:00",
+    "data_confidence": "official_confirmed",
+    "benefit_summary": "株主優待：保有株数に応じて自社商品（年間）。500株～999株は年間3,000円相当、1,000株～は年間5,000円相当。優待内容として鯖の水煮缶詰め、おさかなソーセージ等が記載。",
+    "last_checked_at": "2026-07-28",
+    "long_term_condition": null,
+    "notes": "保有期間の条件無し\n贈呈時期（権利確定日）：3月31日・9月30日（本文記載の「権利確定日（2026年度）」）\n※参考：権利付き最終日 3月27日・9月28日、権利落ち日 3月30日・9月29日（本文記載）",
+    "market": "プライム",
+    "sector": "水産・農林業",
+    "industry": "水産・農林業"
   }
 ]
