@@ -104,12 +104,12 @@ test('a successful data commit deploys and verifies GitHub Pages without relying
     ['Deploy GitHub Pages', 'actions/deploy-pages@v4'],
   ]) {
     const step = stepNamed(name);
-    assert.equal(step.if, "${{ steps.commit_results.outputs.committed == 'yes' }}");
+    assert.equal(step.if, "${{ steps.commit_results.outputs.committed == 'yes' && steps.discovery.outputs.confirmed != '0' }}");
     assert.equal(step.uses, action);
   }
 
   const verify = stepNamed('Verify deployed shareholder benefits');
-  assert.equal(verify.if, "${{ steps.commit_results.outputs.committed == 'yes' }}");
+  assert.equal(verify.if, "${{ steps.commit_results.outputs.committed == 'yes' && steps.discovery.outputs.confirmed != '0' }}");
   assert.ok(verify.run.includes("{'7550', '7616', '7412'}"));
   assert.ok(verify.run.includes("open('data/benefits.json'"));
   assert.ok(verify.run.includes("item.get('benefit_status') == 'official_confirmed' for item in local_benefits"));
@@ -118,6 +118,20 @@ test('a successful data commit deploys and verifies GitHub Pages without relying
   assert.ok(verify.run.includes('actual official_confirmed={confirmed}'));
   assert.ok(!verify.run.includes('confirmed != 14'));
   assert.ok(verify.run.includes('/data/benefits.json?v='));
+  assert.ok(verify.run.includes('codes != expected_all_codes'));
+  assert.ok(verify.run.includes('len(benefits) != len(local_benefits)'));
+});
+
+test('automatic discovery inputs use safe defaults and explicit retry switches', () => {
+  assert.equal(dispatchInputs.auto_select.default, true);
+  assert.equal(dispatchInputs.batch_size.default, '10');
+  assert.equal(dispatchInputs.max_openai_calls.default, '10');
+  assert.equal(dispatchInputs.retry_research_log.default, false);
+  assert.equal(dispatchInputs.retry_failed.default, false);
+  const command = stepNamed('Discover from official sources').run.replace(/[\s'"]/g, '');
+  assert.ok(command.includes('--max-openai-calls${{inputs.max_openai_calls}}'));
+  assert.ok(command.includes('${{inputs.auto_select!=true&&--no-auto-select||}}'));
+  assert.ok(command.includes('${{inputs.retry_research_log==true&&--retry-research-log||}}'));
 });
 
 test('production inputs and startup log are wired to workflow_dispatch values', () => {

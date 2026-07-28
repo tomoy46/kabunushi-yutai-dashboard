@@ -645,6 +645,41 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                 selected = discovery.choose(companies, args, {}, [])
         self.assertEqual([item["code"] for item in selected], ["7550", "9861"])
 
+    def test_auto_selection_filters_ineligible_and_recent_outcomes(self):
+        now = discovery.dt.datetime(2026, 7, 28, tzinfo=discovery.dt.timezone.utc)
+        companies = [
+            {"code": "1000", "name": "new", "market": "プライム"},
+            {"code": "1001", "name": "recent research", "market": "スタンダード"},
+            {"code": "1002", "name": "recent failure", "market": "グロース"},
+            {"code": "1003", "name": "上場ETF", "market": "ETF"},
+            {"code": "1004", "name": "delisted", "market": "プライム", "delisted": True},
+        ]
+        args = type("Args", (), {"security_codes": "", "auto_select": True,
+            "retry_research_log": False, "retry_failed": False, "batch_size": 20})()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "research-log.json").write_text(json.dumps([
+                {"code": "1001", "result": "not_officially_verified", "checked_at": "2026-07-10T00:00:00Z"},
+                {"code": "1002", "result": "failed", "checked_at": "2026-07-25T00:00:00Z"},
+            ]), encoding="utf-8")
+            with patch.object(discovery, "DATA", root):
+                selected = discovery.choose(companies, args, {}, [], now=now)
+        self.assertEqual([item["code"] for item in selected], ["1000"])
+
+    def test_manual_codes_take_priority_over_auto_order_and_batch_is_capped_at_twenty(self):
+        companies = [{"code": str(1000 + i), "name": str(i)} for i in range(30)]
+        args = type("Args", (), {"security_codes": "1025,1002", "auto_select": True,
+            "retry_research_log": False, "retry_failed": False, "batch_size": 99})()
+        with tempfile.TemporaryDirectory() as directory, patch.object(discovery, "DATA", Path(directory)):
+            selected = discovery.choose(companies, args, {}, [])
+        self.assertEqual([item["code"] for item in selected], ["1025", "1002"])
+
+    def test_daily_openai_call_counter_uses_only_current_utc_day(self):
+        now = discovery.dt.datetime(2026, 7, 28, 12, tzinfo=discovery.dt.timezone.utc)
+        records = [{"executed_at": "2026-07-28T01:00:00Z", "responses_api_calls": 12},
+                   {"executed_at": "2026-07-27T23:00:00Z", "responses_api_calls": 20}]
+        self.assertEqual(discovery.calls_today(records, now), 12)
+
     def test_diagnostic_does_not_write_any_data_file(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
