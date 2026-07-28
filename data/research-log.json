@@ -494,5 +494,225 @@
       "official_source_not_found"
     ],
     "checked_at": "2026-07-28T09:24:33.884050+00:00"
+  },
+  {
+    "code": "1436",
+    "name": "グリーンエナジー＆カンパニー",
+    "result": "not_officially_verified",
+    "reasons": [
+      "record_date_unknown"
+    ],
+    "checked_at": "2026-07-28T11:42:10.215476+00:00",
+    "source_url": "https://green-energy.co.jp/ir/ir_type/ir_stock_info/"
+  },
+  {
+    "code": "1434",
+    "name": "ＪＥＳＣＯホールディングス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "minimum_shares_unknown",
+      "record_date_unknown"
+    ],
+    "checked_at": "2026-07-28T11:41:46.459856+00:00",
+    "source_url": "https://www.nikkei.com/nkd/company/?scode=1434"
+  },
+  {
+    "code": "1430",
+    "name": "ファーストコーポレーション",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T11:41:11.112236+00:00"
+  },
+  {
+    "code": "1491",
+    "name": "中外鉱業",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T11:42:41.412107+00:00"
+  },
+  {
+    "code": "148A",
+    "name": "ハッチ・ワーク",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T11:42:41.290811+00:00"
+  },
+  {
+    "code": "1447",
+    "name": "ＳＡＡＦホールディングス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T11:42:40.717862+00:00"
+  },
+  {
+    "code": "146A",
+    "name": "コロンビア・ワークス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T11:42:41.068856+00:00"
+  },
+  {
+    "code": "147A",
+    "name": "ソラコム",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T11:42:41.192755+00:00"
+  },
+  {
+    "code": "1446",
+    "name": "キャンディル",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T11:42:38.473649+00:00"
+  },
+  {
+    "code": "1435",
+    "name": "ｒｏｂｏｔ　ｈｏｍｅ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "minimum_shares_unknown",
+      "record_date_unknown",
+      "low_confidence"
+    ],
+    "checked_at": "2026-07-28T11:42:00.824297+00:00",
+    "source_url": "https://www.nikkei.com/nkd/company/yutai/?scode=1435"
+  },
+  {
+    "code": "150A",
+    "name": "ＪＳＨ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T11:42:41.638018+00:00"
+  },
+  {
+    "code": "1450",
+    "name": "ＴＡＮＡＫＥＮ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T11:42:40.844641+00:00"
+  },
+  {
+    "code": "143A",
+    "name": "イシン",
+    "result": "not_officially_verified",
+    "reasons": [
+      "minimum_shares_unknown",
+      "record_date_unknown"
+    ],
+    "checked_at": "2026-07-28T11:42:21.536987+00:00",
+    "source_url": "https://www.nikkei.com/nkd/company/?scode=143A"
+  },
+  {
+    "code": "149A",
+    "name": "シンカ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T11:42:41.539261+00:00"
+  },
+  {
+    "code": "141A",
+    "name": "トライアルホールディングス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T11:40:30.656039+00:00"
+  },
+  {
+    "code": "1429",
+    "name": "日本アクア",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T11:40:53.300261+00:00"
+  },
+  {
+    "code": "1443",
+    "name": "技研ホールディングス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "minimum_shares_unknown",
+      "record_date_unknown"
+    ],
+    "checked_at": "2026-07-28T11:42:26.058342+00:00",
+    "source_url": "https://www.nikkei.com/nkd/company/?scode=1443"
+  },
+  {
+    "code": "1419",
+    "name": "タマホーム",
+    "result": "not_officially_verified",
+    "reasons": [
+      "record_date_unknown"
+    ],
+    "checked_at": "2026-07-28T11:40:20.314814+00:00",
+    "source_url": "https://www.tamahome.jp/company/ir/stock_bond/stock_bond_03.html"
+  },
+  {
+    "code": "1438",
+    "name": "岐阜造園",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T11:42:17.517189+00:00"
+  },
+  {
+    "code": "142A",
+    "name": "ジンジブ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T11:41:06.031456+00:00"
+  },
+  {
+    "code": "1433",
+    "name": "ベステラ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T11:41:39.820444+00:00"
+  },
+  {
+    "code": "1444",
+    "name": "ニッソウ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "minimum_shares_unknown",
+      "record_date_unknown"
+    ],
+    "checked_at": "2026-07-28T11:42:33.781945+00:00",
+    "source_url": "https://www.nikkei.com/nkd/company/?scode=1444"
+  },
+  {
+    "code": "145A",
+    "name": "Ｌ　ｉｓ　Ｂ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T11:42:40.972025+00:00"
   }
 ]
