@@ -55,7 +55,11 @@ def parse_workbook(path, previous=None, excluded=None):
         raise ValueError(f"unexpected JPX columns: {headings}")
 
     column = {name: headings.index(name) for name in required}
-    domains = {str(item["code"]): item.get("official_domain") for item in (previous or [])}
+    retained = {str(item["code"]): {
+        key: item.get(key) for key in ("official_domain", "official_url",
+                                      "official_url_candidate", "official_url_candidates")
+        if item.get(key)
+    } for item in (previous or [])}
     companies = []
     excluded = excluded if excluded is not None else []
     for row in range(1, sheet.nrows):
@@ -79,7 +83,9 @@ def parse_workbook(path, previous=None, excluded=None):
                 "name": name,
                 "market": ALLOWED_MARKETS[product],
                 "sector": str(sheet.cell_value(row, column["33業種区分"])).strip(),
-                "official_domain": domains.get(code),
+                "official_domain": retained.get(code, {}).get("official_domain"),
+                **{key: value for key, value in retained.get(code, {}).items()
+                   if key != "official_domain"},
             }
         )
 

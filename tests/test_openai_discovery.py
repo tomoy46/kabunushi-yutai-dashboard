@@ -675,6 +675,33 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         self.assertEqual(sum(c["candidate_priority"] == "low" for c in selected), 23)
         self.assertGreaterEqual(sum(c["candidate_priority"] == "low" for c in selected[-3:]), 3)
 
+    def test_free_priority_fixtures_produce_high_medium_and_low(self):
+        fixtures = [
+            {"code": "2001", "name": "high", "h1": " 株主\n優待のご案内 "},
+            {"code": "2002", "name": "medium", "meta_description": "株主ご優待&#21046;度"},
+            {"code": "2003", "name": "low"},
+        ]
+        priorities = [discovery.free_priority(item)[1] for item in fixtures]
+        self.assertEqual(priorities, ["high", "medium", "low"])
+
+    def test_pdf_or_tdnet_shareholder_benefit_program_title_is_high(self):
+        company = {"code": "2004", "name": "pdf", "official_pdf_name":
+                   "株主優待制度のお知らせ.pdf"}
+        self.assertEqual(discovery.free_priority(company)[1], "high")
+        review = [{"code": "2005", "title": "株主優待制度の新設について"}]
+        self.assertEqual(discovery.free_priority({"code": "2005", "name": "tdnet"}, review)[1],
+                         "high")
+
+    def test_page_metadata_and_regex_facts_are_normalized(self):
+        html = """<title> 株主\n優待 </title><meta name="description" content="株主&amp;ご優待">
+        <h1>株主優待</h1><a href="benefit.pdf">優待券</a>１００株 1,000株 毎年３月３１日 ８月末日"""
+        text = discovery.page_text(html.encode())
+        self.assertIn("PAGE_TITLE[株主 優待]", text)
+        self.assertIn("H1[株主優待]", text)
+        self.assertIn("LINK_TEXT[優待券]", text)
+        self.assertEqual(discovery.regex_official_facts(text),
+                         {"minimum_shares": 100, "record_months": [3, 8]})
+
     def test_sparse_official_evidence_reason_classification(self):
         facts = {"required_shares": True, "benefit_content": False, "record_month": False}
         self.assertEqual(discovery.classified_reasons([], facts),
