@@ -1526,5 +1526,17 @@
     ],
     "checked_at": "2026-07-28T22:38:03.832687+00:00",
     "source_url": "https://www.nikkei.com/nkd/company/yutai/?scode=1893"
+  },
+  {
+    "code": "1898",
+    "name": "世紀東急工業",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "record_month_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-28T22:53:56.948247+00:00",
+    "source_url": "https://finance.matsui.co.jp/stock/1898/complimentary/index/"
   }
 ]

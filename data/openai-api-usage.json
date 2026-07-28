@@ -1036,5 +1036,67 @@
     ],
     "duration_seconds": 137.283,
     "errors": []
+  },
+  {
+    "executed_at": "2026-07-28T22:54:00.617562+00:00",
+    "model": "gpt-5.4-nano",
+    "diagnostic_mode": false,
+    "processed_companies": 25,
+    "responses_api_calls": 1,
+    "responses_with_web_search": 0,
+    "web_search_output_items": 0,
+    "web_search_calls": 0,
+    "input_tokens": 7553,
+    "cached_input_tokens": 0,
+    "output_tokens": 303,
+    "successes": 0,
+    "verification_required": 25,
+    "research_log_saved": 1,
+    "failures": 0,
+    "free_candidates_checked": 25,
+    "benefit_candidates": 1,
+    "free_extraction_success": 1,
+    "research_reasons": {
+      "official_site_discovery_failed": 24,
+      "required_shares_missing": 1,
+      "benefit_content_missing": 0,
+      "record_month_missing": 1,
+      "confidence_low": 1,
+      "redirect_domain_rejected": 0,
+      "pdf_parse_failed": 0
+    },
+    "high": 1,
+    "medium": 0,
+    "low": 24,
+    "official_domains_found": 1,
+    "official_url_candidates_found": 7,
+    "official_company_url_candidates": 7,
+    "non_official_urls_excluded": 374,
+    "official_material_fetch_success": 1,
+    "post_official_fetch_openai_calls": 1,
+    "pre_openai_excluded": 24,
+    "unresolved": 24,
+    "unique_web_search_call_ids": 0,
+    "estimated_cost_jpy": 0.283403,
+    "daily_estimated_cost_jpy": 15.039678,
+    "pricing": {
+      "input_usd_per_million": 0.2,
+      "cached_input_usd_per_million": 0.02,
+      "output_usd_per_million": 1.25,
+      "usd_to_jpy": 150.0,
+      "source": "https://openai.com/api/pricing/",
+      "verified_at": "2026-07-28"
+    },
+    "company_usage": [
+      {
+        "code": "1898",
+        "input_tokens": 7553,
+        "cached_input_tokens": 0,
+        "output_tokens": 303,
+        "estimated_cost_jpy": 0.283403
+      }
+    ],
+    "duration_seconds": 23.101,
+    "errors": []
   }
 ]

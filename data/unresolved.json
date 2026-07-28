@@ -348,5 +348,245 @@
     ],
     "explored_urls": [],
     "checked_at": "2026-07-28T22:39:46.496304+00:00"
+  },
+  {
+    "code": "1948",
+    "name": "弘電社",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:53:59.810386+00:00"
+  },
+  {
+    "code": "1944",
+    "name": "きんでん",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:53:59.300479+00:00"
+  },
+  {
+    "code": "1941",
+    "name": "中電工",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:53:58.971454+00:00"
+  },
+  {
+    "code": "1951",
+    "name": "エクシオグループ",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:54:00.279278+00:00"
+  },
+  {
+    "code": "1945",
+    "name": "東京エネシス",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:53:59.456543+00:00"
+  },
+  {
+    "code": "1871",
+    "name": "ピーエス・コンストラクション",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:53:48.910942+00:00"
+  },
+  {
+    "code": "194A",
+    "name": "ＷＯＬＶＥＳ　ＨＡＮＤ",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:53:59.965527+00:00"
+  },
+  {
+    "code": "1938",
+    "name": "日本リーテック",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:53:58.657730+00:00"
+  },
+  {
+    "code": "192A",
+    "name": "インテグループ",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:53:58.149312+00:00"
+  },
+  {
+    "code": "1939",
+    "name": "四電工",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:53:58.812894+00:00"
+  },
+  {
+    "code": "1934",
+    "name": "ユアテック",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:53:58.501337+00:00"
+  },
+  {
+    "code": "1959",
+    "name": "クラフティア",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:54:00.615258+00:00"
+  },
+  {
+    "code": "1904",
+    "name": "大成温調",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:53:57.165273+00:00"
+  },
+  {
+    "code": "1928",
+    "name": "積水ハウス",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:53:57.825487+00:00"
+  },
+  {
+    "code": "1888",
+    "name": "若築建設",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:53:50.289041+00:00"
+  },
+  {
+    "code": "1929",
+    "name": "日特建設",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:53:57.994853+00:00"
+  },
+  {
+    "code": "1930",
+    "name": "北陸電気工事",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:53:58.335043+00:00"
+  },
+  {
+    "code": "1950",
+    "name": "日本電設工業",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:54:00.120666+00:00"
+  },
+  {
+    "code": "1925",
+    "name": "大和ハウス工業",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:53:57.502706+00:00"
+  },
+  {
+    "code": "1926",
+    "name": "ライト工業",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:53:57.660034+00:00"
+  },
+  {
+    "code": "1946",
+    "name": "トーエネック",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:53:59.654209+00:00"
+  },
+  {
+    "code": "1905",
+    "name": "テノックス",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:53:57.320804+00:00"
+  },
+  {
+    "code": "1942",
+    "name": "関電工",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:53:59.144260+00:00"
+  },
+  {
+    "code": "1952",
+    "name": "新日本空調",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:54:00.443100+00:00"
   }
 ]
