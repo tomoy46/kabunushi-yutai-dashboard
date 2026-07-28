@@ -1,0 +1,29 @@
+name: Recover shareholder benefit discovery results
+on:
+  workflow_dispatch:
+    inputs:
+      run_id: {description: 'Failed discovery workflow run ID', required: true, type: string}
+      artifact_name: {description: 'Artifact name (discovery-results-RUN_ID-ATTEMPT)', required: true, type: string}
+permissions: {actions: read, contents: write}
+concurrency: {group: shareholder-data-main, cancel-in-progress: false}
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: main}
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+          path: .discovery-results
+      - name: Show preserved security codes
+        run: cat .discovery-results/manifest.json
+      - name: Merge, validate, and commit without rerunning the API
+        id: commit_results
+        env:
+          USE_EXISTING_DISCOVERY_BUNDLE: 'true'
+        run: scripts/commit_discovery_results.sh

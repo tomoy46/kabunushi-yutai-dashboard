@@ -13,7 +13,7 @@ on:
       official_only: {description: 'Only register fully official results', default: true, type: boolean}
       diagnostic_mode: {description: 'Diagnose code 1301 without changing data', default: false, type: boolean}
 permissions: {contents: write, pages: write, id-token: write}
-concurrency: {group: openai-benefit-discovery, cancel-in-progress: false}
+concurrency: {group: shareholder-data-main, cancel-in-progress: false}
 jobs:
   discover:
     environment: {name: github-pages, url: '${{ steps.deployment.outputs.page_url }}'}
@@ -78,58 +78,16 @@ jobs:
         # so confirmed results still reach this step. A failed test or structural
         # discovery failure blocks the step via success().
         if: ${{ success() && inputs.diagnostic_mode != true }}
-        env:
-          CONFIRMED_COUNT: ${{ steps.discovery.outputs.confirmed }}
-          RESEARCH_LOG_COUNT: ${{ steps.discovery.outputs.research_log }}
-          FAILED_COUNT: ${{ steps.discovery.outputs.failed }}
         run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add data/benefits.csv data/benefits.json data/verification-queue.json data/discovery-progress.json data/research-log.json data/openai-api-usage.json data/official-benefit-sources.json
-          echo "Changed files and added/updated record counts before commit:"
-          python - <<'PY'
-          import csv, io, json, pathlib, subprocess
-
-          changed = subprocess.check_output(
-              ["git", "diff", "--cached", "--name-only", "--", "data"], text=True
-          ).splitlines()
-          for filename in changed:
-              path = pathlib.Path(filename)
-              current_text = path.read_text(encoding="utf-8")
-              try:
-                  previous_text = subprocess.check_output(
-                      ["git", "show", f"HEAD:{filename}"], text=True, stderr=subprocess.DEVNULL
-                  )
-              except subprocess.CalledProcessError:
-                  previous_text = ""
-              if path.suffix == ".csv":
-                  current = {row.get("code", str(index)): row for index, row in enumerate(csv.DictReader(io.StringIO(current_text)))}
-                  previous = {row.get("code", str(index)): row for index, row in enumerate(csv.DictReader(io.StringIO(previous_text)))}
-              else:
-                  current_value = json.loads(current_text)
-                  previous_value = json.loads(previous_text) if previous_text else []
-                  if isinstance(current_value, list):
-                      current = {str(row.get("code", index)) if isinstance(row, dict) else str(index): row
-                                 for index, row in enumerate(current_value)}
-                      previous = {str(row.get("code", index)) if isinstance(row, dict) else str(index): row
-                                  for index, row in enumerate(previous_value)}
-                  else:
-                      current, previous = {"document": current_value}, {"document": previous_value}
-              added = len(current.keys() - previous.keys())
-              updated = sum(current[key] != previous[key] for key in current.keys() & previous.keys())
-              print(f"{filename}: added={added} updated={updated}")
-          PY
-          echo "Changed line counts:"
-          git diff --cached --numstat
-          if git diff --cached --quiet; then
-            echo "::warning::No data files changed: discovery selected no eligible targets, or every generated value already matches Git. No commit was created."
-            committed=no
-          else
-            git commit -m "chore: update OpenAI benefit discovery"
-            git push
-            committed=yes
-          fi
-          echo "committed=${committed}" >> "$GITHUB_OUTPUT"
+          scripts/commit_discovery_results.sh
+      - name: Preserve uncommitted discovery results
+        if: ${{ failure() && inputs.diagnostic_mode != true }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: discovery-results-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .discovery-results/
+          if-no-files-found: error
+          retention-days: 30
       - name: Configure GitHub Pages
         if: ${{ steps.commit_results.outputs.committed == 'yes' && steps.discovery.outputs.confirmed != '0' }}
         uses: actions/configure-pages@v5

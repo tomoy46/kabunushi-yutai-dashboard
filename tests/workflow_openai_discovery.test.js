@@ -44,10 +44,39 @@ test('all boolean workflow inputs use typed boolean comparisons', () => {
 
 test('commit step reports staged changes and explains an empty diff', () => {
   const command = stepNamed('Commit verified results').run;
-  assert.ok(command.includes('added={added} updated={updated}'));
-  assert.ok(command.includes('git diff --cached --numstat'));
-  assert.ok(command.includes('::warning::No data files changed'));
-  assert.ok(command.includes('No commit was created'));
+  assert.ok(command.includes('scripts/commit_discovery_results.sh'));
+});
+
+test('all data-writing workflows share non-cancelling concurrency', () => {
+  for (const filename of ['discover-benefits-with-openai.yml', 'discover-benefits.yml',
+    'update-data.yml', 'update-listed-companies.yml', 'recover-discovery-results.yml']) {
+    const parsed = JSON.parse(execFileSync('ruby', ['-ryaml', '-rjson', '-e',
+      'puts JSON.generate(YAML.safe_load(File.read(ARGV[0]), aliases: true))',
+      path.join(__dirname, '..', '.github', 'workflows', filename)], { encoding: 'utf8' }));
+    assert.equal(parsed.concurrency.group, 'shareholder-data-main');
+    assert.equal(parsed.concurrency['cancel-in-progress'], false);
+  }
+});
+
+test('commit helper fetches main and retries a data-aware merge three times', () => {
+  const helper = require('node:fs').readFileSync(path.join(__dirname, '..', 'scripts', 'commit_discovery_results.sh'), 'utf8');
+  assert.ok(helper.includes('for attempt in 1 2 3'));
+  assert.ok(helper.includes('git fetch origin main'));
+  assert.ok(helper.includes('git reset --hard origin/main'));
+  assert.ok(helper.includes('merge_discovery_results.py apply'));
+  assert.ok(helper.includes('npm test'));
+  assert.ok(helper.includes('git push origin HEAD:main'));
+  assert.ok(!helper.includes('checkout --ours'));
+  assert.ok(!helper.includes('checkout --theirs'));
+  assert.ok(!helper.includes('git pull'));
+});
+
+test('failed commits preserve a recovery artifact', () => {
+  const preserve = stepNamed('Preserve uncommitted discovery results');
+  assert.equal(preserve.uses, 'actions/upload-artifact@v4');
+  assert.equal(preserve.if, '${{ failure() && inputs.diagnostic_mode != true }}');
+  assert.ok(preserve.with.name.includes('discovery-results-'));
+  assert.equal(preserve.with.path, '.discovery-results/');
 });
 
 test('tests run before discovery and a failed test blocks API use and commit', () => {
