@@ -72,7 +72,8 @@ FIELDS = {
     "source_updated_at": {"type": ["string", "null"]},
 }
 SCHEMA = {"type": "object", "properties": FIELDS, "required": list(FIELDS), "additionalProperties": False}
-BENEFIT_WORDS = ("株主優待", "優待制度", "優待券", "優待ポイント")
+BENEFIT_WORDS = ("株主優待", "株主ご優待", "株主優待制度", "優待券",
+                 "株主優待カード", "株主優待ポイント", "株主様ご優待")
 TRACKING_QUERY_KEYS = {"fbclid", "gclid", "yclid", "mc_cid", "mc_eid"}
 BROWSER_USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                       "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -95,6 +96,14 @@ class OfficialSourceFetchError(Exception):
         self.reason = reason
         self.original = error
         super().__init__(f"{reason}: {type(error).__name__}: {safe_message(error)}")
+
+
+class OpenAICallBudgetExhausted(Exception):
+    """Signal a safely skipped candidate after the per-run/day budget is spent."""
+
+    def __init__(self, item, reasons, url):
+        self.item, self.reasons, self.url = item, reasons, url
+        super().__init__(reasons[0])
 
 
 def official_source_log(company, url, **fields):
@@ -819,6 +828,36 @@ def discover_verified_official_source(company, registered=None, review_items=Non
     return None, ""
 
 
+def free_search_official_source(company, opener=None):
+    """Use a free HTML search result only to locate and verify an issuer page.
+
+    Search snippets are never evidence.  Every returned URL is downloaded and
+    must contain the issuer identity and a benefit term before it is accepted.
+    """
+    opener = opener or urlopen
+    query = urlencode({"q": f'{company["code"]} {company["name"]} 株主優待'})
+    request = Request(f"https://html.duckduckgo.com/html/?{query}", headers={"User-Agent": BROWSER_USER_AGENT})
+    try:
+        with opener(request, timeout=20) as response:
+            html = safe_text(response.read(1_000_000))
+    except (HTTPError, URLError, socket.timeout, TimeoutError, ValueError):
+        return None, ""
+    links = re.findall(r'''(?is)href=["']([^"']+)["']''', html)
+    for raw in links[:30]:
+        parsed = urlparse(unescape(raw))
+        target = dict(parse_qsl(parsed.query)).get("uddg") if "duckduckgo.com" in (parsed.hostname or "") else raw
+        url = canonical_url(target)
+        host = normalized_host(url)
+        if not url or not host or any(is_subdomain(host, blocked) for blocked in (*BLOCKED_HOSTS, "duckduckgo.com")):
+            continue
+        candidate = dict(company, official_domain=host, official_domains=[host])
+        try:
+            return fetch_official_page(url, candidate, {url: {}}, registered=False)
+        except (OfficialSourceNotFound, OfficialSourceFetchError, ValueError, TypeError):
+            continue
+    return None, ""
+
+
 def fetch_official_page(url, company, source_urls, registered=False, follow_links=True):
     normalized = canonical_url(url)
     if not registered and not any(url_identity(normalized) == url_identity(source) for source in source_urls):
@@ -1105,25 +1144,65 @@ def learn_domain_candidate(company, sources, page_fetcher=None):
     return None
 
 
-def choose(companies, args, progress, benefits, queue=None):
-    """Select only explicitly eligible companies; never scan the JPX master.
+def parsed_time(value):
+    """Parse an ISO timestamp from durable state, returning a UTC value or None."""
+    try:
+        result = dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        return result.replace(tzinfo=result.tzinfo or dt.timezone.utc).astimezone(dt.timezone.utc)
+    except (TypeError, ValueError):
+        return None
 
-    Eligibility comes from a manual code list, the maintained benefit universe,
-    or a TDnet review item.  Code ranges and progress cursors intentionally play
-    no part in selection.
-    """
+
+def excluded_security(company):
+    """Reject non-operating securities and delisted master rows for auto mode."""
+    text = " ".join(str(company.get(key) or "") for key in
+                    ("market", "sector", "name", "security_type", "status"))
+    return bool(re.search(r"ETF|ETN|REIT|リート|インフラファンド|優先株|上場廃止", text, re.I)) or \
+        company.get("listed") is False or company.get("delisted") is True
+
+
+def choose(companies, args, progress, benefits, queue=None, now=None):
+    """Choose manual targets first, otherwise scan genuinely unresearched issuers."""
     immutable = {x["code"] for x in benefits if x.get("benefit_status") in ("official_confirmed", "abolished")}
     manual = parse_security_codes(getattr(args, "security_codes", ""))
-    universe = load_benefit_universe(DATA / "benefit-universe.csv")
-    tdnet = tdnet_codes(load(DATA / "review-queue.json", []))
-    eligible = set(manual) | universe | tdnet
     by_code = {str(company["code"]): company for company in companies}
-    ordered = manual + sorted(eligible - set(manual))
+    auto = getattr(args, "auto_select", None)
+    if manual:
+        ordered = manual
+    elif auto is True:
+        ordered = [str(company["code"]) for company in companies]
+    elif auto is None:  # compatibility for callers predating the workflow input
+        eligible = load_benefit_universe(DATA / "benefit-universe.csv") | tdnet_codes(
+            load(DATA / "review-queue.json", []))
+        ordered = sorted(eligible)
+    else:
+        ordered = []
     candidates = [by_code[code] for code in ordered if code in by_code and code not in immutable]
+    if not manual:
+        candidates = [company for company in candidates if not excluded_security(company)]
+    now = now or dt.datetime.now(dt.timezone.utc)
+    recent_research, recent_failed = set(), set()
+    for item in load(DATA / "research-log.json", []):
+        checked = parsed_time(item.get("checked_at"))
+        age = now - checked if checked else None
+        failed = item.get("result") in ("failed", "api_failed", "url_fetch_failed", "analysis_failed")
+        if failed and age is not None and age < dt.timedelta(days=7):
+            recent_failed.add(str(item.get("code")))
+        elif not failed and age is not None and age < dt.timedelta(days=30):
+            recent_research.add(str(item.get("code")))
+    if not getattr(args, "retry_research_log", False):
+        candidates = [c for c in candidates if str(c["code"]) not in recent_research]
     if not getattr(args, "retry_failed", False):
-        researched = {str(item.get("code")) for item in load(DATA / "research-log.json", [])}
-        candidates = [company for company in candidates if str(company["code"]) not in researched]
-    return candidates[:min(args.batch_size, args.daily_limit)]
+        candidates = [c for c in candidates if str(c["code"]) not in recent_failed]
+    return candidates[:min(max(0, args.batch_size), 20)]
+
+
+def calls_today(records, now=None):
+    """Count Responses calls already made on the current UTC day."""
+    today = (now or dt.datetime.now(dt.timezone.utc)).date()
+    return sum(int(record.get("responses_api_calls") or 0) for record in records
+               if parsed_time(record.get("executed_at")) and
+               parsed_time(record.get("executed_at")).date() == today)
 
 
 def parse_security_codes(value):
@@ -1274,6 +1353,9 @@ def run(args):
     benefits = load(DATA / "benefits.json", []); queue = load(DATA / "verification-queue.json", [])
     progress = load(DATA / "discovery-progress.json", {"next_index": 0, "processed_codes": [], "failed_codes": []})
     selected = companies if args.diagnostic_mode else choose(companies, args, progress, benefits, queue)
+    previous_usage = load(DATA / "openai-api-usage.json", [])
+    daily_remaining = max(0, 20 - calls_today(previous_usage))
+    run_call_limit = min(max(0, getattr(args, "max_openai_calls", 10)), 20, daily_remaining)
     if not args.diagnostic_mode and not fixture:
         targets = ", ".join(f'{company["code"]} {company["name"]}' for company in selected) or "none"
         print(f"PRODUCTION TARGETS ({len(selected)}): {targets}")
@@ -1281,7 +1363,7 @@ def run(args):
               "web_search_output_items": 0, "web_search_calls": 0,
               "input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0,
               "successes": 0, "verification_required": 0, "research_log_saved": 0,
-              "failures": 0}
+              "failures": 0, "free_candidates_checked": 0, "benefit_candidates": 0}
     confirmed_codes = []
     unique_web_search_call_ids = set()
     web_search_action_types = set()
@@ -1305,6 +1387,7 @@ def run(args):
         active_failed_stage = "web_search"
         failure_logged = False
         try:
+            totals["free_candidates_checked"] += 1
             registered = registered_sources.get(str(company["code"]).upper())
             active_label = "Official source discovery and extraction"
             active_failed_stage = "official_discovery"
@@ -1317,15 +1400,24 @@ def run(args):
                     company["official_domain"] = company["official_domains"][0]
             final_url, official_text = discover_verified_official_source(
                 company, registered, load(DATA / "review-queue.json", []))
+            if not final_url and not registered and not fixture:
+                final_url, official_text = free_search_official_source(company)
+                if final_url and not company.get("official_domain"):
+                    company["official_domain"] = normalized_host(final_url)
             if not final_url:
                 item = empty_extraction(company, None)
                 reasons = ["official_source_not_found"]
             else:
+                totals["benefit_candidates"] += 1
                 facts = evidence_facts(official_text)
                 print("Evidence readiness " + str(company["code"]) + ": " + " ".join(
                     f"{name}={'found' if value else 'missing'}" for name, value in facts.items()))
                 # OpenAI receives already-fetched text and performs structure
                 # extraction only.  It never participates in URL discovery or IO.
+                if totals["responses_api_calls"] >= run_call_limit:
+                    item = empty_extraction(company, final_url)
+                    reasons = ["openai_call_budget_exhausted"]
+                    raise OpenAICallBudgetExhausted(item, reasons, final_url)
                 totals["responses_api_calls"] += 1
                 correction = request_response(official_page_payload(
                     company, final_url, official_text,
@@ -1370,6 +1462,14 @@ def run(args):
             label = "FIXTURE RESULT" if fixture else "PRODUCTION RESULT"
             print(f'{label} {company["code"]} {company["name"]}: {outcome}')
             continue
+        except OpenAICallBudgetExhausted as budget:
+            totals["processed_companies"] += 1
+            totals["verification_required"] += 1
+            if not args.diagnostic_mode:
+                append_research_log(company, "not_officially_verified", budget.reasons, budget.url)
+                totals["research_log_saved"] += 1
+                persist_production_state(benefits, queue, progress)
+                print(f'PRODUCTION RESULT {company["code"]} {company["name"]}: research_log')
         except OfficialSourceNotFound as error:
             totals["processed_companies"] += 1
             totals["verification_required"] += 1
@@ -1427,7 +1527,15 @@ def run(args):
         print(f"{summary_label}: "
               f"confirmed={totals['successes']} verification_queue={totals['verification_required']} "
               f"research_log={totals['research_log_saved']} failed={totals['failures']} "
-              f"skipped=0 selected={len(selected)}")
+              f"skipped=0 selected={len(selected)} free_checked={totals['free_candidates_checked']} "
+              f"benefit_candidates={totals['benefit_candidates']} openai_calls={totals['responses_api_calls']}")
+        # Defaults are deliberately conservative and can be updated without code
+        # changes when the configured model price changes.
+        input_rate = float(os.environ.get("OPENAI_INPUT_USD_PER_MILLION", "0.20"))
+        output_rate = float(os.environ.get("OPENAI_OUTPUT_USD_PER_MILLION", "1.25"))
+        estimated_cost = (totals["input_tokens"] * input_rate + totals["output_tokens"] * output_rate) / 1_000_000
+        print(f"API USAGE: input_tokens={totals['input_tokens']} output_tokens={totals['output_tokens']} "
+              f"estimated_cost_usd={estimated_cost:.6f}")
         if not fixture:
             changed = subprocess.run(
                 ["git", "diff", "--name-only", "--", "data"], cwd=ROOT,
@@ -1465,8 +1573,12 @@ def run(args):
 
 
 def parser():
-    result=argparse.ArgumentParser(); result.add_argument("--batch-size", type=int, default=5); result.add_argument("--daily-limit", type=int, default=20)
+    result=argparse.ArgumentParser(); result.add_argument("--batch-size", type=int, default=10)
+    result.add_argument("--max-openai-calls", type=int, default=10)
+    result.add_argument("--daily-limit", type=int, default=20, help=argparse.SUPPRESS)
     result.add_argument("--security-codes", default="", help="comma-separated security codes")
+    result.add_argument("--auto-select", action=argparse.BooleanOptionalAction, default=True)
+    result.add_argument("--retry-research-log", action="store_true")
     result.add_argument("--retry-failed", action="store_true")
     result.add_argument("--official-only", action="store_true"); result.add_argument("--diagnostic-mode", action="store_true"); return result
 
