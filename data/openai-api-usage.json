@@ -582,5 +582,95 @@
     ],
     "duration_seconds": 151.524,
     "errors": []
+  },
+  {
+    "executed_at": "2026-07-28T13:07:20.907395+00:00",
+    "model": "gpt-5.4-nano",
+    "diagnostic_mode": false,
+    "processed_companies": 25,
+    "responses_api_calls": 8,
+    "responses_with_web_search": 0,
+    "web_search_output_items": 0,
+    "web_search_calls": 0,
+    "input_tokens": 46062,
+    "cached_input_tokens": 0,
+    "output_tokens": 4801,
+    "successes": 2,
+    "verification_required": 23,
+    "research_log_saved": 23,
+    "failures": 0,
+    "free_candidates_checked": 25,
+    "benefit_candidates": 8,
+    "unique_web_search_call_ids": 0,
+    "estimated_cost_jpy": 2.28205,
+    "daily_estimated_cost_jpy": 8.741376,
+    "pricing": {
+      "input_usd_per_million": 0.2,
+      "cached_input_usd_per_million": 0.02,
+      "output_usd_per_million": 1.25,
+      "usd_to_jpy": 150.0,
+      "source": "https://openai.com/api/pricing/",
+      "verified_at": "2026-07-28"
+    },
+    "company_usage": [
+      {
+        "code": "1514",
+        "input_tokens": 4286,
+        "cached_input_tokens": 0,
+        "output_tokens": 317,
+        "estimated_cost_jpy": 0.188018
+      },
+      {
+        "code": "1515",
+        "input_tokens": 3262,
+        "cached_input_tokens": 0,
+        "output_tokens": 809,
+        "estimated_cost_jpy": 0.249548
+      },
+      {
+        "code": "1518",
+        "input_tokens": 4854,
+        "cached_input_tokens": 0,
+        "output_tokens": 1899,
+        "estimated_cost_jpy": 0.501683
+      },
+      {
+        "code": "151A",
+        "input_tokens": 4695,
+        "cached_input_tokens": 0,
+        "output_tokens": 297,
+        "estimated_cost_jpy": 0.196538
+      },
+      {
+        "code": "153A",
+        "input_tokens": 4177,
+        "cached_input_tokens": 0,
+        "output_tokens": 339,
+        "estimated_cost_jpy": 0.188873
+      },
+      {
+        "code": "155A",
+        "input_tokens": 15120,
+        "cached_input_tokens": 0,
+        "output_tokens": 561,
+        "estimated_cost_jpy": 0.558787
+      },
+      {
+        "code": "156A",
+        "input_tokens": 4734,
+        "cached_input_tokens": 0,
+        "output_tokens": 327,
+        "estimated_cost_jpy": 0.203333
+      },
+      {
+        "code": "157A",
+        "input_tokens": 4934,
+        "cached_input_tokens": 0,
+        "output_tokens": 252,
+        "estimated_cost_jpy": 0.19527
+      }
+    ],
+    "duration_seconds": 72.047,
+    "errors": []
   }
 ]
