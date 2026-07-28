@@ -915,5 +915,126 @@
     ],
     "duration_seconds": 60.014,
     "errors": []
+  },
+  {
+    "executed_at": "2026-07-28T22:39:46.947709+00:00",
+    "model": "gpt-5.4-nano",
+    "diagnostic_mode": false,
+    "processed_companies": 25,
+    "responses_api_calls": 10,
+    "responses_with_web_search": 0,
+    "web_search_output_items": 0,
+    "web_search_calls": 0,
+    "input_tokens": 62057,
+    "cached_input_tokens": 0,
+    "output_tokens": 3816,
+    "successes": 1,
+    "verification_required": 24,
+    "research_log_saved": 9,
+    "failures": 0,
+    "free_candidates_checked": 25,
+    "benefit_candidates": 10,
+    "free_extraction_success": 10,
+    "research_reasons": {
+      "official_site_discovery_failed": 15,
+      "required_shares_missing": 7,
+      "benefit_content_missing": 0,
+      "record_month_missing": 0,
+      "confidence_low": 9,
+      "redirect_domain_rejected": 0,
+      "pdf_parse_failed": 0
+    },
+    "high": 3,
+    "medium": 7,
+    "low": 15,
+    "official_domains_found": 10,
+    "official_url_candidates_found": 70,
+    "pre_openai_excluded": 15,
+    "unresolved": 15,
+    "unique_web_search_call_ids": 0,
+    "estimated_cost_jpy": 2.577211,
+    "daily_estimated_cost_jpy": 14.756275,
+    "pricing": {
+      "input_usd_per_million": 0.2,
+      "cached_input_usd_per_million": 0.02,
+      "output_usd_per_million": 1.25,
+      "usd_to_jpy": 150.0,
+      "source": "https://openai.com/api/pricing/",
+      "verified_at": "2026-07-28"
+    },
+    "company_usage": [
+      {
+        "code": "1887",
+        "input_tokens": 6920,
+        "cached_input_tokens": 0,
+        "output_tokens": 284,
+        "estimated_cost_jpy": 0.26085
+      },
+      {
+        "code": "1893",
+        "input_tokens": 6930,
+        "cached_input_tokens": 0,
+        "output_tokens": 236,
+        "estimated_cost_jpy": 0.25215
+      },
+      {
+        "code": "1897",
+        "input_tokens": 6905,
+        "cached_input_tokens": 0,
+        "output_tokens": 291,
+        "estimated_cost_jpy": 0.261713
+      },
+      {
+        "code": "1899",
+        "input_tokens": 4759,
+        "cached_input_tokens": 0,
+        "output_tokens": 657,
+        "estimated_cost_jpy": 0.265958
+      },
+      {
+        "code": "189A",
+        "input_tokens": 4824,
+        "cached_input_tokens": 0,
+        "output_tokens": 690,
+        "estimated_cost_jpy": 0.274095
+      },
+      {
+        "code": "1909",
+        "input_tokens": 3385,
+        "cached_input_tokens": 0,
+        "output_tokens": 486,
+        "estimated_cost_jpy": 0.192675
+      },
+      {
+        "code": "190A",
+        "input_tokens": 7493,
+        "cached_input_tokens": 0,
+        "output_tokens": 281,
+        "estimated_cost_jpy": 0.277478
+      },
+      {
+        "code": "1911",
+        "input_tokens": 6941,
+        "cached_input_tokens": 0,
+        "output_tokens": 236,
+        "estimated_cost_jpy": 0.25248
+      },
+      {
+        "code": "1914",
+        "input_tokens": 6951,
+        "cached_input_tokens": 0,
+        "output_tokens": 317,
+        "estimated_cost_jpy": 0.267967
+      },
+      {
+        "code": "1921",
+        "input_tokens": 6949,
+        "cached_input_tokens": 0,
+        "output_tokens": 338,
+        "estimated_cost_jpy": 0.271845
+      }
+    ],
+    "duration_seconds": 137.283,
+    "errors": []
   }
 ]

@@ -1429,5 +1429,102 @@
     ],
     "checked_at": "2026-07-28T22:19:04.171910+00:00",
     "source_url": "https://yutai.net-ir.ne.jp/company/1879/"
+  },
+  {
+    "code": "1921",
+    "name": "巴コーポレーション",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-28T22:39:46.135287+00:00",
+    "source_url": "https://www.nikkei.com/nkd/company/yutai/?scode=1921"
+  },
+  {
+    "code": "1899",
+    "name": "福田組",
+    "result": "not_officially_verified",
+    "reasons": [
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-28T22:38:32.141797+00:00",
+    "source_url": "https://yutai.net-ir.ne.jp/company/1899/"
+  },
+  {
+    "code": "1897",
+    "name": "金下建設",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-28T22:38:09.991157+00:00",
+    "source_url": "https://www.nikkei.com/nkd/company/yutai/?scode=1897"
+  },
+  {
+    "code": "1909",
+    "name": "日本ドライケミカル",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-28T22:39:11.596922+00:00",
+    "source_url": "https://www.ndc-group.co.jp/ir/stock/stock_preferential_treatment/index.html"
+  },
+  {
+    "code": "189A",
+    "name": "Ｄ＆Ｍカンパニー",
+    "result": "not_officially_verified",
+    "reasons": [
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-28T22:38:43.336940+00:00",
+    "source_url": "https://yutai.net-ir.ne.jp/company/189A/"
+  },
+  {
+    "code": "1914",
+    "name": "日本基礎技術",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-28T22:39:41.502388+00:00",
+    "source_url": "https://www.nikkei.com/nkd/company/yutai/?scode=1914"
+  },
+  {
+    "code": "1911",
+    "name": "住友林業",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-28T22:39:37.167772+00:00",
+    "source_url": "https://www.nikkei.com/nkd/company/yutai/?scode=1911"
+  },
+  {
+    "code": "1887",
+    "name": "日本国土開発",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-28T22:37:46.933352+00:00",
+    "source_url": "https://www.nikkei.com/nkd/company/yutai/?scode=1887"
+  },
+  {
+    "code": "1893",
+    "name": "五洋建設",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-28T22:38:03.832687+00:00",
+    "source_url": "https://www.nikkei.com/nkd/company/yutai/?scode=1893"
   }
 ]

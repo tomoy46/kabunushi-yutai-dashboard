@@ -1377,5 +1377,55 @@
     "market": "プライム",
     "sector": "建設業",
     "industry": "建設業"
+  },
+  {
+    "code": "190A",
+    "name": "Ｃｈｏｒｄｉａ　Ｔｈｅｒａｐｅｕｔｉｃｓ",
+    "benefit_status": "official_confirmed",
+    "record_months": [
+      8,
+      7,
+      3
+    ],
+    "record_date": null,
+    "annual_occurrences": 3,
+    "minimum_shares": 100,
+    "maximum_shares": null,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "maximum_shares": null,
+        "description": "優待内容未取得",
+        "annual_value_yen": null
+      }
+    ],
+    "benefit_title": null,
+    "benefit_description": null,
+    "category": null,
+    "annual_value_yen": null,
+    "valuation_type": "not_calculated",
+    "long_term_required": false,
+    "holding_period_months": null,
+    "long_term_condition_verified": false,
+    "conditions": "株主優待 無",
+    "official_source_url": "https://www.nikkei.com/nkd/company/?scode=190A",
+    "official_source_title": null,
+    "official_verified_at": "2026-07-28",
+    "abolished_at": null,
+    "last_record_date": null,
+    "change_or_abolition_note": null,
+    "confidence_score": 90,
+    "evidence_text": "本文中に「株主優待 無」の記載のみ確認できたため。株数ごとの条件、贈呈時期、金額等は本文に存在せず取得不可。",
+    "error_reason": null,
+    "source_published_at": null,
+    "source_updated_at": null,
+    "data_confidence": "official_confirmed",
+    "benefit_summary": "優待内容未取得",
+    "last_checked_at": "2026-07-28",
+    "long_term_condition": "公式資料に長期保有条件の記載なし",
+    "notes": "株主優待 無",
+    "market": "グロース",
+    "sector": "医薬品",
+    "industry": "医薬品"
   }
 ]

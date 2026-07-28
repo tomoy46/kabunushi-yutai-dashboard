@@ -198,5 +198,155 @@
     ],
     "explored_urls": [],
     "checked_at": "2026-07-28T22:19:14.681345+00:00"
+  },
+  {
+    "code": "1934",
+    "name": "ユアテック",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:39:46.610898+00:00"
+  },
+  {
+    "code": "1939",
+    "name": "四電工",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:39:46.883721+00:00"
+  },
+  {
+    "code": "1926",
+    "name": "ライト工業",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:39:46.234404+00:00"
+  },
+  {
+    "code": "1898",
+    "name": "世紀東急工業",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:38:22.075746+00:00"
+  },
+  {
+    "code": "1925",
+    "name": "大和ハウス工業",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:39:46.195277+00:00"
+  },
+  {
+    "code": "1941",
+    "name": "中電工",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:39:46.945423+00:00"
+  },
+  {
+    "code": "1871",
+    "name": "ピーエス・コンストラクション",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:37:41.799308+00:00"
+  },
+  {
+    "code": "1938",
+    "name": "日本リーテック",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:39:46.688114+00:00"
+  },
+  {
+    "code": "1904",
+    "name": "大成温調",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:38:52.819579+00:00"
+  },
+  {
+    "code": "1928",
+    "name": "積水ハウス",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:39:46.273245+00:00"
+  },
+  {
+    "code": "1930",
+    "name": "北陸電気工事",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:39:46.569018+00:00"
+  },
+  {
+    "code": "1905",
+    "name": "テノックス",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:39:06.433573+00:00"
+  },
+  {
+    "code": "1888",
+    "name": "若築建設",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:37:58.407723+00:00"
+  },
+  {
+    "code": "1929",
+    "name": "日特建設",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:39:46.450099+00:00"
+  },
+  {
+    "code": "192A",
+    "name": "インテグループ",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:39:46.496304+00:00"
   }
 ]
