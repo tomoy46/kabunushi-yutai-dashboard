@@ -1,0 +1,14 @@
+{
+  "currency": "USD",
+  "usd_to_jpy": 150.0,
+  "exchange_rate_note": "A conservative fixed operational rate; update together with model prices.",
+  "models": {
+    "gpt-5.4-nano": {
+      "input_usd_per_million": 0.2,
+      "cached_input_usd_per_million": 0.02,
+      "output_usd_per_million": 1.25,
+      "source": "https://openai.com/api/pricing/",
+      "verified_at": "2026-07-28"
+    }
+  }
+}

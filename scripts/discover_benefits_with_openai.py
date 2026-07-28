@@ -33,6 +33,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 ENDPOINT = "https://api.openai.com/v1/responses"
 DEFAULT_MODEL = "gpt-5.4-nano"
+PRICING_CONFIG = ROOT / "config" / "openai-pricing.json"
 OFFICIAL_HOSTS = ("jpx.co.jp", "tdnet.info")
 JPX_BLOCKED_PATHS = ("/corporate/investor-relations/", "/corporate/about-jpx/")
 BLOCKED_HOSTS = (
@@ -473,6 +474,7 @@ def official_page_payload(company, url, text, initial, model):
                     "公開日・更新日を確認できればsource_published_at・source_updated_atへ保存する。"
                     "長期保有条件なしという明記がある場合だけlong_term_condition_verified=trueとする。")
     return {"model": model, "input": instructions + "\n" + json.dumps(prompt, ensure_ascii=False),
+            "max_output_tokens": 4_000,
             "store": False, "reasoning": {"effort": "none"}, "text": {"format": response_format()}}
 
 
@@ -1194,7 +1196,8 @@ def choose(companies, args, progress, benefits, queue=None, now=None):
         candidates = [c for c in candidates if str(c["code"]) not in recent_research]
     if not getattr(args, "retry_failed", False):
         candidates = [c for c in candidates if str(c["code"]) not in recent_failed]
-    return candidates[:min(max(0, args.batch_size), 20)]
+    companies_per_run = getattr(args, "companies_per_run", getattr(args, "batch_size", 25))
+    return candidates[:max(0, companies_per_run)]
 
 
 def calls_today(records, now=None):
@@ -1203,6 +1206,57 @@ def calls_today(records, now=None):
     return sum(int(record.get("responses_api_calls") or 0) for record in records
                if parsed_time(record.get("executed_at")) and
                parsed_time(record.get("executed_at")).date() == today)
+
+
+def load_pricing(model, path=None):
+    """Load the checked-in price for the model actually sent to OpenAI."""
+    config = load(path or PRICING_CONFIG, {})
+    try:
+        price = config["models"][model]
+        return {
+            "input_usd_per_million": float(price["input_usd_per_million"]),
+            "cached_input_usd_per_million": float(price["cached_input_usd_per_million"]),
+            "output_usd_per_million": float(price["output_usd_per_million"]),
+            "usd_to_jpy": float(config["usd_to_jpy"]),
+            "source": price.get("source"),
+            "verified_at": price.get("verified_at"),
+        }
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError(f"OpenAI pricing is not configured for model: {model}") from error
+
+
+def estimated_cost_jpy(token_usage, pricing):
+    """Price billed input (including its cached subset) and output tokens in JPY."""
+    input_tokens = max(0, int(token_usage.get("input_tokens") or 0))
+    cached_tokens = min(input_tokens, max(0, int(token_usage.get("cached_input_tokens") or 0)))
+    output_tokens = max(0, int(token_usage.get("output_tokens") or 0))
+    usd = ((input_tokens - cached_tokens) * pricing["input_usd_per_million"] +
+           cached_tokens * pricing["cached_input_usd_per_million"] +
+           output_tokens * pricing["output_usd_per_million"]) / 1_000_000
+    return round(usd * pricing["usd_to_jpy"], 6)
+
+
+def cost_today(records, now=None, pricing=None):
+    """Sum durable estimated JPY charges for the current UTC day."""
+    today = (now or dt.datetime.now(dt.timezone.utc)).date()
+    total = 0.0
+    for record in records:
+        executed = parsed_time(record.get("executed_at"))
+        if not executed or executed.date() != today:
+            continue
+        if record.get("estimated_cost_jpy") is not None:
+            total += float(record["estimated_cost_jpy"])
+        elif pricing:
+            # Price legacy records so rollout-day usage cannot bypass the budget.
+            total += estimated_cost_jpy(record, pricing)
+    return round(total, 6)
+
+
+def projected_request_cost_jpy(payload, pricing):
+    """Conservatively reserve a request before its server token usage is known."""
+    input_tokens = max(1, (len(json.dumps(payload, ensure_ascii=False)) + 3) // 4)
+    output_tokens = int(payload.get("max_output_tokens") or 4_000)
+    return estimated_cost_jpy({"input_tokens": input_tokens, "output_tokens": output_tokens}, pricing)
 
 
 def parse_security_codes(value):
@@ -1342,6 +1396,11 @@ def run(args):
                                  "zero_confirmed_cause": "pdftotext_unavailable"})
         return 1
     model = os.environ.get("OPENAI_MODEL") or DEFAULT_MODEL
+    try:
+        pricing = load_pricing(model)
+    except ValueError as error:
+        print(str(error), file=sys.stderr)
+        return 2
     companies = load(DATA / "listed-companies.json", [])
     domains = load(DATA / "company-domains.json", {})
     registered_sources = load_official_sources(DATA / "official-benefit-sources.json")
@@ -1354,8 +1413,12 @@ def run(args):
     progress = load(DATA / "discovery-progress.json", {"next_index": 0, "processed_codes": [], "failed_codes": []})
     selected = companies if args.diagnostic_mode else choose(companies, args, progress, benefits, queue)
     previous_usage = load(DATA / "openai-api-usage.json", [])
-    daily_remaining = max(0, 20 - calls_today(previous_usage))
-    run_call_limit = min(max(0, getattr(args, "max_openai_calls", 10)), 20, daily_remaining)
+    prior_daily_calls = calls_today(previous_usage)
+    prior_daily_cost_jpy = cost_today(previous_usage, pricing=pricing)
+    max_calls_per_run = max(0, getattr(args, "max_openai_calls_per_run",
+                                      getattr(args, "max_openai_calls", 25)))
+    max_calls_per_day = max(0, getattr(args, "max_openai_calls_per_day", 100))
+    max_budget_jpy_per_day = max(0.0, getattr(args, "max_openai_budget_jpy_per_day", 100.0))
     if not args.diagnostic_mode and not fixture:
         targets = ", ".join(f'{company["code"]} {company["name"]}' for company in selected) or "none"
         print(f"PRODUCTION TARGETS ({len(selected)}): {targets}")
@@ -1364,6 +1427,9 @@ def run(args):
               "input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0,
               "successes": 0, "verification_required": 0, "research_log_saved": 0,
               "failures": 0, "free_candidates_checked": 0, "benefit_candidates": 0}
+    company_usage = []
+    budget_deferred = 0
+    run_estimated_cost_jpy = 0.0
     confirmed_codes = []
     unique_web_search_call_ids = set()
     web_search_action_types = set()
@@ -1382,7 +1448,7 @@ def run(args):
         except Exception as error:
             failed_stage = "plain"
             diagnostic_stage("Plain Responses API", "failure", error, key)
-    for company in selected:
+    for company_index, company in enumerate(selected):
         active_label = "Web search + Structured Outputs"
         active_failed_stage = "web_search"
         failure_logged = False
@@ -1414,15 +1480,29 @@ def run(args):
                     f"{name}={'found' if value else 'missing'}" for name, value in facts.items()))
                 # OpenAI receives already-fetched text and performs structure
                 # extraction only.  It never participates in URL discovery or IO.
-                if totals["responses_api_calls"] >= run_call_limit:
+                payload = official_page_payload(company, final_url, official_text,
+                                                empty_extraction(company, final_url), model)
+                projected_cost = projected_request_cost_jpy(payload, pricing)
+                daily_calls = prior_daily_calls + totals["responses_api_calls"]
+                daily_cost = prior_daily_cost_jpy + run_estimated_cost_jpy
+                print(f"OpenAI budget check {company['code']}: daily_calls={daily_calls}/{max_calls_per_day} "
+                      f"daily_estimated_cost_jpy={daily_cost:.6f}/{max_budget_jpy_per_day:.2f} "
+                      f"projected_request_cost_jpy={projected_cost:.6f}")
+                if (totals["responses_api_calls"] >= max_calls_per_run or
+                        daily_calls >= max_calls_per_day or
+                        daily_cost >= max_budget_jpy_per_day or
+                        daily_cost + projected_cost > max_budget_jpy_per_day):
                     item = empty_extraction(company, final_url)
                     reasons = ["openai_call_budget_exhausted"]
                     raise OpenAICallBudgetExhausted(item, reasons, final_url)
                 totals["responses_api_calls"] += 1
-                correction = request_response(official_page_payload(
-                    company, final_url, official_text,
-                    empty_extraction(company, final_url), model), key)
-                for key_name, value in usage(correction).items(): totals[key_name] += value
+                correction = request_response(payload, key)
+                response_usage = usage(correction)
+                for key_name, value in response_usage.items(): totals[key_name] += value
+                company_cost = estimated_cost_jpy(response_usage, pricing)
+                run_estimated_cost_jpy = round(run_estimated_cost_jpy + company_cost, 6)
+                company_usage.append({"code": str(company["code"]), **response_usage,
+                                      "estimated_cost_jpy": company_cost})
                 item = json.loads(output_text(correction))
                 item["code"], item["name"], item["official_source_url"] = (
                     str(company["code"]), company["name"], final_url)
@@ -1463,13 +1543,11 @@ def run(args):
             print(f'{label} {company["code"]} {company["name"]}: {outcome}')
             continue
         except OpenAICallBudgetExhausted as budget:
-            totals["processed_companies"] += 1
-            totals["verification_required"] += 1
-            if not args.diagnostic_mode:
-                append_research_log(company, "not_officially_verified", budget.reasons, budget.url)
-                totals["research_log_saved"] += 1
-                persist_production_state(benefits, queue, progress)
-                print(f'PRODUCTION RESULT {company["code"]} {company["name"]}: research_log')
+            # Do not mark deferred issuers as researched: the next run must be
+            # able to select them again rather than silently omitting them.
+            budget_deferred = len(selected) - company_index
+            print(f"OPENAI BUDGET EXHAUSTED: deferred_companies={budget_deferred}")
+            break
         except OfficialSourceNotFound as error:
             totals["processed_companies"] += 1
             totals["verification_required"] += 1
@@ -1520,22 +1598,22 @@ def run(args):
     if not args.diagnostic_mode:
         totals["unique_web_search_call_ids"] = len(unique_web_search_call_ids)
         record = {"executed_at": dt.datetime.now(dt.timezone.utc).isoformat(), "model": model,
-                  "diagnostic_mode": False, **totals, "duration_seconds": round(time.monotonic()-started, 3), "errors": errors}
+                  "diagnostic_mode": False, **totals,
+                  "estimated_cost_jpy": round(run_estimated_cost_jpy, 6),
+                  "daily_estimated_cost_jpy": round(prior_daily_cost_jpy + run_estimated_cost_jpy, 6),
+                  "pricing": pricing, "company_usage": company_usage,
+                  "duration_seconds": round(time.monotonic()-started, 3), "errors": errors}
         usage_log=load(DATA / "openai-api-usage.json", []); usage_log.append(record); atomic(DATA / "openai-api-usage.json", usage_log)
         accounted = totals["successes"] + totals["verification_required"] + totals["failures"]
         summary_label = "FIXTURE SUMMARY" if fixture else "PRODUCTION SUMMARY"
         print(f"{summary_label}: "
               f"confirmed={totals['successes']} verification_queue={totals['verification_required']} "
               f"research_log={totals['research_log_saved']} failed={totals['failures']} "
-              f"skipped=0 selected={len(selected)} free_checked={totals['free_candidates_checked']} "
+              f"skipped={budget_deferred} selected={len(selected)} free_checked={totals['free_candidates_checked']} "
               f"benefit_candidates={totals['benefit_candidates']} openai_calls={totals['responses_api_calls']}")
-        # Defaults are deliberately conservative and can be updated without code
-        # changes when the configured model price changes.
-        input_rate = float(os.environ.get("OPENAI_INPUT_USD_PER_MILLION", "0.20"))
-        output_rate = float(os.environ.get("OPENAI_OUTPUT_USD_PER_MILLION", "1.25"))
-        estimated_cost = (totals["input_tokens"] * input_rate + totals["output_tokens"] * output_rate) / 1_000_000
         print(f"API USAGE: input_tokens={totals['input_tokens']} output_tokens={totals['output_tokens']} "
-              f"estimated_cost_usd={estimated_cost:.6f}")
+              f"estimated_cost_jpy={run_estimated_cost_jpy:.6f} "
+              f"daily_estimated_cost_jpy={prior_daily_cost_jpy + run_estimated_cost_jpy:.6f}")
         if not fixture:
             changed = subprocess.run(
                 ["git", "diff", "--name-only", "--", "data"], cwd=ROOT,
@@ -1550,7 +1628,7 @@ def run(args):
                   f"input_tokens={totals['input_tokens']} output_tokens={totals['output_tokens']} "
                   f"cause={totals['zero_confirmed_cause']}")
         publish_workflow_counts(totals)
-        if accounted != len(selected):
+        if accounted + budget_deferred != len(selected):
             print(f"ERROR: selected {len(selected)} companies but persisted outcomes for {accounted}", file=sys.stderr)
             return 1
     if args.diagnostic_mode:
@@ -1573,9 +1651,12 @@ def run(args):
 
 
 def parser():
-    result=argparse.ArgumentParser(); result.add_argument("--batch-size", type=int, default=10)
-    result.add_argument("--max-openai-calls", type=int, default=10)
-    result.add_argument("--daily-limit", type=int, default=20, help=argparse.SUPPRESS)
+    result=argparse.ArgumentParser()
+    result.add_argument("--companies-per-run", "--batch-size", dest="companies_per_run", type=int, default=25)
+    result.add_argument("--max-openai-calls-per-run", "--max-openai-calls",
+                        dest="max_openai_calls_per_run", type=int, default=25)
+    result.add_argument("--max-openai-calls-per-day", type=int, default=100)
+    result.add_argument("--max-openai-budget-jpy-per-day", type=float, default=100)
     result.add_argument("--security-codes", default="", help="comma-separated security codes")
     result.add_argument("--auto-select", action=argparse.BooleanOptionalAction, default=True)
     result.add_argument("--retry-research-log", action="store_true")
