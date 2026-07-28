@@ -171,6 +171,10 @@ jobs:
           FREE_EXTRACTION_SUCCESS: ${{ steps.discovery.outputs.free_extraction_success }}
           OFFICIAL_DOMAINS_FOUND: ${{ steps.discovery.outputs.official_domains_found }}
           OFFICIAL_URL_CANDIDATES_FOUND: ${{ steps.discovery.outputs.official_url_candidates_found }}
+          OFFICIAL_COMPANY_URL_CANDIDATES: ${{ steps.discovery.outputs.official_company_url_candidates }}
+          NON_OFFICIAL_URLS_EXCLUDED: ${{ steps.discovery.outputs.non_official_urls_excluded }}
+          OFFICIAL_MATERIAL_FETCH_SUCCESS: ${{ steps.discovery.outputs.official_material_fetch_success }}
+          POST_OFFICIAL_FETCH_OPENAI_CALLS: ${{ steps.discovery.outputs.post_official_fetch_openai_calls }}
           PRE_OPENAI_EXCLUDED: ${{ steps.discovery.outputs.pre_openai_excluded }}
           UNRESOLVED_COUNT: ${{ steps.discovery.outputs.unresolved }}
           RESEARCH_REASONS: ${{ steps.discovery.outputs.research_reasons }}
@@ -194,6 +198,15 @@ jobs:
             echo "- 無料抽出成功数: ${FREE_EXTRACTION_SUCCESS:-0}"
             echo "- 公式ドメイン発見数: ${OFFICIAL_DOMAINS_FOUND:-0}"
             echo "- 公式URL候補発見数: ${OFFICIAL_URL_CANDIDATES_FOUND:-0}"
+            echo "- 企業公式URL候補数: ${OFFICIAL_COMPANY_URL_CANDIDATES:-0}"
+            echo "- 非公式URL除外数: ${NON_OFFICIAL_URLS_EXCLUDED:-0}"
+            echo "- 公式資料取得成功数: ${OFFICIAL_MATERIAL_FETCH_SUCCESS:-0}"
+            echo "- 公式資料取得後のOpenAI calls: ${POST_OFFICIAL_FETCH_OPENAI_CALLS:-0}"
+            if [ "${POST_OFFICIAL_FETCH_OPENAI_CALLS:-0}" -gt 0 ]; then
+              echo "- confirmed/OpenAI call率: $((100 * ${CONFIRMED_COUNT:-0} / ${POST_OFFICIAL_FETCH_OPENAI_CALLS:-1}))%"
+            else
+              echo "- confirmed/OpenAI call率: 0%"
+            fi
             echo "- OpenAI解析前に除外: ${PRE_OPENAI_EXCLUDED:-0}"
             echo "- unresolved: ${UNRESOLVED_COUNT:-0}"
             processed=$((${CONFIRMED_COUNT:-0} + ${RESEARCH_LOG_COUNT:-0}))
