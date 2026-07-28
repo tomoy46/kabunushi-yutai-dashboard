@@ -124,12 +124,14 @@ test('a successful data commit deploys and verifies GitHub Pages without relying
 
 test('automatic discovery inputs use safe defaults and explicit retry switches', () => {
   assert.equal(dispatchInputs.auto_select.default, true);
-  assert.equal(dispatchInputs.batch_size.default, '10');
-  assert.equal(dispatchInputs.max_openai_calls.default, '10');
+  assert.equal(dispatchInputs.companies_per_run.default, '25');
+  assert.equal(dispatchInputs.max_openai_calls_per_run.default, '25');
+  assert.equal(dispatchInputs.max_openai_calls_per_day.default, '100');
+  assert.equal(dispatchInputs.max_openai_budget_jpy_per_day.default, '100');
   assert.equal(dispatchInputs.retry_research_log.default, false);
   assert.equal(dispatchInputs.retry_failed.default, false);
   const command = stepNamed('Discover from official sources').run.replace(/[\s'"]/g, '');
-  assert.ok(command.includes('--max-openai-calls${{inputs.max_openai_calls}}'));
+  assert.ok(command.includes('--max-openai-calls-per-run${{inputs.max_openai_calls_per_run}}'));
   assert.ok(command.includes('${{inputs.auto_select!=true&&--no-auto-select||}}'));
   assert.ok(command.includes('${{inputs.retry_research_log==true&&--retry-research-log||}}'));
 });
@@ -137,8 +139,10 @@ test('automatic discovery inputs use safe defaults and explicit retry switches',
 test('production inputs and startup log are wired to workflow_dispatch values', () => {
   const command = stepNamed('Discover from official sources').run.replace(/[\s'"]/g, '');
   const expectedWiring = {
-    batch_size: '--batch-size${{inputs.batch_size}}',
-    daily_limit: '--daily-limit${{inputs.daily_limit}}',
+    companies_per_run: '--companies-per-run${{inputs.companies_per_run}}',
+    max_openai_calls_per_run: '--max-openai-calls-per-run${{inputs.max_openai_calls_per_run}}',
+    max_openai_calls_per_day: '--max-openai-calls-per-day${{inputs.max_openai_calls_per_day}}',
+    max_openai_budget_jpy_per_day: '--max-openai-budget-jpy-per-day${{inputs.max_openai_budget_jpy_per_day}}',
     security_codes: '--security-codes${{inputs.security_codes}}',
     retry_failed: '${{inputs.retry_failed==true&&--retry-failed||}}',
     official_only: '${{inputs.official_only==true&&--official-only||}}',
@@ -149,7 +153,8 @@ test('production inputs and startup log are wired to workflow_dispatch values', 
   }
 
   const logStep = stepNamed('Log workflow inputs');
-  for (const input of ['diagnostic_mode', 'security_codes', 'batch_size', 'daily_limit']) {
+  for (const input of ['diagnostic_mode', 'security_codes', 'companies_per_run',
+    'max_openai_calls_per_run', 'max_openai_calls_per_day', 'max_openai_budget_jpy_per_day']) {
     const environmentName = input.toUpperCase();
     assert.equal(logStep.env[environmentName], `\${{ inputs.${input} }}`);
     assert.ok(logStep.run.includes(`echo "${input}=\${${environmentName}}"`));

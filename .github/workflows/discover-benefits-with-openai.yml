@@ -3,9 +3,10 @@ on:
   workflow_dispatch:
     inputs:
       auto_select: {description: 'Auto select unresearched companies', default: true, type: boolean}
-      batch_size: {description: 'Companies per run', default: '10', type: string}
-      max_openai_calls: {description: 'Maximum OpenAI calls per run', default: '10', type: string}
-      daily_limit: {description: 'Maximum companies per run', default: '20', type: string}
+      companies_per_run: {description: 'Companies per run', default: '25', type: string}
+      max_openai_calls_per_run: {description: 'Maximum OpenAI calls per run', default: '25', type: string}
+      max_openai_calls_per_day: {description: 'Maximum OpenAI calls per day', default: '100', type: string}
+      max_openai_budget_jpy_per_day: {description: 'Maximum OpenAI budget per day in JPY', default: '100', type: string}
       security_codes: {description: 'Security codes (comma-separated, e.g. 7550,9861,8163)', required: false, type: string}
       retry_research_log: {description: 'Retry research-log companies', default: false, type: boolean}
       retry_failed: {description: 'Retry failed companies', default: false, type: boolean}
@@ -33,18 +34,20 @@ jobs:
         env:
           DIAGNOSTIC_MODE: ${{ inputs.diagnostic_mode }}
           SECURITY_CODES: ${{ inputs.security_codes }}
-          BATCH_SIZE: ${{ inputs.batch_size }}
-          DAILY_LIMIT: ${{ inputs.daily_limit }}
+          COMPANIES_PER_RUN: ${{ inputs.companies_per_run }}
+          MAX_OPENAI_CALLS_PER_DAY: ${{ inputs.max_openai_calls_per_day }}
+          MAX_OPENAI_BUDGET_JPY_PER_DAY: ${{ inputs.max_openai_budget_jpy_per_day }}
           AUTO_SELECT: ${{ inputs.auto_select }}
-          MAX_OPENAI_CALLS: ${{ inputs.max_openai_calls }}
+          MAX_OPENAI_CALLS_PER_RUN: ${{ inputs.max_openai_calls_per_run }}
           RETRY_RESEARCH_LOG: ${{ inputs.retry_research_log }}
         run: |
           echo "diagnostic_mode=${DIAGNOSTIC_MODE}"
           echo "security_codes=${SECURITY_CODES}"
-          echo "batch_size=${BATCH_SIZE}"
-          echo "daily_limit=${DAILY_LIMIT}"
+          echo "companies_per_run=${COMPANIES_PER_RUN}"
+          echo "max_openai_calls_per_day=${MAX_OPENAI_CALLS_PER_DAY}"
+          echo "max_openai_budget_jpy_per_day=${MAX_OPENAI_BUDGET_JPY_PER_DAY}"
           echo "auto_select=${AUTO_SELECT}"
-          echo "max_openai_calls=${MAX_OPENAI_CALLS}"
+          echo "max_openai_calls_per_run=${MAX_OPENAI_CALLS_PER_RUN}"
           echo "retry_research_log=${RETRY_RESEARCH_LOG}"
       - name: Test before using the production API
         run: npm test
@@ -59,9 +62,10 @@ jobs:
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
         run: >-
           python scripts/discover_benefits_with_openai.py
-          --batch-size '${{ inputs.batch_size }}'
-          --daily-limit '${{ inputs.daily_limit }}'
-          --max-openai-calls '${{ inputs.max_openai_calls }}'
+          --companies-per-run '${{ inputs.companies_per_run }}'
+          --max-openai-calls-per-run '${{ inputs.max_openai_calls_per_run }}'
+          --max-openai-calls-per-day '${{ inputs.max_openai_calls_per_day }}'
+          --max-openai-budget-jpy-per-day '${{ inputs.max_openai_budget_jpy_per_day }}'
           --security-codes '${{ inputs.security_codes }}'
           ${{ inputs.auto_select != true && '--no-auto-select' || '' }}
           ${{ inputs.retry_research_log == true && '--retry-research-log' || '' }}

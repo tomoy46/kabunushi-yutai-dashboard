@@ -680,6 +680,26 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                    {"executed_at": "2026-07-27T23:00:00Z", "responses_api_calls": 20}]
         self.assertEqual(discovery.calls_today(records, now), 12)
 
+    def test_jpy_cost_uses_uncached_cached_and_output_rates(self):
+        pricing = {"input_usd_per_million": 1, "cached_input_usd_per_million": .1,
+                   "output_usd_per_million": 2, "usd_to_jpy": 100}
+        cost = discovery.estimated_cost_jpy(
+            {"input_tokens": 1000, "cached_input_tokens": 400, "output_tokens": 200}, pricing)
+        self.assertEqual(cost, 0.104)
+
+    def test_daily_cost_uses_only_current_utc_day(self):
+        now = discovery.dt.datetime(2026, 7, 28, 12, tzinfo=discovery.dt.timezone.utc)
+        records = [{"executed_at": "2026-07-28T01:00:00Z", "estimated_cost_jpy": 12.5},
+                   {"executed_at": "2026-07-27T23:00:00Z", "estimated_cost_jpy": 80}]
+        self.assertEqual(discovery.cost_today(records, now), 12.5)
+
+    def test_parser_has_budget_defaults(self):
+        args = discovery.parser().parse_args([])
+        self.assertEqual(args.companies_per_run, 25)
+        self.assertEqual(args.max_openai_calls_per_run, 25)
+        self.assertEqual(args.max_openai_calls_per_day, 100)
+        self.assertEqual(args.max_openai_budget_jpy_per_day, 100)
+
     def test_diagnostic_does_not_write_any_data_file(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
