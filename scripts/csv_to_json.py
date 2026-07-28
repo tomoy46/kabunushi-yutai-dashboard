@@ -38,7 +38,7 @@ def convert(source: Path, destination: Path):
         if item['data_confidence'] == 'official_confirmed' and item['benefit_status'] != 'abolished':
             item['benefit_status'] = 'official_confirmed'
         item['record_months'] = [int(x) for x in row['record_months'].split('|') if x]
-        item['annual_occurrences'] = int(row['annual_occurrences'])
+        item['annual_occurrences'] = int(row['annual_occurrences']) if row['annual_occurrences'] else None
         item['benefit_tiers'] = json.loads(row['benefit_tiers_json'])
         if item['data_confidence'] == 'official_confirmed':
             item['confidence_score'] = 95

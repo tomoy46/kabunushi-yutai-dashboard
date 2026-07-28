@@ -13,8 +13,8 @@ class Tests(unittest.TestCase):
  def test_benefit_master_schema_and_kddi_orix(self):
   with tempfile.TemporaryDirectory() as directory:
    items=convert(Path('data/benefits.csv'),Path(directory)/'benefits.json')
-  self.assertEqual(len(items),13)
-  self.assertEqual(sum(item['benefit_status']=='official_confirmed' for item in items),11)
+  self.assertEqual(len(items),16)
+  self.assertEqual(sum(item['benefit_status']=='official_confirmed' for item in items),14)
   by_code={item['code']:item for item in items}
   self.assertEqual(by_code['8591']['benefit_status'],'abolished')
   self.assertEqual(by_code['8591']['last_record_date'],'2024-03-31')
@@ -40,7 +40,7 @@ class Tests(unittest.TestCase):
   with tempfile.TemporaryDirectory() as directory:
    out=Path(directory)/'out.json'; queue=Path(directory)/'queue.json'
    items,q=merge(Path('data/benefits.json'),Path('data/benefit-universe.csv'),out,queue)
-   self.assertEqual(len(items),13); self.assertEqual(len(items),len({x['code'] for x in items})); self.assertEqual(q,[])
+   self.assertEqual(len(items),16); self.assertEqual(len(items),len({x['code'] for x in items})); self.assertEqual(q,[])
    self.assertEqual(next(x for x in items if x['code']=='8267')['data_confidence'],'official_confirmed')
    self.assertTrue(all(x['benefit_status']=='candidate' for x in q))
 
@@ -57,7 +57,7 @@ class Tests(unittest.TestCase):
  def test_no_dummy_candidates_and_status_counts_are_preserved(self):
   items=json.loads(Path('data/benefits.json').read_text())
   self.assertFalse(any(x['name'].startswith('公式確認待ち銘柄') for x in items))
-  self.assertEqual(sum(x['benefit_status']=='official_confirmed' for x in items),11)
+  self.assertEqual(sum(x['benefit_status']=='official_confirmed' for x in items),14)
   self.assertEqual(sum(x['benefit_status']=='abolished' for x in items),2)
   self.assertEqual(sum(x['benefit_status']=='candidate' for x in items),0)
 
