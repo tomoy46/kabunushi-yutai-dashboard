@@ -1147,5 +1147,234 @@
     ],
     "checked_at": "2026-07-28T14:55:19.035886+00:00",
     "source_url": "https://www.nikkei.com/nkd/company/?scode=173A"
+  },
+  {
+    "code": "1813",
+    "name": "不動テトラ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:47.376313+00:00"
+  },
+  {
+    "code": "1850",
+    "name": "南海辰村建設",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:54.864733+00:00"
+  },
+  {
+    "code": "1867",
+    "name": "植木組",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:55.288465+00:00"
+  },
+  {
+    "code": "1833",
+    "name": "奥村組",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:54.369013+00:00"
+  },
+  {
+    "code": "1853",
+    "name": "森組",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:55.010184+00:00"
+  },
+  {
+    "code": "186A",
+    "name": "アストロスケールホールディングス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:55.352541+00:00"
+  },
+  {
+    "code": "1840",
+    "name": "土屋ホールディングス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:54.517842+00:00"
+  },
+  {
+    "code": "1847",
+    "name": "イチケン",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:54.664336+00:00"
+  },
+  {
+    "code": "1822",
+    "name": "大豊建設",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:54.093466+00:00"
+  },
+  {
+    "code": "1820",
+    "name": "西松建設",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:54.010598+00:00"
+  },
+  {
+    "code": "1827",
+    "name": "ナカノフドー建設",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:54.222630+00:00"
+  },
+  {
+    "code": "1870",
+    "name": "矢作建設工業",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:55.421964+00:00"
+  },
+  {
+    "code": "1815",
+    "name": "鉄建建設",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:53.939518+00:00"
+  },
+  {
+    "code": "1826",
+    "name": "佐田建設",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:54.151621+00:00"
+  },
+  {
+    "code": "1828",
+    "name": "田辺工業",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:54.286580+00:00"
+  },
+  {
+    "code": "1861",
+    "name": "熊谷組",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:55.158543+00:00"
+  },
+  {
+    "code": "1812",
+    "name": "鹿島建設",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "record_month_missing"
+    ],
+    "checked_at": "2026-07-28T21:13:44.502818+00:00",
+    "source_url": "https://kabutrack.com/stock/kabuyutai/1812/"
+  },
+  {
+    "code": "1844",
+    "name": "大盛工業",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:54.599674+00:00"
+  },
+  {
+    "code": "1866",
+    "name": "北野建設",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:55.225602+00:00"
+  },
+  {
+    "code": "1835",
+    "name": "東鉄工業",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:54.456079+00:00"
+  },
+  {
+    "code": "1852",
+    "name": "淺沼組",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:54.939329+00:00"
+  },
+  {
+    "code": "1848",
+    "name": "富士ピー・エス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:54.726937+00:00"
+  },
+  {
+    "code": "1860",
+    "name": "戸田建設",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:55.085736+00:00"
+  },
+  {
+    "code": "1814",
+    "name": "大末建設",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-28T21:13:53.869475+00:00",
+    "source_url": "https://www.nikkei.com/nkd/company/yutai/?scode=1814"
+  },
+  {
+    "code": "184A",
+    "name": "学びエイド",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T21:13:54.795979+00:00"
   }
 ]
