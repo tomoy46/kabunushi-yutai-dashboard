@@ -74,7 +74,11 @@ FIELDS = {
 }
 SCHEMA = {"type": "object", "properties": FIELDS, "required": list(FIELDS), "additionalProperties": False}
 BENEFIT_WORDS = ("株主優待", "株主ご優待", "株主優待制度", "優待券",
-                 "株主優待カード", "株主優待ポイント", "株主様ご優待")
+                 "株主優待カード", "株主優待ポイント", "株主様ご優待",
+                 "株主特典", "株主還元", "商品贈呈", "割引券", "クーポン")
+RESEARCH_REASONS = ("official_source_not_found", "required_shares_missing",
+                    "benefit_content_missing", "record_month_missing", "confidence_low",
+                    "redirect_domain_rejected", "pdf_parse_failed")
 TRACKING_QUERY_KEYS = {"fbclid", "gclid", "yclid", "mc_cid", "mc_eid"}
 BROWSER_USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                       "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -105,6 +109,12 @@ class OpenAICallBudgetExhausted(Exception):
     def __init__(self, item, reasons, url):
         self.item, self.reasons, self.url = item, reasons, url
         super().__init__(reasons[0])
+
+
+class SparseOfficialEvidence(Exception):
+    def __init__(self, reasons, url):
+        self.reasons, self.url = reasons, url
+        super().__init__(",".join(reasons))
 
 
 def official_source_log(company, url, **fields):
@@ -1163,6 +1173,48 @@ def excluded_security(company):
         company.get("listed") is False or company.get("delisted") is True
 
 
+def free_priority(company, review_items=None, official_sources=None, universe=None):
+    """Score only cached/free official metadata; never use OpenAI for scheduling."""
+    code = str(company["code"])
+    source = (official_sources or {}).get(code, {})
+    metadata = " ".join(safe_text(company.get(key)) for key in
+                        ("page_title", "ir_title", "stock_title", "sitemap_text",
+                         "official_pdf_name", "url_path", "link_text"))
+    metadata += " " + safe_text(source.get("url"))
+    for item in review_items or []:
+        if security_code_found(" ".join(safe_text(item.get(k)) for k in
+                                        ("code", "title", "description")), code):
+            metadata += " " + " ".join(safe_text(item.get(k)) for k in
+                                        ("title", "description", "url", "pdf_url", "link_text"))
+    hits = sum(term in metadata for term in BENEFIT_WORDS)
+    score = hits * 20
+    if code in (universe or set()):
+        score += 15
+    if re.search(r"(?:^|[/_-])(?:ir|investor|stock|shareholder)(?:[/_.-]|$)", metadata, re.I):
+        score += 5
+    priority = "high" if score >= 20 else "medium" if score >= 5 else "low"
+    return score, priority
+
+
+def quota_order(candidates, batch_size, review_items, official_sources, universe):
+    """Mix 15 high, 7 medium and at least 3 low targets, then backfill."""
+    buckets = {name: [] for name in ("high", "medium", "low")}
+    for company in candidates:
+        score, priority = free_priority(company, review_items, official_sources, universe)
+        company["candidate_score"], company["candidate_priority"] = score, priority
+        buckets[priority].append(company)
+    for values in buckets.values():
+        values.sort(key=lambda c: (-c["candidate_score"], str(c["code"])))
+    limits = {"high": min(15, batch_size), "medium": min(7, max(0, batch_size - 3)),
+              "low": min(3, batch_size)}
+    selected = (buckets["high"][:limits["high"]] + buckets["medium"][:limits["medium"]] +
+                buckets["low"][:limits["low"]])
+    selected_codes = {str(c["code"]) for c in selected}
+    remainder = [c for level in ("high", "medium", "low") for c in buckets[level]
+                 if str(c["code"]) not in selected_codes]
+    return (selected + remainder)[:batch_size]
+
+
 def choose(companies, args, progress, benefits, queue=None, now=None):
     """Choose manual targets first, otherwise scan genuinely unresearched issuers."""
     immutable = {x["code"] for x in benefits if x.get("benefit_status") in ("official_confirmed", "abolished")}
@@ -1196,8 +1248,20 @@ def choose(companies, args, progress, benefits, queue=None, now=None):
         candidates = [c for c in candidates if str(c["code"]) not in recent_research]
     if not getattr(args, "retry_failed", False):
         candidates = [c for c in candidates if str(c["code"]) not in recent_failed]
-    companies_per_run = getattr(args, "companies_per_run", getattr(args, "batch_size", 25))
-    return candidates[:max(0, companies_per_run)]
+    companies_per_run = max(0, getattr(args, "companies_per_run", getattr(args, "batch_size", 25)))
+    if manual or auto is not True:
+        return candidates[:companies_per_run]
+    review = load(DATA / "review-queue.json", [])
+    sources = load_official_sources(DATA / "official-benefit-sources.json")
+    universe = load_benefit_universe(DATA / "benefit-universe.csv")
+    fresh = [c for c in candidates if str(c["code"]) not in recent_research]
+    retry = [c for c in candidates if str(c["code"]) in recent_research][:5]
+    ordered = quota_order(fresh, companies_per_run, review, sources, universe)
+    # Explicit retries never displace more than five newly researched companies.
+    if getattr(args, "retry_research_log", False) and retry:
+        keep = max(0, companies_per_run - min(5, len(retry)))
+        ordered = ordered[:keep] + quota_order(retry, min(5, len(retry)), review, sources, universe)
+    return ordered[:companies_per_run]
 
 
 def calls_today(records, now=None):
@@ -1346,6 +1410,28 @@ def append_research_log(company, result, reasons, source_url=None):
     atomic(path, entries)
 
 
+def classified_reasons(reasons, facts=None):
+    """Collapse implementation details into stable, actionable queue reasons."""
+    facts = facts or {}
+    mapped = []
+    text = " ".join(map(safe_text, reasons))
+    if "official_source_not_found" in text:
+        mapped.append("official_source_not_found")
+    if "redirect" in text or "domain_not_allowed" in text:
+        mapped.append("redirect_domain_rejected")
+    if "pdf" in text and re.search(r"parse|conversion|extract", text, re.I):
+        mapped.append("pdf_parse_failed")
+    for fact, reason in (("required_shares", "required_shares_missing"),
+                         ("benefit_content", "benefit_content_missing"),
+                         ("record_month", "record_month_missing")):
+        if facts.get(fact) is False or ({"required_shares": "minimum_shares_unknown",
+                                        "record_month": "record_date_unknown"}.get(fact) in reasons):
+            mapped.append(reason)
+    if "low_confidence" in reasons or (reasons and not mapped):
+        mapped.append("confidence_low")
+    return list(dict.fromkeys(mapped)) or ["confidence_low"]
+
+
 def is_test_fixture():
     """Distinguish isolated test data from the repository's production data."""
     try:
@@ -1364,6 +1450,10 @@ def publish_workflow_counts(totals):
         stream.write(f"research_log={totals['research_log_saved']}\n")
         stream.write(f"failed={totals['failures']}\n")
         stream.write(f"openai_calls={totals['responses_api_calls']}\n")
+        for name in ("high", "medium", "low", "free_extraction_success"):
+            stream.write(f"{name}={totals.get(name, 0)}\n")
+        stream.write("research_reasons=" + json.dumps(totals.get("research_reasons", {}),
+                                                       ensure_ascii=False, separators=(",", ":")) + "\n")
         cause = totals.get("zero_confirmed_cause") or "none"
         stream.write(f"zero_confirmed_cause={cause}\n")
 
@@ -1426,7 +1516,11 @@ def run(args):
               "web_search_output_items": 0, "web_search_calls": 0,
               "input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0,
               "successes": 0, "verification_required": 0, "research_log_saved": 0,
-              "failures": 0, "free_candidates_checked": 0, "benefit_candidates": 0}
+              "failures": 0, "free_candidates_checked": 0, "benefit_candidates": 0,
+              "free_extraction_success": 0, "research_reasons": {reason: 0 for reason in RESEARCH_REASONS},
+              "high": sum(c.get("candidate_priority") == "high" for c in selected),
+              "medium": sum(c.get("candidate_priority") == "medium" for c in selected),
+              "low": sum(c.get("candidate_priority", "low") == "low" for c in selected)}
     company_usage = []
     budget_deferred = 0
     run_estimated_cost_jpy = 0.0
@@ -1449,6 +1543,7 @@ def run(args):
             failed_stage = "plain"
             diagnostic_stage("Plain Responses API", "failure", error, key)
     for company_index, company in enumerate(selected):
+        facts = {}
         active_label = "Web search + Structured Outputs"
         active_failed_stage = "web_search"
         failure_logged = False
@@ -1478,6 +1573,15 @@ def run(args):
                 facts = evidence_facts(official_text)
                 print("Evidence readiness " + str(company["code"]) + ": " + " ".join(
                     f"{name}={'found' if value else 'missing'}" for name, value in facts.items()))
+                core_count = sum(facts[name] for name in
+                                 ("required_shares", "benefit_content", "record_month"))
+                if core_count < 2:
+                    # Sparse evidence is returned to the unresolved queue without
+                    # spending an API call. It remains eligible after its cooldown.
+                    item = empty_extraction(company, final_url)
+                    reasons = classified_reasons([], facts)
+                    raise SparseOfficialEvidence(reasons, final_url)
+                totals["free_extraction_success"] += 1
                 # OpenAI receives already-fetched text and performs structure
                 # extraction only.  It never participates in URL discovery or IO.
                 payload = official_page_payload(company, final_url, official_text,
@@ -1524,6 +1628,8 @@ def run(args):
             if args.diagnostic_mode:
                 continue
             if reasons:
+                reasons = classified_reasons(reasons, facts)
+                for reason in reasons: totals["research_reasons"][reason] += 1
                 append_research_log(company, "not_officially_verified", reasons, final_url)
                 totals["research_log_saved"] += 1
                 queue = [x for x in queue if x.get("code") != company["code"]]
@@ -1578,13 +1684,24 @@ def run(args):
                 persist_production_state(benefits, queue, progress)
                 label = "FIXTURE RESULT" if fixture else "PRODUCTION RESULT"
                 print(f'{label} {company["code"]} {company["name"]}: failed')
+        except SparseOfficialEvidence as sparse:
+            totals["processed_companies"] += 1
+            totals["verification_required"] += 1
+            totals["research_log_saved"] += 1
+            for reason in sparse.reasons: totals["research_reasons"][reason] += 1
+            append_research_log(company, "not_officially_verified", sparse.reasons, sparse.url)
+            persist_production_state(benefits, queue, progress)
+            label = "FIXTURE RESULT" if fixture else "PRODUCTION RESULT"
+            print(f'{label} {company["code"]} {company["name"]}: research_log (OpenAI skipped)')
         except Exception as error:
             if args.diagnostic_mode and not failure_logged:
                 failed_stage = failed_stage or active_failed_stage
                 diagnostic_stage(active_label, "failure", error, key)
             totals["failures"] += 1; errors.append({"code": company["code"], "error": str(error)[:300]})
             if not args.diagnostic_mode:
-                append_research_log(company, "failed", [safe_message(error)],
+                reasons = classified_reasons([safe_message(error)], facts)
+                for reason in reasons: totals["research_reasons"][reason] += 1
+                append_research_log(company, "not_officially_verified", reasons,
                                     registered.get("url") if registered else None)
                 totals["research_log_saved"] += 1
             if not args.diagnostic_mode:
@@ -1611,6 +1728,12 @@ def run(args):
               f"research_log={totals['research_log_saved']} failed={totals['failures']} "
               f"skipped={budget_deferred} selected={len(selected)} free_checked={totals['free_candidates_checked']} "
               f"benefit_candidates={totals['benefit_candidates']} openai_calls={totals['responses_api_calls']}")
+        rate = (100 * totals["successes"] / totals["processed_companies"]
+                if totals["processed_companies"] else 0.0)
+        print(f"PRIORITY SUMMARY: high={totals['high']} medium={totals['medium']} low={totals['low']} "
+              f"free_extraction_success={totals['free_extraction_success']} confirmed_rate={rate:.1f}%")
+        print("RESEARCH-LOG REASONS: " + " ".join(
+            f"{reason}={totals['research_reasons'][reason]}" for reason in RESEARCH_REASONS))
         print(f"API USAGE: input_tokens={totals['input_tokens']} output_tokens={totals['output_tokens']} "
               f"estimated_cost_jpy={run_estimated_cost_jpy:.6f} "
               f"daily_estimated_cost_jpy={prior_daily_cost_jpy + run_estimated_cost_jpy:.6f}")

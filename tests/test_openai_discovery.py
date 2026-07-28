@@ -666,6 +666,22 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                 selected = discovery.choose(companies, args, {}, [], now=now)
         self.assertEqual([item["code"] for item in selected], ["1000"])
 
+    def test_free_priority_uses_official_titles_paths_and_disclosure_titles(self):
+        companies = [{"code": str(1000 + i), "name": f"company{i}"} for i in range(30)]
+        companies[20]["page_title"] = "株主様ご優待制度"
+        review = [{"code": "1021", "title": "株主優待カードの贈呈", "url": "https://tdnet.info/a"}]
+        selected = discovery.quota_order(companies, 25, review, {}, set())
+        self.assertEqual({c["code"] for c in selected[:2]}, {"1020", "1021"})
+        self.assertEqual(sum(c["candidate_priority"] == "low" for c in selected), 23)
+        self.assertGreaterEqual(sum(c["candidate_priority"] == "low" for c in selected[-3:]), 3)
+
+    def test_sparse_official_evidence_reason_classification(self):
+        facts = {"required_shares": True, "benefit_content": False, "record_month": False}
+        self.assertEqual(discovery.classified_reasons([], facts),
+                         ["benefit_content_missing", "record_month_missing"])
+        self.assertEqual(discovery.classified_reasons(["redirect_host_not_verified"]),
+                         ["redirect_domain_rejected"])
+
     def test_manual_codes_take_priority_over_auto_order_and_batch_is_capped_at_twenty(self):
         companies = [{"code": str(1000 + i), "name": str(i)} for i in range(30)]
         args = type("Args", (), {"security_codes": "1025,1002", "auto_select": True,
