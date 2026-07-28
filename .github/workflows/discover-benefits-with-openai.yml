@@ -169,6 +169,10 @@ jobs:
           MEDIUM_COUNT: ${{ steps.discovery.outputs.medium }}
           LOW_COUNT: ${{ steps.discovery.outputs.low }}
           FREE_EXTRACTION_SUCCESS: ${{ steps.discovery.outputs.free_extraction_success }}
+          OFFICIAL_DOMAINS_FOUND: ${{ steps.discovery.outputs.official_domains_found }}
+          OFFICIAL_URL_CANDIDATES_FOUND: ${{ steps.discovery.outputs.official_url_candidates_found }}
+          PRE_OPENAI_EXCLUDED: ${{ steps.discovery.outputs.pre_openai_excluded }}
+          UNRESOLVED_COUNT: ${{ steps.discovery.outputs.unresolved }}
           RESEARCH_REASONS: ${{ steps.discovery.outputs.research_reasons }}
           ZERO_CONFIRMED_CAUSE: ${{ steps.discovery.outputs.zero_confirmed_cause }}
           COMMITTED: ${{ steps.commit_results.outputs.committed }}
@@ -188,6 +192,10 @@ jobs:
             echo "- medium候補数: ${MEDIUM_COUNT:-0}"
             echo "- low候補数: ${LOW_COUNT:-0}"
             echo "- 無料抽出成功数: ${FREE_EXTRACTION_SUCCESS:-0}"
+            echo "- 公式ドメイン発見数: ${OFFICIAL_DOMAINS_FOUND:-0}"
+            echo "- 公式URL候補発見数: ${OFFICIAL_URL_CANDIDATES_FOUND:-0}"
+            echo "- OpenAI解析前に除外: ${PRE_OPENAI_EXCLUDED:-0}"
+            echo "- unresolved: ${UNRESOLVED_COUNT:-0}"
             processed=$((${CONFIRMED_COUNT:-0} + ${RESEARCH_LOG_COUNT:-0}))
             if [ "$processed" -gt 0 ]; then
               echo "- confirmed率: $((100 * ${CONFIRMED_COUNT:-0} / processed))%"

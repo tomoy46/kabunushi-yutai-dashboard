@@ -12,7 +12,7 @@ from pathlib import Path
 DATA_FILES = (
     "benefits.json", "benefits.csv", "verification-queue.json",
     "discovery-progress.json", "research-log.json", "openai-api-usage.json",
-    "official-benefit-sources.json",
+    "official-benefit-sources.json", "unresolved.json",
 )
 
 
@@ -68,7 +68,7 @@ def capture(bundle):
         if name == "benefits.csv":
             before = keyed(list(csv.DictReader(io.StringIO(content.decode()))))
             after = keyed(list(csv.DictReader(current.open(encoding="utf-8"))))
-        elif name in ("benefits.json", "research-log.json", "verification-queue.json"):
+        elif name in ("benefits.json", "research-log.json", "verification-queue.json", "unresolved.json"):
             before, after = keyed(json.loads(content)), keyed(load_json(current))
         else:
             continue
@@ -79,6 +79,12 @@ def capture(bundle):
 def apply(bundle):
     for name in DATA_FILES:
         base_path, local_path, target = bundle / "base" / name, bundle / "result" / name, Path("data") / name
+        if name == "unresolved.json" and (not base_path.exists() or not local_path.exists()):
+            # Recovery artifacts created before the unresolved queue existed are
+            # still valid and simply carry no changes for this file.
+            if not target.exists():
+                write_json(target, [])
+            continue
         if name == "benefits.csv":
             def rows(path):
                 with path.open(encoding="utf-8", newline="") as stream:
@@ -91,7 +97,7 @@ def apply(bundle):
                 writer = csv.DictWriter(stream, fieldnames=fieldnames); writer.writeheader(); writer.writerows(merged)
             continue
         base, local, remote = load_json(base_path), load_json(local_path), load_json(target)
-        if name == "research-log.json":
+        if name in ("research-log.json", "unresolved.json"):
             merged = merge_changed([], local, remote, ("code", "checked_at"))
         elif name == "openai-api-usage.json":
             merged = merge_changed([], local, remote, ("executed_at",))

@@ -77,7 +77,7 @@ BENEFIT_WORDS = ("株主優待", "株主ご優待", "株主優待制度", "優�
                  "株主優待カード", "株主優待ポイント", "株主様ご優待",
                  "株主特典", "株主還元", "商品贈呈", "割引券", "クーポン")
 PRIORITY_MEDIUM_TERMS = ("株主優待", "株主ご優待", "株主様ご優待", "優待制度", "優待券")
-RESEARCH_REASONS = ("official_source_not_found", "required_shares_missing",
+RESEARCH_REASONS = ("official_site_discovery_failed", "required_shares_missing",
                     "benefit_content_missing", "record_month_missing", "confidence_low",
                     "redirect_domain_rejected", "pdf_parse_failed")
 TRACKING_QUERY_KEYS = {"fbclid", "gclid", "yclid", "mc_cid", "mc_eid"}
@@ -484,6 +484,7 @@ def official_page_payload(company, url, text, initial, model):
     prompt = {
         "company": {"name": company["name"], "code": str(company["code"])},
         "verified_official_url": url,
+        "official_candidate_metadata": company.get("official_candidate_metadata") or {},
         "official_page_shareholder_benefit_excerpt": text[:20_000],
         "initial_structured_result": initial,
     }
@@ -836,7 +837,7 @@ def save_official_source(path, company, url, allowed_domains=()):
 
 
 def discover_verified_official_source(company, registered=None, review_items=None,
-                                        page_fetcher=None, crawler=None):
+                                        page_fetcher=None, crawler=None, explored_out=None):
     """Resolve official evidence in one issuer-independent priority pipeline."""
     page_fetcher = page_fetcher or fetch_official_page
     crawler = crawler or discover_corporate_candidates
@@ -868,6 +869,8 @@ def discover_verified_official_source(company, registered=None, review_items=Non
                             exploration_url=url, exploration_state="trying")
         try:
             final, text = page_fetcher(url, company, {url: {}}, registered=trusted)
+            if explored_out is not None:
+                explored_out.extend(explored)
             official_source_log(company, registered["url"] if registered else url,
                                 explored_urls=explored, adopted_url=final)
             return final, text
@@ -880,6 +883,8 @@ def discover_verified_official_source(company, registered=None, review_items=Non
             continue
     official_source_log(company, registered["url"] if registered else "none",
                         explored_urls=explored, adopted_url="none")
+    if explored_out is not None:
+        explored_out.extend(explored)
     return None, ""
 
 
@@ -933,9 +938,11 @@ def fetch_official_page(url, company, source_urls, registered=False, follow_link
             expected_domains = registered_domains(company)
             final_is_exchange = final and any(is_subdomain(hostname(final), exchange)
                                               for exchange in OFFICIAL_HOSTS)
-            if not final or (expected_domains and not any(is_subdomain(hostname(final), value) for value in expected_domains) and
-                             not final_is_exchange):
-                raise ValueError(f"redirect_host_not_official_domain:{hostname(final) or 'invalid'}")
+            redirected_alias = bool(final and expected_domains and
+                                    not any(is_subdomain(hostname(final), value) for value in expected_domains) and
+                                    not final_is_exchange)
+            if not final:
+                raise ValueError("redirect_host_not_official_domain:invalid")
             if not expected_domains and hostname(final) != hostname(normalized):
                 raise ValueError("source_redirected_outside_candidate_domain")
             content_type = safe_text(response.headers.get("Content-Type", "")).lower() if hasattr(response, "headers") else ""
@@ -1045,6 +1052,14 @@ def fetch_official_page(url, company, source_urls, registered=False, follow_link
     normalized_text = normalize_company_name(identity_text)
     name_found = normalize_company_name(company["name"]) in normalized_text
     code_found = security_code_found(identity_text, company["code"])
+    if locals().get("redirected_alias"):
+        # Corporate reorganisations and brand migrations commonly redirect to a
+        # new host.  Adopt it only after the landing document proves issuer
+        # identity by legal/company name or security code.
+        if not (name_found or code_found):
+            raise ValueError("redirect_host_identity_mismatch")
+        company["official_domains"] = list(dict.fromkeys([
+            *(company.get("official_domains") or []), hostname(final)]))
     if any(is_subdomain(host, exchange) for exchange in OFFICIAL_HOSTS) and not registered:
         # The security code is the stable issuer identifier.  Do not reject a
         # valid disclosure merely because its company name uses an old name,
@@ -1304,6 +1319,22 @@ def quota_order(candidates, batch_size, review_items, official_sources, universe
     return (selected + remainder)[:batch_size]
 
 
+def openai_eligible(priority, official_candidates, extracted_fact_count=0, low_sent=0):
+    """Apply the deliberately permissive pre-analysis gate.
+
+    URL/PDF provenance, not completeness of regex extraction, is the gate.  The
+    final argument documents and regression-tests the five-low-candidate floor;
+    it is not a ceiling, so useful low-priority candidates may all proceed.
+    """
+    if not official_candidates:
+        return False
+    if priority in ("high", "medium") and extracted_fact_count >= 1:
+        return True
+    if priority == "low" and low_sent < 5:
+        return True
+    return True
+
+
 def choose(companies, args, progress, benefits, queue=None, now=None):
     """Choose manual targets first, otherwise scan genuinely unresearched issuers."""
     immutable = {x["code"] for x in benefits if x.get("benefit_status") in ("official_confirmed", "abolished")}
@@ -1499,13 +1530,43 @@ def append_research_log(company, result, reasons, source_url=None):
     atomic(path, entries)
 
 
+def append_unresolved(company, reasons, explored_urls=()):
+    """Persist issuer-site discovery failures separately from sparse benefits."""
+    path = DATA / "unresolved.json"
+    entries = load(path, [])
+    entry = {"code": str(company["code"]), "name": company["name"],
+             "result": "official_site_discovery_failed", "reasons": list(reasons),
+             "explored_urls": list(dict.fromkeys(canonical_url(url) for url in explored_urls
+                                                  if canonical_url(url))),
+             "checked_at": dt.datetime.now(dt.timezone.utc).isoformat()}
+    entries = [value for value in entries if str(value.get("code")) != entry["code"]]
+    entries.append(entry)
+    atomic(path, entries)
+
+
+def candidate_metadata(company, url, text, review_items, explored_urls):
+    """Build bounded provenance context for OpenAI, including disclosure titles."""
+    title = re.search(r"PAGE_TITLE\[(.*?)\]", safe_text(text))
+    disclosures = []
+    for item in review_items or []:
+        haystack = " ".join(safe_text(item.get(key)) for key in ("code", "title", "description"))
+        if security_code_found(haystack, company["code"]):
+            disclosures.append({"title": safe_text(item.get("title"))[:500],
+                                "url": canonical_url(item.get("pdf_url") or item.get("url"))})
+    return {"url": canonical_url(url), "page_title": title.group(1)[:500] if title else None,
+            "link_text": safe_text(company.get("link_text"))[:500] or None,
+            "pdf_name": Path(urlparse(safe_text(url)).path).name if url else None,
+            "explored_urls": list(dict.fromkeys(explored_urls))[:24],
+            "tdnet_jpx_disclosures": disclosures[:10]}
+
+
 def classified_reasons(reasons, facts=None):
     """Collapse implementation details into stable, actionable queue reasons."""
     facts = facts or {}
     mapped = []
     text = " ".join(map(safe_text, reasons))
-    if "official_source_not_found" in text:
-        mapped.append("official_source_not_found")
+    if "official_source_not_found" in text or "official_site_discovery_failed" in text:
+        mapped.append("official_site_discovery_failed")
     if "redirect" in text or "domain_not_allowed" in text:
         mapped.append("redirect_domain_rejected")
     if "pdf" in text and re.search(r"parse|conversion|extract", text, re.I):
@@ -1539,7 +1600,9 @@ def publish_workflow_counts(totals):
         stream.write(f"research_log={totals['research_log_saved']}\n")
         stream.write(f"failed={totals['failures']}\n")
         stream.write(f"openai_calls={totals['responses_api_calls']}\n")
-        for name in ("high", "medium", "low", "free_extraction_success"):
+        for name in ("high", "medium", "low", "free_extraction_success",
+                     "official_domains_found", "official_url_candidates_found",
+                     "pre_openai_excluded", "unresolved"):
             stream.write(f"{name}={totals.get(name, 0)}\n")
         stream.write("research_reasons=" + json.dumps(totals.get("research_reasons", {}),
                                                        ensure_ascii=False, separators=(",", ":")) + "\n")
@@ -1614,9 +1677,11 @@ def run(args):
               "successes": 0, "verification_required": 0, "research_log_saved": 0,
               "failures": 0, "free_candidates_checked": 0, "benefit_candidates": 0,
               "free_extraction_success": 0, "research_reasons": {reason: 0 for reason in RESEARCH_REASONS},
-              "high": 0, "medium": 0, "low": 0}
+              "high": 0, "medium": 0, "low": 0, "official_domains_found": 0,
+              "official_url_candidates_found": 0, "pre_openai_excluded": 0, "unresolved": 0}
     company_usage = []
     budget_deferred = 0
+    low_sent = 0
     run_estimated_cost_jpy = 0.0
     confirmed_codes = []
     unique_web_search_call_ids = set()
@@ -1659,36 +1724,64 @@ def run(args):
                     *([company["official_domain"]] if company.get("official_domain") else [])]))
                 if not company.get("official_domain"):
                     company["official_domain"] = company["official_domains"][0]
+            review_items = load(DATA / "review-queue.json", [])
+            explored_urls = []
             final_url, official_text = discover_verified_official_source(
-                company, registered, load(DATA / "review-queue.json", []))
+                company, registered, review_items, explored_out=explored_urls)
             if not final_url and not registered and not fixture:
                 final_url, official_text = free_search_official_source(company)
                 if final_url and not company.get("official_domain"):
                     company["official_domain"] = normalized_host(final_url)
+                if final_url:
+                    explored_urls.append(final_url)
+            # A known issuer host is useful provenance even when a benefit page
+            # cannot be text-extracted.  Give discovery at least the mandated
+            # top/IR/stock/shareholder/sitemap/robots candidate set.
+            if company.get("official_domain"):
+                totals["official_domains_found"] += 1
+                host = company["official_domain"]
+                explored_urls.extend(canonical_url(f"https://{host}{path}") for path in
+                                     ("/", "/ir/", "/ir/stock/", "/ir/shareholder/",
+                                      "/sitemap.xml", "/robots.txt"))
+            explored_urls.extend(exchange_candidates(company, review_items))
+            explored_urls = list(dict.fromkeys(url for url in explored_urls if url))
+            totals["official_url_candidates_found"] += len(explored_urls)
             _score, fetched_priority = priority_diagnostic(
                 company, final_url, official_text, load(DATA / "review-queue.json", []))
             totals[fetched_priority] += 1
-            if not final_url:
-                item = empty_extraction(company, None)
-                reasons = ["official_source_not_found"]
+            candidate_url = final_url or (explored_urls[0] if explored_urls else None)
+            if not candidate_url:
+                totals["processed_companies"] += 1
+                totals["verification_required"] += 1
+                totals["pre_openai_excluded"] += 1
+                totals["unresolved"] += 1
+                totals["research_reasons"]["official_site_discovery_failed"] += 1
+                if not args.diagnostic_mode:
+                    append_unresolved(company, ["official_site_discovery_failed"], explored_urls)
+                    persist_production_state(benefits, queue, progress)
+                print(f'{"FIXTURE RESULT" if fixture else "PRODUCTION RESULT"} '
+                      f'{company["code"]} {company["name"]}: unresolved')
+                continue
             else:
+                final_url = candidate_url
                 totals["benefit_candidates"] += 1
                 facts = evidence_facts(official_text)
                 print("Evidence readiness " + str(company["code"]) + ": " + " ".join(
                     f"{name}={'found' if value else 'missing'}" for name, value in facts.items()))
                 core_count = sum(facts[name] for name in
                                  ("required_shares", "benefit_content", "record_month"))
-                if core_count < 2:
-                    # Sparse evidence is returned to the unresolved queue without
-                    # spending an API call. It remains eligible after its cooldown.
-                    item = empty_extraction(company, final_url)
-                    reasons = classified_reasons([], facts)
-                    raise SparseOfficialEvidence(reasons, final_url)
-                totals["free_extraction_success"] += 1
+                if not openai_eligible(fetched_priority, explored_urls, core_count, low_sent):
+                    raise AssertionError("official candidate gate invariant violated")
+                if fetched_priority == "low":
+                    low_sent += 1
+                if core_count >= 1:
+                    totals["free_extraction_success"] += 1
+                company["official_candidate_metadata"] = candidate_metadata(
+                    company, candidate_url, official_text, review_items, explored_urls)
                 # OpenAI receives already-fetched text and performs structure
                 # extraction only.  It never participates in URL discovery or IO.
-                payload = official_page_payload(company, final_url, official_text,
-                                                empty_extraction(company, final_url), model)
+                payload = official_page_payload(company, candidate_url, official_text,
+                                                empty_extraction(company, candidate_url), model)
                 projected_cost = projected_request_cost_jpy(payload, pricing)
                 daily_calls = prior_daily_calls + totals["responses_api_calls"]
                 daily_cost = prior_daily_cost_jpy + run_estimated_cost_jpy
@@ -1699,9 +1792,9 @@ def run(args):
                         daily_calls >= max_calls_per_day or
                         daily_cost >= max_budget_jpy_per_day or
                         daily_cost + projected_cost > max_budget_jpy_per_day):
-                    item = empty_extraction(company, final_url)
+                    item = empty_extraction(company, candidate_url)
                     reasons = ["openai_call_budget_exhausted"]
-                    raise OpenAICallBudgetExhausted(item, reasons, final_url)
+                    raise OpenAICallBudgetExhausted(item, reasons, candidate_url)
                 totals["responses_api_calls"] += 1
                 correction = request_response(payload, key)
                 response_usage = usage(correction)
@@ -1712,17 +1805,17 @@ def run(args):
                                       "estimated_cost_jpy": company_cost})
                 item = json.loads(output_text(correction))
                 item["code"], item["name"], item["official_source_url"] = (
-                    str(company["code"]), company["name"], final_url)
+                    str(company["code"]), company["name"], candidate_url)
                 item = apply_regex_official_facts(item, official_text)
-                item, _facts, stale_pdf = apply_official_evidence_policy(item, official_text, final_url)
-                item, reasons = validate(item, company, {final_url: {}},
+                item, _facts, stale_pdf = apply_official_evidence_policy(item, official_text, candidate_url)
+                item, reasons = validate(item, company, {candidate_url: {}},
                                          fetcher=lambda url, _company, _sources: url)
                 if stale_pdf:
                     reasons = list(dict.fromkeys([*reasons, "historical_pdf_not_current_evidence"]))
                     item["benefit_status"] = "candidate"
                     item["error_reason"] = ",".join(reasons)
                 if not args.diagnostic_mode:
-                    save_official_source(DATA / "official-benefit-sources.json", company, final_url,
+                    save_official_source(DATA / "official-benefit-sources.json", company, candidate_url,
                                          company.get("official_domains") or ())
             # Both fixed and searched sources converge on the same persistence path.
             item = normalize_for_storage(item, company)
@@ -1836,6 +1929,9 @@ def run(args):
                 if totals["processed_companies"] else 0.0)
         print(f"PRIORITY SUMMARY: high={totals['high']} medium={totals['medium']} low={totals['low']} "
               f"free_extraction_success={totals['free_extraction_success']} confirmed_rate={rate:.1f}%")
+        print(f"DISCOVERY SUMMARY: official_domains_found={totals['official_domains_found']} "
+              f"official_url_candidates_found={totals['official_url_candidates_found']} "
+              f"pre_openai_excluded={totals['pre_openai_excluded']} unresolved={totals['unresolved']}")
         print("RESEARCH-LOG REASONS: " + " ".join(
             f"{reason}={totals['research_reasons'][reason]}" for reason in RESEARCH_REASONS))
         print(f"API USAGE: input_tokens={totals['input_tokens']} output_tokens={totals['output_tokens']} "
