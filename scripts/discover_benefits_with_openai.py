@@ -76,6 +76,7 @@ SCHEMA = {"type": "object", "properties": FIELDS, "required": list(FIELDS), "add
 BENEFIT_WORDS = ("株主優待", "株主ご優待", "株主優待制度", "優待券",
                  "株主優待カード", "株主優待ポイント", "株主様ご優待",
                  "株主特典", "株主還元", "商品贈呈", "割引券", "クーポン")
+PRIORITY_MEDIUM_TERMS = ("株主優待", "株主ご優待", "株主様ご優待", "優待制度", "優待券")
 RESEARCH_REASONS = ("official_source_not_found", "required_shares_missing",
                     "benefit_content_missing", "record_month_missing", "confidence_low",
                     "redirect_domain_rejected", "pdf_parse_failed")
@@ -171,6 +172,13 @@ def safe_text(value):
     if isinstance(value, (dict, list)):
         return json.dumps(value, ensure_ascii=False, default=str)
     return str(value)
+
+
+def normalize_japanese_text(value):
+    """Normalize width, entities and whitespace before Japanese matching."""
+    value = unescape(safe_text(value))
+    value = unicodedata.normalize("NFKC", value).replace("\u3000", " ")
+    return re.sub(r"\s+", " ", value).strip()
 
 
 class APIError(Exception):
@@ -540,6 +548,11 @@ def page_text(body, content_type=""):
     else:
         # Never discard a successfully downloaded body solely due to encoding.
         decoded = body.decode("utf-8", errors="replace")
+    title = " ".join(re.findall(r"(?is)<title\b[^>]*>(.*?)</title>", decoded))
+    heading = " ".join(re.findall(r"(?is)<h1\b[^>]*>(.*?)</h1>", decoded))
+    links = " ".join(re.findall(r"(?is)<a\b[^>]*>(.*?)</a>", decoded))
+    title, heading, links = (normalize_japanese_text(re.sub(r"(?is)<[^>]+>", " ", value))
+                             for value in (title, heading, links))
     # Meta values are not text nodes, but are important corporate identity
     # evidence (description, og:title and og:site_name).
     meta = " ".join(match.group(1) for tag in re.findall(r"(?is)<meta\b[^>]*>", decoded)
@@ -554,8 +567,10 @@ def page_text(body, content_type=""):
         r'''(?is)<script\b[^>]*id\s*=\s*["']__NEXT_DATA__["'][^>]*>(.*?)</script>''', decoded))
     decoded = re.sub(r"(?is)<(script|style).*?>.*?</\1>", " ", decoded)
     decoded = embedded + " " + next_data + " " + decoded
-    decoded = meta + " " + decoded
-    return re.sub(r"\s+", " ", re.sub(r"(?s)<[^>]+>", " ", decoded)).strip()
+    structured = (f"PAGE_TITLE[{title}] H1[{heading}] META_DESCRIPTION[{meta}] "
+                  f"LINK_TEXT[{links}] ") if any((title, heading, meta, links)) else ""
+    decoded = structured + decoded
+    return normalize_japanese_text(re.sub(r"(?s)<[^>]+>", " ", decoded))
 
 
 def pdf_text(body, diagnostic=None):
@@ -603,13 +618,35 @@ def pdf_extractor_available():
 
 def evidence_facts(text):
     """Report the four facts required before structured extraction."""
-    text = safe_text(text)
+    text = normalize_japanese_text(text)
     return {
         "required_shares": bool(re.search(r"\d[\d,]*\s*株", text)),
-        "benefit_content": bool(re.search(r"優待(?:券|内容|品|ポイント|食事)|\d[\d,]*\s*(?:円|ポイント)", text)),
-        "record_month": bool(re.search(r"権利確定|基準日|\d{1,2}\s*月", text)),
+        "benefit_content": bool(re.search(
+            r"株主(?:ご|様ご)?優待|優待(?:制度|券|内容|品|ポイント|食事)|\d[\d,]*\s*(?:円|ポイント)", text)),
+        "record_month": bool(re.search(r"権利確定|基準日|(?:毎年\s*)?\d{1,2}\s*月(?:末日|\d{1,2}\s*日)?", text)),
         "long_term_condition": bool(re.search(r"継続保有|長期保有|保有期間|保有条件", text)),
     }
+
+
+def regex_official_facts(text):
+    """Re-extract shares/months from flattened HTML tables, lists and PDF text."""
+    text = normalize_japanese_text(text)
+    shares = [int(value.replace(",", "")) for value in re.findall(
+        r"(?<!\d)(\d{1,3}(?:,\d{3})*|\d+)\s*株", text)]
+    months = [int(value) for value in re.findall(
+        r"(?:毎年\s*)?(1[0-2]|0?[1-9])\s*月(?:末日|\d{1,2}\s*日)?", text)]
+    return {"minimum_shares": min(shares) if shares else None,
+            "record_months": list(dict.fromkeys(months))}
+
+
+def apply_regex_official_facts(item, text):
+    extracted = regex_official_facts(text)
+    if item.get("minimum_shares") is None and extracted["minimum_shares"] is not None:
+        item["minimum_shares"] = extracted["minimum_shares"]
+    if not item.get("record_months") and extracted["record_months"]:
+        item["record_months"] = extracted["record_months"]
+        item["annual_occurrences"] = len(extracted["record_months"])
+    return item
 
 
 def apply_official_evidence_policy(item, text, url):
@@ -662,7 +699,10 @@ def security_code_found(text, code):
 
 def registered_domains(company):
     """Return the issuer domains explicitly approved for redirects and links."""
-    values = [company.get("official_domain"), *(company.get("official_domains") or [])]
+    values = [company.get("official_domain"), company.get("official_url"),
+              company.get("official_url_candidate"),
+              *(company.get("official_url_candidates") or []),
+              *(company.get("official_domains") or [])]
     return tuple(dict.fromkeys(normalized_host(value) for value in values if normalized_host(value)))
 
 
@@ -702,6 +742,7 @@ def document_links(body, base_url):
     html = body.decode("utf-8", "ignore")
     values = re.findall(r'''(?is)\b(?:href|src|action)\s*=\s*["']([^"'#]+)["']''', html)
     values += re.findall(r"(?is)<loc>\s*([^<\s]+)\s*</loc>", html)
+    values += re.findall(r"(?im)^\s*Sitemap\s*:\s*(https?://\S+)", html)
     values += re.findall(r'''(?i)["']((?:https?:)?(?:\\?/){2}[^"']+|/[^"']+)["']''', html)
     links = []
     for value in values:
@@ -736,7 +777,9 @@ def discover_corporate_candidates(company, fetcher=None, max_pages=24):
     if not domains:
         return []
     fetcher = fetcher or fetch_discovery_document
-    seeds = [canonical_url(f"https://{domains[0]}/"), canonical_url(f"https://{domains[0]}/sitemap.xml")]
+    seeds = [canonical_url(f"https://{domains[0]}{path}") for path in
+             ("/", "/ir/", "/ir/stock/", "/ir/shareholder/", "/company/ir/",
+              "/sitemap.xml", "/robots.txt")]
     queue, seen, relevant = [url for url in seeds if url], set(), []
     while queue and len(seen) < max_pages:
         url = queue.pop(0)
@@ -1174,25 +1217,71 @@ def excluded_security(company):
 
 
 def free_priority(company, review_items=None, official_sources=None, universe=None):
-    """Score only cached/free official metadata; never use OpenAI for scheduling."""
+    """Score normalized free official metadata; never use OpenAI for scheduling."""
     code = str(company["code"])
     source = (official_sources or {}).get(code, {})
-    metadata = " ".join(safe_text(company.get(key)) for key in
-                        ("page_title", "ir_title", "stock_title", "sitemap_text",
-                         "official_pdf_name", "url_path", "link_text"))
+    fields = ("official_source_url", "page_title", "title", "h1", "meta_description",
+              "ir_title", "stock_title", "sitemap_text", "official_pdf_name",
+              "pdf_name", "url_path", "link_text", "official_page_text")
+    metadata = " ".join(safe_text(company.get(key)) for key in fields)
     metadata += " " + safe_text(source.get("url"))
+    disclosures = []
     for item in review_items or []:
         if security_code_found(" ".join(safe_text(item.get(k)) for k in
                                         ("code", "title", "description")), code):
-            metadata += " " + " ".join(safe_text(item.get(k)) for k in
-                                        ("title", "description", "url", "pdf_url", "link_text"))
-    hits = sum(term in metadata for term in BENEFIT_WORDS)
-    score = hits * 20
-    if code in (universe or set()):
+            value = " ".join(safe_text(item.get(k)) for k in
+                             ("title", "description", "url", "pdf_url", "link_text"))
+            metadata += " " + value
+            disclosures.append(safe_text(item.get("title")))
+    metadata = normalize_japanese_text(metadata)
+    match_metadata = re.sub(r"\s+", "", metadata)
+    detected = [term for term in PRIORITY_MEDIUM_TERMS if term in match_metadata]
+    title_h1 = normalize_japanese_text(" ".join(safe_text(company.get(key))
+                                                for key in ("page_title", "title", "h1")))
+    title_h1_match = re.sub(r"\s+", "", title_h1)
+    pdf_disclosure = normalize_japanese_text(" ".join([
+        safe_text(company.get("official_pdf_name")), safe_text(company.get("pdf_name")),
+        *disclosures]))
+    page_obtained = bool(company.get("official_page_obtained") or
+                         company.get("official_source_url") or source.get("url") or
+                         any(company.get(key) for key in fields[1:]))
+    if "株主優待" in title_h1_match or "株主優待制度" in re.sub(r"\s+", "", pdf_disclosure):
+        score, priority = 100, "high"
+    elif detected:
+        score, priority = 50, "medium"
+    elif page_obtained:
+        score, priority = 10, "medium"
+    else:
+        score, priority = 0, "low"
+    if score and code in (universe or set()):
         score += 15
-    if re.search(r"(?:^|[/_-])(?:ir|investor|stock|shareholder)(?:[/_.-]|$)", metadata, re.I):
+    if score and re.search(r"(?:^|[/_-])(?:ir|investor|stock|shareholder)(?:[/_.-]|$)", metadata, re.I):
         score += 5
-    priority = "high" if score >= 20 else "medium" if score >= 5 else "low"
+    return score, priority
+
+
+def priority_diagnostic(company, url=None, official_text="", review_items=None):
+    """Classify and log free evidence after the official fetch."""
+    text = normalize_japanese_text(official_text)
+    title = re.search(r"PAGE_TITLE\[(.*?)\]", text)
+    heading = re.search(r"H1\[(.*?)\]", text)
+    enriched = dict(company, official_source_url=url, official_page_obtained=bool(url),
+                    official_page_text=text,
+                    page_title=title.group(1) if title else company.get("page_title"),
+                    h1=heading.group(1) if heading else company.get("h1"),
+                    pdf_name=Path(urlparse(url).path).name if url else "")
+    score, priority = free_priority(enriched, review_items)
+    match_text = re.sub(r"\s+", "", normalize_japanese_text(
+        " ".join((safe_text(url), text, safe_text(enriched.get("pdf_name"))))))
+    detected = [term for term in PRIORITY_MEDIUM_TERMS if term in match_text]
+    title_h1 = normalize_japanese_text(" ".join((safe_text(enriched.get("page_title")),
+                                                  safe_text(enriched.get("h1")))))
+    reason = ("title_or_h1" if "株主優待" in re.sub(r"\s+", "", title_h1) else
+              "official_pdf_or_tdnet_title" if priority == "high" else
+              "benefit_term" if detected else
+              "official_page_without_term" if url else "official_page_not_obtained")
+    print(f"Free priority {company['code']}: score={score} priority={priority} "
+          f"reason={reason} detected_terms={','.join(detected) or 'none'} url={url or 'none'}")
     return score, priority
 
 
@@ -1495,7 +1584,14 @@ def run(args):
     domains = load(DATA / "company-domains.json", {})
     registered_sources = load_official_sources(DATA / "official-benefit-sources.json")
     for company in companies:
-        if not company.get("official_domain"): company["official_domain"] = domains.get(company["code"])
+        master_candidate = (company.get("official_url") or company.get("official_url_candidate") or
+                            next(iter(company.get("official_url_candidates") or []), None))
+        mapped = domains.get(company["code"])
+        if isinstance(mapped, dict):
+            master_candidate = master_candidate or mapped.get("url") or mapped.get("official_url")
+            mapped = mapped.get("domain")
+        if not company.get("official_domain"):
+            company["official_domain"] = mapped or normalized_host(master_candidate)
     if args.diagnostic_mode:
         companies = [x for x in companies if x.get("code") == "1301"]
         if not companies: companies = [{"code": "1301", "name": "極洋", "official_domain": domains.get("1301")}]
@@ -1518,9 +1614,7 @@ def run(args):
               "successes": 0, "verification_required": 0, "research_log_saved": 0,
               "failures": 0, "free_candidates_checked": 0, "benefit_candidates": 0,
               "free_extraction_success": 0, "research_reasons": {reason: 0 for reason in RESEARCH_REASONS},
-              "high": sum(c.get("candidate_priority") == "high" for c in selected),
-              "medium": sum(c.get("candidate_priority") == "medium" for c in selected),
-              "low": sum(c.get("candidate_priority", "low") == "low" for c in selected)}
+              "high": 0, "medium": 0, "low": 0}
     company_usage = []
     budget_deferred = 0
     run_estimated_cost_jpy = 0.0
@@ -1549,6 +1643,12 @@ def run(args):
         failure_logged = False
         try:
             totals["free_candidates_checked"] += 1
+            # Scheduling classification (before network access) is deliberately
+            # logged separately from the evidence-based post-fetch result.
+            before_score, before_priority = free_priority(
+                company, load(DATA / "review-queue.json", []), registered_sources)
+            print(f"Free priority before fetch {company['code']}: score={before_score} "
+                  f"priority={before_priority}")
             registered = registered_sources.get(str(company["code"]).upper())
             active_label = "Official source discovery and extraction"
             active_failed_stage = "official_discovery"
@@ -1565,6 +1665,9 @@ def run(args):
                 final_url, official_text = free_search_official_source(company)
                 if final_url and not company.get("official_domain"):
                     company["official_domain"] = normalized_host(final_url)
+            _score, fetched_priority = priority_diagnostic(
+                company, final_url, official_text, load(DATA / "review-queue.json", []))
+            totals[fetched_priority] += 1
             if not final_url:
                 item = empty_extraction(company, None)
                 reasons = ["official_source_not_found"]
@@ -1610,6 +1713,7 @@ def run(args):
                 item = json.loads(output_text(correction))
                 item["code"], item["name"], item["official_source_url"] = (
                     str(company["code"]), company["name"], final_url)
+                item = apply_regex_official_facts(item, official_text)
                 item, _facts, stale_pdf = apply_official_evidence_policy(item, official_text, final_url)
                 item, reasons = validate(item, company, {final_url: {}},
                                          fetcher=lambda url, _company, _sources: url)
