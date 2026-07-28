@@ -753,5 +753,72 @@
     "market": "スタンダード",
     "sector": "小売業",
     "industry": "小売業"
+  },
+  {
+    "code": "9861",
+    "name": "吉野家ホールディングス",
+    "benefit_status": "official_confirmed",
+    "record_months": [
+      2,
+      8
+    ],
+    "record_date": null,
+    "annual_occurrences": 2,
+    "minimum_shares": 100,
+    "maximum_shares": null,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "maximum_shares": 199,
+        "description": "100株～199株の株主様：2月末、8月末の半期毎に4枚の500円サービス券を進呈",
+        "annual_value_yen": null
+      },
+      {
+        "shares": 200,
+        "maximum_shares": 999,
+        "description": "200株～999株の株主様：2月末、8月末の半期毎に10枚の500円サービス券を進呈（200株以上は『株主様ご優待商品セット』との引き換えも可能）",
+        "annual_value_yen": null
+      },
+      {
+        "shares": 1000,
+        "maximum_shares": 1999,
+        "description": "1,000株～1,999株の株主様：2月末、8月末の半期毎に12枚の500円サービス券を進呈",
+        "annual_value_yen": null
+      },
+      {
+        "shares": 2000,
+        "maximum_shares": null,
+        "description": "2,000株以上の株主様：2月末、8月末の半期毎に24枚の500円サービス券を進呈",
+        "annual_value_yen": null
+      }
+    ],
+    "benefit_title": "株主様ご優待券（500円分のご飲食に利用可）",
+    "benefit_description": "「株主様ご優待券」1枚につき500円分のご飲食にご利用いただけます。店舗で販売しておりますすべての商品が、お引換の対象となります。キラメキノ未来株式会社の店舗に限り、「株主様ご優待券」2枚につき、お好きなラーメン1杯と引き換えいただけます。お会計に応じ複数枚のご利用が可能ですが、「株主様ご優待券」のみでお支払いをされる場合には、お釣りのお支払いは出来ません。なお、200株以上の株主様は（現在、引き換え期間は終了しております）『株主様ご優待商品セット』との引き換えも可能です。",
+    "category": "株主優待券",
+    "annual_value_yen": null,
+    "valuation_type": "not_calculated",
+    "long_term_required": false,
+    "holding_period_months": null,
+    "long_term_condition_verified": false,
+    "conditions": "配布枚数：100株～199株：2月末、8月末の半期毎に4枚／200株～999株：2月末、8月末の半期毎に10枚（200株以上は『株主様ご優待商品セット』との引き換えも可能（現在、引き換え期間は終了））／1,000株～1,999株：2月末、8月末の半期毎に12枚／2,000株以上：2月末、8月末の半期毎に24枚。贈呈時期（発送時期）：2月末分は5月上旬、8月末分は11月中旬。2026年2月末分は2026年5月1日（金）に発送。",
+    "official_source_url": "https://www.yoshinoya-holdings.com/ir/info/dividend/",
+    "official_source_title": null,
+    "official_verified_at": "2026-07-28",
+    "abolished_at": null,
+    "last_record_date": null,
+    "change_or_abolition_note": null,
+    "confidence_score": 90,
+    "evidence_text": "『株主優待情報』→『株主様ご優待券』：1枚につき500円分のご飲食に利用可能／キラメキノ未来株式会社の店舗では2枚→ラーメン1杯と引換／200株以上は『株主様ご優待商品セット』との引換も可能（現在引換期間終了）／配布枚数（100株～199株：2月末・8月末半期毎に4枚、200株～999株：同10枚、1,000株～1,999株：同12枚、2,000株以上：同24枚）／発送時期（2月末分は5月上旬、8月末分は11月中旬、2026年2月末分は2026年5月1日に発送）。",
+    "error_reason": null,
+    "source_published_at": null,
+    "source_updated_at": null,
+    "data_confidence": "official_confirmed",
+    "benefit_summary": "株主様ご優待券（500円分のご飲食に利用可） 「株主様ご優待券」1枚につき500円分のご飲食にご利用いただけます。店舗で販売しておりますすべての商品が、お引換の対象となります。キラメキノ未来株式会社の店舗に限り、「株主様ご優待券」2枚につき、お好きなラーメン1杯と引き換えいただけます。お会計に応じ複数枚のご利用が可能ですが、「株主様ご優待券」のみでお支払いをされる場合には、お釣りのお支払いは出来ません。なお、200株以上の株主様は（現在、引き換え期間は終了しております）『株主様ご優待商品セット』との引き換えも可能です。",
+    "last_checked_at": "2026-07-28",
+    "long_term_condition": "公式資料に長期保有条件の記載なし",
+    "notes": "配布枚数：100株～199株：2月末、8月末の半期毎に4枚／200株～999株：2月末、8月末の半期毎に10枚（200株以上は『株主様ご優待商品セット』との引き換えも可能（現在、引き換え期間は終了））／1,000株～1,999株：2月末、8月末の半期毎に12枚／2,000株以上：2月末、8月末の半期毎に24枚。贈呈時期（発送時期）：2月末分は5月上旬、8月末分は11月中旬。2026年2月末分は2026年5月1日（金）に発送。",
+    "market": "プライム",
+    "sector": "小売業",
+    "industry": "小売業"
   }
 ]

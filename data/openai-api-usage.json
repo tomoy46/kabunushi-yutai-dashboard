@@ -401,5 +401,25 @@
     "unique_web_search_call_ids": 0,
     "duration_seconds": 48.563,
     "errors": []
+  },
+  {
+    "executed_at": "2026-07-28T03:36:41.648931+00:00",
+    "model": "gpt-5.4-nano",
+    "diagnostic_mode": false,
+    "processed_companies": 2,
+    "responses_api_calls": 1,
+    "responses_with_web_search": 0,
+    "web_search_output_items": 0,
+    "web_search_calls": 0,
+    "input_tokens": 2155,
+    "cached_input_tokens": 0,
+    "output_tokens": 1007,
+    "successes": 1,
+    "verification_required": 1,
+    "research_log_saved": 1,
+    "failures": 0,
+    "unique_web_search_call_ids": 0,
+    "duration_seconds": 12.52,
+    "errors": []
   }
 ]
