@@ -1209,5 +1209,173 @@
     "market": "プライム",
     "sector": "その他製品",
     "industry": "その他製品"
+  },
+  {
+    "code": "1766",
+    "name": "東建コーポレーション",
+    "benefit_status": "official_confirmed",
+    "record_months": [
+      4
+    ],
+    "record_date": null,
+    "annual_occurrences": null,
+    "minimum_shares": 100,
+    "maximum_shares": null,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "maximum_shares": 1000,
+        "description": "（保有株式数：100株以上1,000株未満）\nゴルフ場：5,000円割引券 4枚（※1 またはハートマークショップ4,000円割引券 ※2）\nゴルフ場：平日1年カード（※3）またはハートマークショップ5,000円割引券 ※2\n新米（5kg）・ミネラルウォーター（500ml×48本）／焼酎（720ml×5本）よりひとつ選択\nホテル多度温泉：無料宿泊（1泊） ペア招待券（※4）",
+        "annual_value_yen": null
+      },
+      {
+        "shares": 1000,
+        "maximum_shares": 2000,
+        "description": "（保有株式数：1,000株以上2,000株未満）\nゴルフ場：平日1年カード（※3）またはハートマークショップ5,000円割引券 ※2\n新米（10kg）・ミネラルウォーター（500ml×96本）／焼酎（720ml×10本）よりひとつ選択\nホテル多度温泉：無料宿泊（1泊） ペア招待券（※4）",
+        "annual_value_yen": null
+      },
+      {
+        "shares": 2000,
+        "maximum_shares": null,
+        "description": "（保有株式数：2,000株以上）\nゴルフ場：全日1年カード（※3）またはハートマークショップ6,000円割引券 ※2\n新米（5kg）・ミネラルウォーター（500ml×48本）／焼酎（720ml×5本）よりひとつ選択ではなく、本文上は「新米（10kg）・ミネラルウォーター（500ml×96本）／焼酎（720ml×10本）よりひとつ選択」が該当（2,000株以上の欄：○）\nホテル多度温泉：無料宿泊（1泊） ペア招待券（※4）およびホテル多度温泉宿泊（10名様まで有効） 30%割引券（※4）",
+        "annual_value_yen": null
+      }
+    ],
+    "benefit_title": "株主優待制度",
+    "benefit_description": "保有株式数に応じて、リゾート施設（ホテル多度温泉）、ゴルフ場（東建多度カントリークラブ・名古屋／東建塩河カントリー倶楽部）、および飲料・酒（新米／ミネラルウォーター／焼酎）等の特典を提供。毎年4月末（期末）時点で対象。",
+    "category": "株主優待",
+    "annual_value_yen": null,
+    "valuation_type": "not_calculated",
+    "long_term_required": false,
+    "holding_period_months": null,
+    "long_term_condition_verified": false,
+    "conditions": "・毎年4月末（期末）時点で、弊社株式所有の株主様が対象。\n・ご優待内容（保有株式数区分別）：\n  - 100株以上1,000株未満：ゴルフ場5,000円割引券4枚（※1またはハートマークショップ4,000円割引券※2）/ ゴルフ場 平日1年カード（※3）またはハートマークショップ5,000円割引券※2 / 新米（5kg）・ミネラルウォーター（500ml×48本）・焼酎（720ml×5本）よりひとつ選択 / ホテル多度温泉無料宿泊（1泊）ペア招待券（※4）\n  - 1,000株以上2,000株未満：ゴルフ場 平日1年カード（※3）またはハートマークショップ5,000円割引券※2 / 新米（10kg）・ミネラルウォーター（500ml×96本）・焼酎（720ml×10本）よりひとつ選択 / ホテル多度温泉無料宿泊（1泊）ペア招待券（※4）\n  - 2,000株以上：ゴルフ場 全日1年カード（※3）またはハートマークショップ6,000円割引券※2 / 新米（10kg）・ミネラルウォーター（500ml×96本）・焼酎（720ml×10本）よりひとつ選択 / ホテル多度温泉無料宿泊（1泊）ペア招待券（※4）およびホテル多度温泉宿泊（10名様まで有効）30%割引券（※4）\n・注記：\n  ※1 ゴルフプレー料金の精算総額からお一人様につき5,000円割引（平日のみ有効、土・日・祝祭日は対象外）。本券1枚で紹介・同伴を含め4名様まで。\n  ※2 ナスラック（株）が運営する「ハートマークショップ」で利用可能な割引券。\n  ※3 ゴルフ場において、株主様お一人分がメンバー料金で利用可能なカード。\n  ※4 ホテル多度温泉（三重県桑名市）で利用可能（クラブハウス本館／火水風別館／レジデンス新館（4階））。",
+    "official_source_url": "https://www.token.co.jp/ir/investors/shareholder_privilege/",
+    "official_source_title": "株主優待制度｜東建コーポレーション",
+    "official_verified_at": "2026-07-28",
+    "abolished_at": null,
+    "last_record_date": null,
+    "change_or_abolition_note": null,
+    "confidence_score": 90,
+    "evidence_text": "「毎年4月末（期末）時点で、弊社株式所有の株主様が対象となります。」「ご優待内容 100株以上 1,000株未満／1,000株以上2,000株未満／2,000株以上」の区分表および各特典（ゴルフ場割引券・カード、新米/ミネラルウォーター/焼酎より選択、ホテル多度温泉無料宿泊・ペア招待券、宿泊（10名様まで有効）30%割引券）に基づく。",
+    "error_reason": null,
+    "source_published_at": null,
+    "source_updated_at": null,
+    "data_confidence": "official_confirmed",
+    "benefit_summary": "株主優待制度 保有株式数に応じて、リゾート施設（ホテル多度温泉）、ゴルフ場（東建多度カントリークラブ・名古屋／東建塩河カントリー倶楽部）、および飲料・酒（新米／ミネラルウォーター／焼酎）等の特典を提供。毎年4月末（期末）時点で対象。",
+    "last_checked_at": "2026-07-28",
+    "long_term_condition": "公式資料に長期保有条件の記載なし",
+    "notes": "・毎年4月末（期末）時点で、弊社株式所有の株主様が対象。\n・ご優待内容（保有株式数区分別）：\n  - 100株以上1,000株未満：ゴルフ場5,000円割引券4枚（※1またはハートマークショップ4,000円割引券※2）/ ゴルフ場 平日1年カード（※3）またはハートマークショップ5,000円割引券※2 / 新米（5kg）・ミネラルウォーター（500ml×48本）・焼酎（720ml×5本）よりひとつ選択 / ホテル多度温泉無料宿泊（1泊）ペア招待券（※4）\n  - 1,000株以上2,000株未満：ゴルフ場 平日1年カード（※3）またはハートマークショップ5,000円割引券※2 / 新米（10kg）・ミネラルウォーター（500ml×96本）・焼酎（720ml×10本）よりひとつ選択 / ホテル多度温泉無料宿泊（1泊）ペア招待券（※4）\n  - 2,000株以上：ゴルフ場 全日1年カード（※3）またはハートマークショップ6,000円割引券※2 / 新米（10kg）・ミネラルウォーター（500ml×96本）・焼酎（720ml×10本）よりひとつ選択 / ホテル多度温泉無料宿泊（1泊）ペア招待券（※4）およびホテル多度温泉宿泊（10名様まで有効）30%割引券（※4）\n・注記：\n  ※1 ゴルフプレー料金の精算総額からお一人様につき5,000円割引（平日のみ有効、土・日・祝祭日は対象外）。本券1枚で紹介・同伴を含め4名様まで。\n  ※2 ナスラック（株）が運営する「ハートマークショップ」で利用可能な割引券。\n  ※3 ゴルフ場において、株主様お一人分がメンバー料金で利用可能なカード。\n  ※4 ホテル多度温泉（三重県桑名市）で利用可能（クラブハウス本館／火水風別館／レジデンス新館（4階））。",
+    "market": "プライム",
+    "sector": "建設業",
+    "industry": "建設業"
+  },
+  {
+    "code": "1783",
+    "name": "ｆａｎｔａｓｉｓｔａ",
+    "benefit_status": "official_confirmed",
+    "record_months": [
+      9
+    ],
+    "record_date": "2025年9月30日現在",
+    "annual_occurrences": null,
+    "minimum_shares": 1000,
+    "maximum_shares": null,
+    "benefit_tiers": [
+      {
+        "shares": 1000,
+        "maximum_shares": null,
+        "description": "毎年9月30日現在の当社株主名簿及び実質株主名簿に記載された株主のうち、1,000株以上を保有する株主",
+        "annual_value_yen": null
+      }
+    ],
+    "benefit_title": null,
+    "benefit_description": "優待内容：①デジタルギフト1,000円分 ②FAIRY FOREST５-アミノレブリン酸（５-ＡＬＡ）配合サプリメントご購入50%off（※２：株主おひとり３袋まで） ③当社グループが運営する宿泊施設無料宿泊券（※３：抽選）",
+    "category": null,
+    "annual_value_yen": null,
+    "valuation_type": "not_calculated",
+    "long_term_required": false,
+    "holding_period_months": null,
+    "long_term_condition_verified": false,
+    "conditions": "優待基準：毎年9月30日現在の当社株主名簿及び実質株主名簿に記載された株主様のうち、1,000株以上を保有する株主様を対象。\n対象注記：2025年9月30日時点の株主名簿に記載された株主様が対象。\n送付時期：デジタルギフト・サプリメント・無料宿泊券のうち、サプリメント（ご購入50%off）の配送時期は2026年2月頃を予定。\n無料宿泊券：2025年12月に当社ホームページ上に開設予定の「株主優待特設サイト」より希望施設を選定、抽選で各施設につき1名に1室/1泊分の無料宿泊券を贈呈。対象施設：①UNDER RAILWAY HOTEL AKIHABARA ②VILLA fantasiaシリーズ ③CASA fantasiaシリーズ（2025年11月末時点で開業している施設が全て対象）。有効期限：ご利用の有効期限は2026年9月末まで。",
+    "official_source_url": "https://fantasista-tokyo.jp/ir/dividend/",
+    "official_source_title": null,
+    "official_verified_at": "2026-07-28",
+    "abolished_at": null,
+    "last_record_date": null,
+    "change_or_abolition_note": null,
+    "confidence_score": 90,
+    "evidence_text": "優待基準：毎年9月30日現在…1,000株以上…/ 優待内容①デジタルギフト1,000円分②サプリメント50%off（株主おひとり3袋まで）③無料宿泊券（抽選）/ 対象注記：2025年9月30日時点…/ 送付時期：サプリメント配送時期は2026年2月頃を予定/ 無料宿泊券：2025年12月特設サイトで選定・抽選、対象施設、利用有効期限2026年9月末まで",
+    "error_reason": null,
+    "source_published_at": null,
+    "source_updated_at": null,
+    "data_confidence": "official_confirmed",
+    "benefit_summary": "優待内容：①デジタルギフト1,000円分 ②FAIRY FOREST５-アミノレブリン酸（５-ＡＬＡ）配合サプリメントご購入50%off（※２：株主おひとり３袋まで） ③当社グループが運営する宿泊施設無料宿泊券（※３：抽選）",
+    "last_checked_at": "2026-07-28",
+    "long_term_condition": "公式資料に長期保有条件の記載なし",
+    "notes": "優待基準：毎年9月30日現在の当社株主名簿及び実質株主名簿に記載された株主様のうち、1,000株以上を保有する株主様を対象。\n対象注記：2025年9月30日時点の株主名簿に記載された株主様が対象。\n送付時期：デジタルギフト・サプリメント・無料宿泊券のうち、サプリメント（ご購入50%off）の配送時期は2026年2月頃を予定。\n無料宿泊券：2025年12月に当社ホームページ上に開設予定の「株主優待特設サイト」より希望施設を選定、抽選で各施設につき1名に1室/1泊分の無料宿泊券を贈呈。対象施設：①UNDER RAILWAY HOTEL AKIHABARA ②VILLA fantasiaシリーズ ③CASA fantasiaシリーズ（2025年11月末時点で開業している施設が全て対象）。有効期限：ご利用の有効期限は2026年9月末まで。",
+    "market": "スタンダード",
+    "sector": "不動産業",
+    "industry": "不動産業"
+  },
+  {
+    "code": "1780",
+    "name": "ヤマウラ",
+    "benefit_status": "official_confirmed",
+    "record_months": [
+      3
+    ],
+    "record_date": null,
+    "annual_occurrences": 1,
+    "minimum_shares": 100,
+    "maximum_shares": 1000,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "maximum_shares": null,
+        "description": "地場商品群（優待カタログ）の中から１商品選択",
+        "annual_value_yen": 3000
+      },
+      {
+        "shares": 300,
+        "maximum_shares": null,
+        "description": "地場商品群（優待カタログ）の中から２商品選択",
+        "annual_value_yen": 3000
+      },
+      {
+        "shares": 1000,
+        "maximum_shares": null,
+        "description": "地場商品群（優待カタログ）の中から３商品選択",
+        "annual_value_yen": 3000
+      }
+    ],
+    "benefit_title": "地場商品群（優待カタログ）から選択",
+    "benefit_description": "地場商品群（優待カタログ）の中から選択（３,０００円相当）",
+    "category": "食品",
+    "annual_value_yen": 3000,
+    "valuation_type": "not_calculated",
+    "long_term_required": false,
+    "holding_period_months": null,
+    "long_term_condition_verified": false,
+    "conditions": "権利確定月：３月／優待回数：１回／年。1,500円の記載あり。株数ごとの内容：100株→3,000円相当の地場商品群の中から１商品選択、300株→3,000円相当の地場商品群の中から２商品選択、1,000株→3,000円相当の地場商品群の中から３商品選択。申込期間あり。数量限定品は抽選（先着順ではありません。）⇒抽選結果は７月末頃メールにてお知らせ。",
+    "official_source_url": "https://kabuusa.com/%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%83%A4%E3%83%9E%E3%82%A6%E3%83%A9%EF%BC%91%EF%BC%97%EF%BC%98%EF%BC%90%E3%81%AE%E6%A0%AA%E4%B8%BB%E5%84%AA%E5%BE%85/",
+    "official_source_title": null,
+    "official_verified_at": "2026-07-28",
+    "abolished_at": null,
+    "last_record_date": null,
+    "change_or_abolition_note": null,
+    "confidence_score": 90,
+    "evidence_text": "「地場商品群（優待カタログ）の中から選択（３,０００円相当）」／「優待回数 １回／年」／「権利確定月 ３月」／「100株 3,000円相当の地場商品群の中から１商品選択」／「300株 3,000円相当の地場商品群の中から２商品選択」／「1,000株 3,000円相当の地場商品群の中から３商品選択」／「数量限定品は抽選（先着順ではありません。）⇒抽選結果は７月末頃メールにてお知らせ」",
+    "error_reason": null,
+    "source_published_at": "2026-01-25T17:36:53+09:00",
+    "source_updated_at": "2026-01-25T17:36:53+09:00",
+    "data_confidence": "official_confirmed",
+    "benefit_summary": "地場商品群（優待カタログ）から選択 地場商品群（優待カタログ）の中から選択（３,０００円相当） 3,000円相当",
+    "last_checked_at": "2026-07-28",
+    "long_term_condition": "公式資料に長期保有条件の記載なし",
+    "notes": "権利確定月：３月／優待回数：１回／年。1,500円の記載あり。株数ごとの内容：100株→3,000円相当の地場商品群の中から１商品選択、300株→3,000円相当の地場商品群の中から２商品選択、1,000株→3,000円相当の地場商品群の中から３商品選択。申込期間あり。数量限定品は抽選（先着順ではありません。）⇒抽選結果は７月末頃メールにてお知らせ。",
+    "market": "プライム",
+    "sector": "建設業",
+    "industry": "建設業"
   }
 ]

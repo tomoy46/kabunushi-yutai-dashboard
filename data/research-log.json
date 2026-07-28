@@ -935,5 +935,217 @@
       "official_source_not_found"
     ],
     "checked_at": "2026-07-28T13:07:20.438287+00:00"
+  },
+  {
+    "code": "177A",
+    "name": "コージンバイオ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T14:56:39.248563+00:00"
+  },
+  {
+    "code": "175A",
+    "name": "Ｗｉｌｌ　Ｓｍａｒｔ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T14:55:42.779708+00:00"
+  },
+  {
+    "code": "1762",
+    "name": "高松コンストラクショングループ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T14:55:53.163114+00:00"
+  },
+  {
+    "code": "1768",
+    "name": "ソネック",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T14:56:22.020887+00:00"
+  },
+  {
+    "code": "1808",
+    "name": "長谷工コーポレーション",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T14:57:16.125286+00:00"
+  },
+  {
+    "code": "1807",
+    "name": "佐藤渡辺",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T14:57:16.079292+00:00"
+  },
+  {
+    "code": "1811",
+    "name": "錢高組",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T14:57:16.385485+00:00"
+  },
+  {
+    "code": "1799",
+    "name": "第一建設工業",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T14:57:15.792978+00:00"
+  },
+  {
+    "code": "1764",
+    "name": "工藤建設",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "record_month_missing"
+    ],
+    "checked_at": "2026-07-28T14:55:57.561557+00:00",
+    "source_url": "https://www.nikkei.com/nkd/company/?scode=1764"
+  },
+  {
+    "code": "1788",
+    "name": "三東工業社",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T14:57:15.188288+00:00"
+  },
+  {
+    "code": "1798",
+    "name": "守谷商会",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T14:57:15.735093+00:00"
+  },
+  {
+    "code": "1801",
+    "name": "大成建設",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T14:57:15.834318+00:00"
+  },
+  {
+    "code": "1787",
+    "name": "ナカボーテック",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "record_month_missing"
+    ],
+    "checked_at": "2026-07-28T14:57:15.139570+00:00",
+    "source_url": "https://kabutrack.com/stock/kabuyutai/1787/"
+  },
+  {
+    "code": "1795",
+    "name": "マサル",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T14:57:15.681121+00:00"
+  },
+  {
+    "code": "1793",
+    "name": "大本組",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T14:57:15.504432+00:00"
+  },
+  {
+    "code": "1758",
+    "name": "太洋基礎工業",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "record_month_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-28T14:55:27.438851+00:00",
+    "source_url": "https://www.nikkei.com/nkd/company/yutai/?scode=1758"
+  },
+  {
+    "code": "1803",
+    "name": "清水建設",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T14:57:16.007109+00:00"
+  },
+  {
+    "code": "1802",
+    "name": "大林組",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T14:57:15.947537+00:00"
+  },
+  {
+    "code": "1810",
+    "name": "松井建設",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T14:57:16.275170+00:00"
+  },
+  {
+    "code": "1770",
+    "name": "藤田エンジニアリング",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "record_month_missing"
+    ],
+    "checked_at": "2026-07-28T14:56:28.383776+00:00",
+    "source_url": "https://www.nikkei.com/nkd/company/?scode=1770"
+  },
+  {
+    "code": "1786",
+    "name": "オリエンタル白石",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "record_month_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-28T14:57:12.370983+00:00",
+    "source_url": "https://www.nikkei.com/nkd/company/yutai/?scode=1786"
+  },
+  {
+    "code": "173A",
+    "name": "ハンモック",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "record_month_missing"
+    ],
+    "checked_at": "2026-07-28T14:55:19.035886+00:00",
+    "source_url": "https://www.nikkei.com/nkd/company/?scode=173A"
   }
 ]
