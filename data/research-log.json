@@ -423,5 +423,76 @@
     ],
     "checked_at": "2026-07-28T09:16:35.490787+00:00",
     "source_url": "https://www.akikawabokuen.com/ir-yutai/"
+  },
+  {
+    "code": "1381",
+    "name": "アクシーズ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T09:22:42.287922+00:00"
+  },
+  {
+    "code": "1382",
+    "name": "ホーブ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "minimum_shares_unknown",
+      "record_date_unknown"
+    ],
+    "checked_at": "2026-07-28T09:22:48.066242+00:00",
+    "source_url": "https://hob.co.jp/ir_information/ir_stock/"
+  },
+  {
+    "code": "1384",
+    "name": "ホクリヨウ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T09:23:15.517111+00:00"
+  },
+  {
+    "code": "1401",
+    "name": "エムビーエス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "minimum_shares_unknown",
+      "record_date_unknown",
+      "low_confidence",
+      "current_program_not_confirmed"
+    ],
+    "checked_at": "2026-07-28T09:23:38.522765+00:00",
+    "source_url": "https://www.nikkei.com/nkd/company/yutai/?scode=1401"
+  },
+  {
+    "code": "1407",
+    "name": "ウエストホールディングス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T09:23:51.765746+00:00"
+  },
+  {
+    "code": "1414",
+    "name": "ショーボンドホールディングス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "minimum_shares_unknown",
+      "record_date_unknown"
+    ],
+    "checked_at": "2026-07-28T09:24:06.581484+00:00",
+    "source_url": "https://kibinago7777.blogspot.com/2026/03/blog-post.html"
+  },
+  {
+    "code": "1418",
+    "name": "インターライフホールディングス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "official_source_not_found"
+    ],
+    "checked_at": "2026-07-28T09:24:33.884050+00:00"
   }
 ]

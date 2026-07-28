@@ -1,14 +1,17 @@
 {
-  "next_index": 5,
+  "next_index": 8,
   "processed_codes": [
     "7550",
     "7616",
     "7412",
     "9861",
-    "1332"
+    "1332",
+    "1383",
+    "138A",
+    "1417"
   ],
   "failed_codes": [],
-  "updated_at": "2026-07-28T09:15:01.117133+00:00",
+  "updated_at": "2026-07-28T09:24:21.209590+00:00",
   "total_companies": 3709,
   "uninvestigated_count": 3709
 }

@@ -463,5 +463,27 @@
     "unique_web_search_call_ids": 0,
     "duration_seconds": 115.341,
     "errors": []
+  },
+  {
+    "executed_at": "2026-07-28T09:24:33.886598+00:00",
+    "model": "gpt-5.4-nano",
+    "diagnostic_mode": false,
+    "processed_companies": 10,
+    "responses_api_calls": 6,
+    "responses_with_web_search": 0,
+    "web_search_output_items": 0,
+    "web_search_calls": 0,
+    "input_tokens": 25556,
+    "cached_input_tokens": 0,
+    "output_tokens": 3770,
+    "successes": 3,
+    "verification_required": 7,
+    "research_log_saved": 7,
+    "failures": 0,
+    "free_candidates_checked": 10,
+    "benefit_candidates": 6,
+    "unique_web_search_call_ids": 0,
+    "duration_seconds": 130.113,
+    "errors": []
   }
 ]

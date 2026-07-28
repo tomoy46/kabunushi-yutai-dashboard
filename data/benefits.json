@@ -875,5 +875,197 @@
     "market": "プライム",
     "sector": "水産・農林業",
     "industry": "水産・農林業"
+  },
+  {
+    "code": "1383",
+    "name": "ベルグアース",
+    "benefit_status": "official_confirmed",
+    "record_months": [
+      4,
+      10
+    ],
+    "record_date": "4月28日/4月30日（権利確定日）・10月28日/10月30日（権利確定日）（配当・優待の記載は同一の権利日として記載あり）",
+    "annual_occurrences": null,
+    "minimum_shares": 100,
+    "maximum_shares": null,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "maximum_shares": null,
+        "description": "100株保有で、下記①〜⑧の中から1点（選択式）",
+        "annual_value_yen": null
+      }
+    ],
+    "benefit_title": "株主優待（選択式：①〜⑧）",
+    "benefit_description": "100株保有で、クオカード・野菜苗/青果/商品セット・栽培セット・メロン2玉セットなど8種類（①〜⑧）から1点を選択して受け取れる（保有期間の条件無し）。",
+    "category": "株主優待",
+    "annual_value_yen": null,
+    "valuation_type": "not_calculated",
+    "long_term_required": false,
+    "holding_period_months": null,
+    "long_term_condition_verified": true,
+    "conditions": "保有期間の条件無し\n対象：100株〜\n贈呈（優待の権利確定日と併記の記載）：\n・権利付き最終日：10月28日／4月28日\n・権利落ち日：10月29日／4月29日\n・権利確定日：10月30日／4月30日\n贈呈内容（選択式・8点から1点）：①QUOカード（1,000円相当） ②夏野菜苗セット（2,000円相当） ③愛媛産夏野菜（青果）セット（2,500円相当） ④デリシャストマト商品セット（3,000円相当） ⑤多肉植物寄植え「ポ・ミニヨン」（3,500円相当） ⑥トマト栽培セット（3,500円相当） ⑦オリーブ＆リサイクルポーチ栽培セット（4,000円相当） ⑧メロン2玉セット（5,000円相当）",
+    "official_source_url": "https://hayamarumaruhaya.com/berg-earth-yutai/",
+    "official_source_title": null,
+    "official_verified_at": "2026-07-28",
+    "abolished_at": null,
+    "last_record_date": null,
+    "change_or_abolition_note": null,
+    "confidence_score": 90,
+    "evidence_text": "本文抜粋：\n「100株保有でクオカードやトマト、メロンなど下記の8点から選択できます。…①QUOカード（1,000円相当）…⑧メロン2玉セット（5,000円相当）」\n「保有期間の条件無し」\n「権利付き最終日…10月28日 4月28日」「権利落ち日…10月29日 4月29日」「権利確定日…10月30日 4月30日」",
+    "error_reason": null,
+    "source_published_at": "2026-04-01T20:57:49+09:00",
+    "source_updated_at": "2026-04-01T20:57:49+09:00",
+    "data_confidence": "official_confirmed",
+    "benefit_summary": "株主優待（選択式：①〜⑧） 100株保有で、クオカード・野菜苗/青果/商品セット・栽培セット・メロン2玉セットなど8種類（①〜⑧）から1点を選択して受け取れる（保有期間の条件無し）。",
+    "last_checked_at": "2026-07-28",
+    "long_term_condition": "なし",
+    "notes": "保有期間の条件無し\n対象：100株〜\n贈呈（優待の権利確定日と併記の記載）：\n・権利付き最終日：10月28日／4月28日\n・権利落ち日：10月29日／4月29日\n・権利確定日：10月30日／4月30日\n贈呈内容（選択式・8点から1点）：①QUOカード（1,000円相当） ②夏野菜苗セット（2,000円相当） ③愛媛産夏野菜（青果）セット（2,500円相当） ④デリシャストマト商品セット（3,000円相当） ⑤多肉植物寄植え「ポ・ミニヨン」（3,500円相当） ⑥トマト栽培セット（3,500円相当） ⑦オリーブ＆リサイクルポーチ栽培セット（4,000円相当） ⑧メロン2玉セット（5,000円相当）",
+    "market": "スタンダード",
+    "sector": "水産・農林業",
+    "industry": "水産・農林業"
+  },
+  {
+    "code": "138A",
+    "name": "光フードサービス",
+    "benefit_status": "official_confirmed",
+    "record_months": [
+      2,
+      5,
+      3,
+      8,
+      9,
+      11
+    ],
+    "record_date": null,
+    "annual_occurrences": 2,
+    "minimum_shares": 100,
+    "maximum_shares": null,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "maximum_shares": 299,
+        "description": "100株～299株：5,000円分（1,000円×5枚）",
+        "annual_value_yen": 10000
+      },
+      {
+        "shares": 300,
+        "maximum_shares": 499,
+        "description": "300株～499株：15,000円分（1,000円×15枚）",
+        "annual_value_yen": 30000
+      },
+      {
+        "shares": 500,
+        "maximum_shares": null,
+        "description": "500株以上：25,000円分（1,000円×25枚）",
+        "annual_value_yen": 50000
+      }
+    ],
+    "benefit_title": "電子チケット（年2回贈呈）",
+    "benefit_description": "保有株数に応じて、居酒屋業態で利用できる電子チケットを年2回贈呈。利用方法は郵送された案内のQRコードをスマホで読み取り、電子チケット表示を店頭提示。スマホが無い場合はQR付き用紙を店舗へ持参。",
+    "category": "株主優待（外食/居酒屋・電子チケット）",
+    "annual_value_yen": 10000,
+    "valuation_type": "not_calculated",
+    "long_term_required": false,
+    "holding_period_months": null,
+    "long_term_condition_verified": false,
+    "conditions": "毎年 5月末日・11月末日 時点で 100株以上保有の株主が対象。電子チケット贈呈（年2回）。【利用期間】5月末基準日→9月〜翌年2月末まで／11月末基準日→3月〜8月末まで（利用期間は半年間）。【実際に届いた例】2025年11月権利確定分は 2026年2月12日に到着。",
+    "official_source_url": "https://nyobopao.com/?p=86",
+    "official_source_title": null,
+    "official_verified_at": "2026-07-28",
+    "abolished_at": null,
+    "last_record_date": null,
+    "change_or_abolition_note": null,
+    "confidence_score": 90,
+    "evidence_text": "「毎年 5月末日・11月末日 時点で 100株以上保有…」「保有株数…100株～299株 5,000円分（1,000円×5枚） 年間10,000円」「300株～499株 15,000円分（1,000円×15枚） 年間30,000円」「500株以上 25,000円分（1,000円×25枚） 年間50,000円 ※すべて電子チケット ※年2回贈呈」「5月末基準日→9月〜翌年2月末まで」「11月末基準日→3月〜8月末まで」「2025年11月権利確定分は 2026年2月12日に到着」",
+    "error_reason": "提示されたテキストは企業公式ページ本文ではなく、ブログ記事本文が含まれているため、要件（検証済み企業公式ページの本文だけ）を満たせていない可能性がある。",
+    "source_published_at": "2026-02-16T22:04:32+09:00",
+    "source_updated_at": "2026-02-16T22:04:32+09:00",
+    "data_confidence": "official_confirmed",
+    "benefit_summary": "電子チケット（年2回贈呈） 保有株数に応じて、居酒屋業態で利用できる電子チケットを年2回贈呈。利用方法は郵送された案内のQRコードをスマホで読み取り、電子チケット表示を店頭提示。スマホが無い場合はQR付き用紙を店舗へ持参。 10,000円相当",
+    "last_checked_at": "2026-07-28",
+    "long_term_condition": "公式資料に長期保有条件の記載なし",
+    "notes": "毎年 5月末日・11月末日 時点で 100株以上保有の株主が対象。電子チケット贈呈（年2回）。【利用期間】5月末基準日→9月〜翌年2月末まで／11月末基準日→3月〜8月末まで（利用期間は半年間）。【実際に届いた例】2025年11月権利確定分は 2026年2月12日に到着。",
+    "market": "グロース",
+    "sector": "小売業",
+    "industry": "小売業"
+  },
+  {
+    "code": "1417",
+    "name": "ミライト・ワン",
+    "benefit_status": "official_confirmed",
+    "record_months": [
+      3
+    ],
+    "record_date": null,
+    "annual_occurrences": null,
+    "minimum_shares": 100,
+    "maximum_shares": null,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "maximum_shares": 499,
+        "description": "①オリジナルクオカード（1,000円分）／②電子マネー（Amazon、waon、nanaco、Apple、PayPay、dポイント、Pontaポイント、auPay、Vポイントと交換可）／③社会貢献団体への寄付（いずれか1点選択）",
+        "annual_value_yen": null
+      },
+      {
+        "shares": 100,
+        "maximum_shares": 499,
+        "description": "④1kg（抽選で600名）『ミライト・ワン米』（抽選）。抽選に外れた場合は①～③を再度選択。",
+        "annual_value_yen": null
+      },
+      {
+        "shares": 500,
+        "maximum_shares": 999,
+        "description": "①オリジナルクオカード（2,000円分）／②電子マネー（交換可）／③社会貢献団体への寄付（いずれか1点選択）",
+        "annual_value_yen": null
+      },
+      {
+        "shares": 500,
+        "maximum_shares": 999,
+        "description": "④1kg（抽選で100名）『ミライト・ワン米』（抽選）。抽選に外れた場合は①～③を再度選択。",
+        "annual_value_yen": null
+      },
+      {
+        "shares": 1000,
+        "maximum_shares": null,
+        "description": "①オリジナルクオカード（3,000円分）／②電子マネー（交換可）／③社会貢献団体への寄付（いずれか1点選択）",
+        "annual_value_yen": null
+      },
+      {
+        "shares": 1000,
+        "maximum_shares": null,
+        "description": "④1kg（抽選で50名）『ミライト・ワン米』（抽選）※3年以上で④5kg（抽選で210名）へ。抽選に外れた場合は①～③を再度選択。",
+        "annual_value_yen": null
+      }
+    ],
+    "benefit_title": "（①～③の選択商品 or ④ミライト・ワン米の抽選）オリジナルクオカード・電子マネー・お米・寄付から選択",
+    "benefit_description": "権利確定は3月末日。保有株数と保有期間に応じ、①～④の優待品の中から1点選択（④「ミライト・ワン米」は抽選）。1年以上保有で①～③または④の選択、また④は条件により当選枠・数量が異なる。",
+    "category": "寄付・クオカード等（選択）",
+    "annual_value_yen": null,
+    "valuation_type": "not_calculated",
+    "long_term_required": null,
+    "holding_period_months": null,
+    "long_term_condition_verified": false,
+    "conditions": "権利確定月：3月。権利確定日は3月末日。保有株数と保有期間に応じて、①～④の優待品の中から1点選択。・①～③（オリジナルクオカード／電子マネー／社会貢献団体への寄付）：100株以上1年以上：1,000円分、500株以上1年以上：2,000円分、1,000株以上1年以上：3,000円分。・④「ミライト・ワン米」（抽選）：100株以上1年以上：1kg（抽選で600名）、500株以上1年以上：1kg（抽選で100名）、1,000株以上1年以上：1kg（抽選で50名）、1,000株以上3年以上：5kg（抽選で210名）。抽選に外れた場合は①～③の優待品を再度選択。",
+    "official_source_url": "https://smayu.jp/company/mirait-one/",
+    "official_source_title": null,
+    "official_verified_at": "2026-07-28",
+    "abolished_at": null,
+    "last_record_date": null,
+    "change_or_abolition_note": null,
+    "confidence_score": 90,
+    "evidence_text": "本文中の記載：「権利確定日は3月末日です。」「保有株数と保有期間に応じて、①～④の優待品の中から1点選択できます。」「④「ミライト・ワン米」…抽選」。・100株以上1年以上 ①②③ 1,000円分／④1kg（抽選で600名）・500株以上1年以上 ①②③ 2,000円分／④1kg（抽選で100名）・1,000株以上1年以上 ①②③ 3,000円分／④1kg（抽選で50名）・1,000株以上3年以上 ④5kg（抽選で210名）",
+    "error_reason": null,
+    "source_published_at": null,
+    "source_updated_at": null,
+    "data_confidence": "official_confirmed",
+    "benefit_summary": "（①～③の選択商品 or ④ミライト・ワン米の抽選）オリジナルクオカード・電子マネー・お米・寄付から選択 権利確定は3月末日。保有株数と保有期間に応じ、①～④の優待品の中から1点選択（④「ミライト・ワン米」は抽選）。1年以上保有で①～③または④の選択、また④は条件により当選枠・数量が異なる。",
+    "last_checked_at": "2026-07-28",
+    "long_term_condition": null,
+    "notes": "権利確定月：3月。権利確定日は3月末日。保有株数と保有期間に応じて、①～④の優待品の中から1点選択。・①～③（オリジナルクオカード／電子マネー／社会貢献団体への寄付）：100株以上1年以上：1,000円分、500株以上1年以上：2,000円分、1,000株以上1年以上：3,000円分。・④「ミライト・ワン米」（抽選）：100株以上1年以上：1kg（抽選で600名）、500株以上1年以上：1kg（抽選で100名）、1,000株以上1年以上：1kg（抽選で50名）、1,000株以上3年以上：5kg（抽選で210名）。抽選に外れた場合は①～③の優待品を再度選択。",
+    "market": "プライム",
+    "sector": "建設業",
+    "industry": "建設業"
   }
 ]
