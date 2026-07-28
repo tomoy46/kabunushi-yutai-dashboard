@@ -165,6 +165,11 @@ jobs:
           RESEARCH_LOG_COUNT: ${{ steps.discovery.outputs.research_log }}
           FAILED_COUNT: ${{ steps.discovery.outputs.failed }}
           OPENAI_CALLS: ${{ steps.discovery.outputs.openai_calls }}
+          HIGH_COUNT: ${{ steps.discovery.outputs.high }}
+          MEDIUM_COUNT: ${{ steps.discovery.outputs.medium }}
+          LOW_COUNT: ${{ steps.discovery.outputs.low }}
+          FREE_EXTRACTION_SUCCESS: ${{ steps.discovery.outputs.free_extraction_success }}
+          RESEARCH_REASONS: ${{ steps.discovery.outputs.research_reasons }}
           ZERO_CONFIRMED_CAUSE: ${{ steps.discovery.outputs.zero_confirmed_cause }}
           COMMITTED: ${{ steps.commit_results.outputs.committed }}
         run: |
@@ -179,6 +184,17 @@ jobs:
             echo "- research-logへ保存: ${RESEARCH_LOG_COUNT:-0}"
             echo "- failed: ${FAILED_COUNT:-0}"
             echo "- OpenAI API calls: ${OPENAI_CALLS:-0}"
+            echo "- high候補数: ${HIGH_COUNT:-0}"
+            echo "- medium候補数: ${MEDIUM_COUNT:-0}"
+            echo "- low候補数: ${LOW_COUNT:-0}"
+            echo "- 無料抽出成功数: ${FREE_EXTRACTION_SUCCESS:-0}"
+            processed=$((${CONFIRMED_COUNT:-0} + ${RESEARCH_LOG_COUNT:-0}))
+            if [ "$processed" -gt 0 ]; then
+              echo "- confirmed率: $((100 * ${CONFIRMED_COUNT:-0} / processed))%"
+            else
+              echo "- confirmed率: 0%"
+            fi
+            echo "- research-log理由別件数: ${RESEARCH_REASONS:-{}}"
             echo "- confirmed=0 の原因: ${ZERO_CONFIRMED_CAUSE:-該当なし}"
             echo "- Gitへコミット: ${committed}"
           } >> "$GITHUB_STEP_SUMMARY"
