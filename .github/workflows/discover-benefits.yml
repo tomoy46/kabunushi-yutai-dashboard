@@ -10,7 +10,7 @@ on:
       official_only: {description: 'Skip current verification queue', default: false, type: boolean}
       diagnostic_mode: {description: 'Test both Gemini stages with one company without registering data', default: false, type: boolean}
 permissions: {contents: write}
-concurrency: {group: gemini-benefit-discovery, cancel-in-progress: false}
+concurrency: {group: shareholder-data-main, cancel-in-progress: false}
 jobs:
   discover:
     runs-on: ubuntu-latest

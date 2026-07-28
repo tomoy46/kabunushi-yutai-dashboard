@@ -4,7 +4,7 @@ on:
   schedule:
     - cron: '17 3 1 * *'
 permissions: {contents: write}
-concurrency: {group: update-listed-companies, cancel-in-progress: false}
+concurrency: {group: shareholder-data-main, cancel-in-progress: false}
 jobs:
   update:
     runs-on: ubuntu-latest

@@ -12,6 +12,7 @@ ROOT = Path(__file__).parents[1]
 UNIT_TEST_FILES = (
     "test_add_companies.py",
     "test_openai_discovery.py",
+    "test_merge_discovery_results.py",
     "test_scripts.py",
 )
 
