@@ -119,6 +119,14 @@ test('workflow reports all saved outcomes and commit status', () => {
   assert.equal(report.env.OPENAI_CALLS, '${{ steps.discovery.outputs.openai_calls }}');
   assert.equal(report.env.ZERO_CONFIRMED_CAUSE, '${{ steps.discovery.outputs.zero_confirmed_cause }}');
   assert.ok(command.includes('confirmed=0; OpenAI calls='));
+  for (const metric of ['企業公式URL候補数', '非公式URL除外数', '公式資料取得成功数',
+    '公式資料取得後のOpenAI calls', 'confirmed/OpenAI call率']) {
+    assert.ok(command.includes(metric));
+  }
+  assert.equal(report.env.OFFICIAL_COMPANY_URL_CANDIDATES,
+    '${{ steps.discovery.outputs.official_company_url_candidates }}');
+  assert.equal(report.env.NON_OFFICIAL_URLS_EXCLUDED,
+    '${{ steps.discovery.outputs.non_official_urls_excluded }}');
 });
 
 test('a successful data commit deploys and verifies GitHub Pages without relying on push chaining', () => {

@@ -147,6 +147,38 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         self.assertTrue(discovery.allowed_url("https://www.jpx.co.jp/a.pdf", None))
         self.assertTrue(discovery.allowed_url("https://www.release.tdnet.info/a.pdf", None))
 
+    def test_non_official_finance_media_and_blogs_have_auditable_rejection(self):
+        for url in ("https://www.nikkei.com/company/1301/",
+                    "https://finance.yahoo.co.jp/quote/1301.T",
+                    "https://minkabu.jp/stock/1301/yutai",
+                    "https://kabutan.jp/stock/yutai?code=1301",
+                    "https://irbank.net/1301/yutai",
+                    "https://example.wordpress.com/yutai"):
+            with self.subTest(url=url):
+                self.assertEqual(discovery.official_url_decision(url, self.company),
+                                 (False, "rejected_non_official"))
+
+    def test_official_candidate_reasons_distinguish_company_ir_and_exchange(self):
+        company = dict(self.company, official_domains=["ir.kyokuyo.co.jp"])
+        self.assertEqual(discovery.official_url_decision(
+            "https://kyokuyo.co.jp/ir/", company), (True, "official_company_domain"))
+        self.assertEqual(discovery.official_url_decision(
+            "https://ir.kyokuyo.co.jp/news.pdf", company), (True, "official_ir_subdomain"))
+        self.assertEqual(discovery.official_url_decision(
+            "https://www.release.tdnet.info/inbs/a.pdf", company),
+            (True, "official_exchange_disclosure"))
+
+    def test_share_wording_is_recognized_in_tables_ocr_and_pdf_text(self):
+        for text in ("100株以上 優待券 基準日3月末日", "1単元以上 株主優待 9月末日",
+                     "保有株式数100株 株主優待制度 3月末日",
+                     "所有株式数に応じて 株主優待ポイント 基準日12月"):
+            with self.subTest(text=text):
+                self.assertTrue(discovery.evidence_facts(text)["required_shares"])
+        self.assertEqual(discovery.regex_official_facts(
+            "画像説明 保有株式数100株以上 株主優待 3月末日")["minimum_shares"], 100)
+        self.assertEqual(discovery.regex_official_facts(
+            "PDF本文 1単元以上 株主優待 9月末日")["minimum_shares"], 100)
+
     def test_failed_validation_clears_model_url(self):
         item, reasons = discovery.validate(
             self.item("https://www.jpx.co.jp/corporate/investor-relations/shareholders/incentives/index.html"),

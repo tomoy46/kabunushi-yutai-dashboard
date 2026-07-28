@@ -37,7 +37,10 @@ PRICING_CONFIG = ROOT / "config" / "openai-pricing.json"
 OFFICIAL_HOSTS = ("jpx.co.jp", "tdnet.info")
 JPX_BLOCKED_PATHS = ("/corporate/investor-relations/", "/corporate/about-jpx/")
 BLOCKED_HOSTS = (
-    "yahoo.co.jp", "minkabu.jp", "kabutan.jp", "rakuten-sec.co.jp",
+    "nikkei.com", "yahoo.co.jp", "finance.yahoo.co.jp", "minkabu.jp", "kabutan.jp",
+    "irbank.net", "ir-bank.net", "yutai.net", "yutai-guide.jp", "kabuyutai.com",
+    "ameblo.jp", "hatenablog.com", "hatena.ne.jp", "wordpress.com", "blog.jp",
+    "rakuten-sec.co.jp",
     "sbisec.co.jp", "monex.co.jp", "note.com", "x.com", "facebook.com",
     "instagram.com", "youtube.com", "yutai-guide.daiwair.co.jp",
 )
@@ -296,6 +299,35 @@ def allowed_url(url, official_domain):
     domains = ((official_domain.lower().removeprefix("www."),) + OFFICIAL_HOSTS
                if official_domain else OFFICIAL_HOSTS)
     return any(is_subdomain(host, domain) for domain in domains)
+
+
+def official_url_decision(url, company, origin="search_result"):
+    """Classify a URL before fetching it and return a stable audit reason.
+
+    Search engines are locators, never authorities: a result is eligible only
+    when its host was registered in the listed-company master, learned by
+    following that registered site, or is an exchange disclosure whose issuer
+    metadata contains the security code.
+    """
+    normalized, host = canonical_url(url), hostname(url)
+    if not normalized or not host or any(is_subdomain(host, bad) for bad in BLOCKED_HOSTS):
+        return False, "rejected_non_official"
+    if any(is_subdomain(host, exchange) for exchange in OFFICIAL_HOSTS):
+        return True, "official_exchange_disclosure"
+    domains = registered_domains(company)
+    matching = next((domain for domain in domains if is_subdomain(host, domain)), None)
+    if not matching:
+        return False, "rejected_non_official"
+    if host != normalized_host(matching):
+        return True, "official_ir_subdomain"
+    return True, "official_company_domain"
+
+
+def log_url_decision(company, url, accepted, reason, origin):
+    print("Official URL candidate: " + " | ".join((
+        f"security_code={safe_message(company.get('code'))}",
+        f"url={safe_message(url)}", f"origin={origin}",
+        f"accepted={'yes' if accepted else 'no'}", f"reason={reason}")))
 
 
 def company_prompt(company):
@@ -621,7 +653,8 @@ def evidence_facts(text):
     """Report the four facts required before structured extraction."""
     text = normalize_japanese_text(text)
     return {
-        "required_shares": bool(re.search(r"\d[\d,]*\s*株", text)),
+        "required_shares": bool(re.search(
+            r"\d[\d,]*\s*株(?:以上)?|1\s*単元(?:以上)?|保有株式数|所有株式数に応じて", text)),
         "benefit_content": bool(re.search(
             r"株主(?:ご|様ご)?優待|優待(?:制度|券|内容|品|ポイント|食事)|\d[\d,]*\s*(?:円|ポイント)", text)),
         "record_month": bool(re.search(r"権利確定|基準日|(?:毎年\s*)?\d{1,2}\s*月(?:末日|\d{1,2}\s*日)?", text)),
@@ -633,7 +666,13 @@ def regex_official_facts(text):
     """Re-extract shares/months from flattened HTML tables, lists and PDF text."""
     text = normalize_japanese_text(text)
     shares = [int(value.replace(",", "")) for value in re.findall(
-        r"(?<!\d)(\d{1,3}(?:,\d{3})*|\d+)\s*株", text)]
+        r"(?:保有|所有)?株式数?\s*(?<!\d)(\d{1,3}(?:,\d{3})*|\d+)\s*株(?:以上)?|"
+        r"(?<!\d)(\d{1,3}(?:,\d{3})*|\d+)\s*株(?:以上)?", text)
+              for value in value if value]
+    # Japanese listed-company trading units are 100 shares.  The explicit
+    # wording is useful in image-adjacent/OCR text even when the table omits it.
+    if re.search(r"1\s*単元(?:以上)?", text):
+        shares.append(100)
     months = [int(value) for value in re.findall(
         r"(?:毎年\s*)?(1[0-2]|0?[1-9])\s*月(?:末日|\d{1,2}\s*日)?", text)]
     return {"minimum_shares": min(shares) if shares else None,
@@ -780,6 +819,7 @@ def discover_corporate_candidates(company, fetcher=None, max_pages=24):
     fetcher = fetcher or fetch_discovery_document
     seeds = [canonical_url(f"https://{domains[0]}{path}") for path in
              ("/", "/ir/", "/ir/stock/", "/ir/shareholder/", "/company/ir/",
+              "/company/", "/company/profile/", "/corporate/profile/", "/stock/",
               "/sitemap.xml", "/robots.txt")]
     queue, seen, relevant = [url for url in seeds if url], set(), []
     while queue and len(seen) < max_pages:
@@ -888,7 +928,7 @@ def discover_verified_official_source(company, registered=None, review_items=Non
     return None, ""
 
 
-def free_search_official_source(company, opener=None):
+def free_search_official_source(company, opener=None, decisions_out=None, previously_rejected=()):
     """Use a free HTML search result only to locate and verify an issuer page.
 
     Search snippets are never evidence.  Every returned URL is downloaded and
@@ -908,11 +948,32 @@ def free_search_official_source(company, opener=None):
         target = dict(parse_qsl(parsed.query)).get("uddg") if "duckduckgo.com" in (parsed.hostname or "") else raw
         url = canonical_url(target)
         host = normalized_host(url)
-        if not url or not host or any(is_subdomain(host, blocked) for blocked in (*BLOCKED_HOSTS, "duckduckgo.com")):
+        if url_identity(url) in {url_identity(value) for value in previously_rejected}:
+            log_url_decision(company, url, False, "rejected_non_official", "durable_rejection_cache")
+            continue
+        # Unknown search hosts may be identity-probed, but are not evidence and
+        # are never sent to OpenAI unless both issuer name and security code are
+        # present on the downloaded corporate page.
+        if (not url or not host or is_subdomain(host, "duckduckgo.com") or
+                any(is_subdomain(host, blocked) for blocked in BLOCKED_HOSTS)):
+            if decisions_out is not None:
+                decisions_out.append((url, False, "rejected_non_official"))
+            log_url_decision(company, url, False, "rejected_non_official", "search_result")
             continue
         candidate = dict(company, official_domain=host, official_domains=[host])
         try:
-            return fetch_official_page(url, candidate, {url: {}}, registered=False)
+            final, text = fetch_official_page(url, candidate, {url: {}}, registered=False)
+            identity = normalize_company_name(text[:20_000])
+            if not (normalize_company_name(company["name"]) in identity and
+                    security_code_found(text[:20_000], company["code"])):
+                if decisions_out is not None:
+                    decisions_out.append((url, False, "rejected_non_official"))
+                log_url_decision(company, url, False, "rejected_non_official", "identity_mismatch")
+                continue
+            log_url_decision(company, url, True, "official_company_domain", "identity_verified_search_result")
+            if decisions_out is not None:
+                decisions_out.append((url, True, "official_company_domain"))
+            return final, text
         except (OfficialSourceNotFound, OfficialSourceFetchError, ValueError, TypeError):
             continue
     return None, ""
@@ -1602,6 +1663,8 @@ def publish_workflow_counts(totals):
         stream.write(f"openai_calls={totals['responses_api_calls']}\n")
         for name in ("high", "medium", "low", "free_extraction_success",
                      "official_domains_found", "official_url_candidates_found",
+                     "official_company_url_candidates", "non_official_urls_excluded",
+                     "official_material_fetch_success", "post_official_fetch_openai_calls",
                      "pre_openai_excluded", "unresolved"):
             stream.write(f"{name}={totals.get(name, 0)}\n")
         stream.write("research_reasons=" + json.dumps(totals.get("research_reasons", {}),
@@ -1678,7 +1741,9 @@ def run(args):
               "failures": 0, "free_candidates_checked": 0, "benefit_candidates": 0,
               "free_extraction_success": 0, "research_reasons": {reason: 0 for reason in RESEARCH_REASONS},
               "high": 0, "medium": 0, "low": 0, "official_domains_found": 0,
-              "official_url_candidates_found": 0, "pre_openai_excluded": 0, "unresolved": 0}
+              "official_url_candidates_found": 0, "official_company_url_candidates": 0,
+              "non_official_urls_excluded": 0, "official_material_fetch_success": 0,
+              "post_official_fetch_openai_calls": 0, "pre_openai_excluded": 0, "unresolved": 0}
     company_usage = []
     budget_deferred = 0
     low_sent = 0
@@ -1729,7 +1794,19 @@ def run(args):
             final_url, official_text = discover_verified_official_source(
                 company, registered, review_items, explored_out=explored_urls)
             if not final_url and not registered and not fixture:
-                final_url, official_text = free_search_official_source(company)
+                search_decisions = []
+                rejection_path = DATA / "rejected-official-candidates.json"
+                rejection_cache = load(rejection_path, {})
+                prior_rejections = rejection_cache.get(str(company["code"]), [])
+                final_url, official_text = free_search_official_source(
+                    company, decisions_out=search_decisions, previously_rejected=prior_rejections)
+                totals["non_official_urls_excluded"] += sum(
+                    not accepted for _url, accepted, _reason in search_decisions)
+                rejected_now = [url for url, accepted, _reason in search_decisions if not accepted and url]
+                if rejected_now and not args.diagnostic_mode:
+                    rejection_cache[str(company["code"])] = list(dict.fromkeys(
+                        [*prior_rejections, *rejected_now]))[-100:]
+                    atomic(rejection_path, rejection_cache)
                 if final_url and not company.get("official_domain"):
                     company["official_domain"] = normalized_host(final_url)
                 if final_url:
@@ -1746,6 +1823,16 @@ def run(args):
             explored_urls.extend(exchange_candidates(company, review_items))
             explored_urls = list(dict.fromkeys(url for url in explored_urls if url))
             totals["official_url_candidates_found"] += len(explored_urls)
+            accepted_urls = []
+            for explored in explored_urls:
+                accepted, reason = official_url_decision(explored, company, "discovery_pipeline")
+                log_url_decision(company, explored, accepted, reason, "discovery_pipeline")
+                if accepted:
+                    accepted_urls.append(explored)
+                else:
+                    totals["non_official_urls_excluded"] += 1
+            explored_urls = accepted_urls
+            totals["official_company_url_candidates"] += len(explored_urls)
             _score, fetched_priority = priority_diagnostic(
                 company, final_url, official_text, load(DATA / "review-queue.json", []))
             totals[fetched_priority] += 1
@@ -1764,6 +1851,7 @@ def run(args):
                 continue
             else:
                 final_url = candidate_url
+                totals["official_material_fetch_success"] += 1
                 totals["benefit_candidates"] += 1
                 facts = evidence_facts(official_text)
                 print("Evidence readiness " + str(company["code"]) + ": " + " ".join(
@@ -1796,6 +1884,7 @@ def run(args):
                     reasons = ["openai_call_budget_exhausted"]
                     raise OpenAICallBudgetExhausted(item, reasons, candidate_url)
                 totals["responses_api_calls"] += 1
+                totals["post_official_fetch_openai_calls"] += 1
                 correction = request_response(payload, key)
                 response_usage = usage(correction)
                 for key_name, value in response_usage.items(): totals[key_name] += value
@@ -1931,6 +2020,10 @@ def run(args):
               f"free_extraction_success={totals['free_extraction_success']} confirmed_rate={rate:.1f}%")
         print(f"DISCOVERY SUMMARY: official_domains_found={totals['official_domains_found']} "
               f"official_url_candidates_found={totals['official_url_candidates_found']} "
+              f"official_company_url_candidates={totals['official_company_url_candidates']} "
+              f"non_official_urls_excluded={totals['non_official_urls_excluded']} "
+              f"official_material_fetch_success={totals['official_material_fetch_success']} "
+              f"post_official_fetch_openai_calls={totals['post_official_fetch_openai_calls']} "
               f"pre_openai_excluded={totals['pre_openai_excluded']} unresolved={totals['unresolved']}")
         print("RESEARCH-LOG REASONS: " + " ".join(
             f"{reason}={totals['research_reasons'][reason]}" for reason in RESEARCH_REASONS))
