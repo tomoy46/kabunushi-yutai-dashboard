@@ -1376,5 +1376,58 @@
       "official_source_not_found"
     ],
     "checked_at": "2026-07-28T21:13:54.795979+00:00"
+  },
+  {
+    "code": "1878",
+    "name": "大東建託",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-28T22:18:52.705239+00:00",
+    "source_url": "https://www.nikkei.com/nkd/company/yutai/?scode=1878"
+  },
+  {
+    "code": "1882",
+    "name": "東亜道路工業",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-28T22:19:08.735713+00:00",
+    "source_url": "https://www.nikkei.com/nkd/company/yutai/?scode=1882"
+  },
+  {
+    "code": "1885",
+    "name": "東亜建設工業",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-28T22:19:14.150185+00:00",
+    "source_url": "https://www.nikkei.com/nkd/company/yutai/?scode=1885"
+  },
+  {
+    "code": "1873",
+    "name": "日本ハウスホールディングス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-28T22:18:44.510314+00:00",
+    "source_url": "https://piyoch.com/1873info/"
+  },
+  {
+    "code": "1879",
+    "name": "新日本建設",
+    "result": "not_officially_verified",
+    "reasons": [
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-28T22:19:04.171910+00:00",
+    "source_url": "https://yutai.net-ir.ne.jp/company/1879/"
   }
 ]

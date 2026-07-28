@@ -829,5 +829,91 @@
     ],
     "duration_seconds": 23.701,
     "errors": []
+  },
+  {
+    "executed_at": "2026-07-28T22:19:15.130649+00:00",
+    "model": "gpt-5.4-nano",
+    "diagnostic_mode": false,
+    "processed_companies": 25,
+    "responses_api_calls": 5,
+    "responses_with_web_search": 0,
+    "web_search_output_items": 0,
+    "web_search_calls": 0,
+    "input_tokens": 29627,
+    "cached_input_tokens": 0,
+    "output_tokens": 2239,
+    "successes": 0,
+    "verification_required": 25,
+    "research_log_saved": 5,
+    "failures": 0,
+    "free_candidates_checked": 25,
+    "benefit_candidates": 5,
+    "free_extraction_success": 5,
+    "research_reasons": {
+      "official_site_discovery_failed": 20,
+      "required_shares_missing": 3,
+      "benefit_content_missing": 0,
+      "record_month_missing": 0,
+      "confidence_low": 5,
+      "redirect_domain_rejected": 0,
+      "pdf_parse_failed": 0
+    },
+    "high": 2,
+    "medium": 3,
+    "low": 20,
+    "official_domains_found": 5,
+    "official_url_candidates_found": 35,
+    "pre_openai_excluded": 20,
+    "unresolved": 20,
+    "unique_web_search_call_ids": 0,
+    "estimated_cost_jpy": 1.308623,
+    "daily_estimated_cost_jpy": 12.179064,
+    "pricing": {
+      "input_usd_per_million": 0.2,
+      "cached_input_usd_per_million": 0.02,
+      "output_usd_per_million": 1.25,
+      "usd_to_jpy": 150.0,
+      "source": "https://openai.com/api/pricing/",
+      "verified_at": "2026-07-28"
+    },
+    "company_usage": [
+      {
+        "code": "1873",
+        "input_tokens": 3942,
+        "cached_input_tokens": 0,
+        "output_tokens": 580,
+        "estimated_cost_jpy": 0.22701
+      },
+      {
+        "code": "1878",
+        "input_tokens": 6973,
+        "cached_input_tokens": 0,
+        "output_tokens": 348,
+        "estimated_cost_jpy": 0.27444
+      },
+      {
+        "code": "1879",
+        "input_tokens": 4784,
+        "cached_input_tokens": 0,
+        "output_tokens": 739,
+        "estimated_cost_jpy": 0.282083
+      },
+      {
+        "code": "1882",
+        "input_tokens": 6937,
+        "cached_input_tokens": 0,
+        "output_tokens": 274,
+        "estimated_cost_jpy": 0.259485
+      },
+      {
+        "code": "1885",
+        "input_tokens": 6991,
+        "cached_input_tokens": 0,
+        "output_tokens": 298,
+        "estimated_cost_jpy": 0.265605
+      }
+    ],
+    "duration_seconds": 60.014,
+    "errors": []
   }
 ]

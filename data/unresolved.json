@@ -1,1 +1,202 @@
-[]
+[
+  {
+    "code": "1893",
+    "name": "五洋建設",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:19:14.295457+00:00"
+  },
+  {
+    "code": "1904",
+    "name": "大成温調",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:19:14.519986+00:00"
+  },
+  {
+    "code": "189A",
+    "name": "Ｄ＆Ｍカンパニー",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:19:14.476764+00:00"
+  },
+  {
+    "code": "192A",
+    "name": "インテグループ",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:19:15.128687+00:00"
+  },
+  {
+    "code": "1899",
+    "name": "福田組",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:19:14.428871+00:00"
+  },
+  {
+    "code": "1887",
+    "name": "日本国土開発",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:19:14.207026+00:00"
+  },
+  {
+    "code": "1929",
+    "name": "日特建設",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:19:15.082009+00:00"
+  },
+  {
+    "code": "1888",
+    "name": "若築建設",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:19:14.250119+00:00"
+  },
+  {
+    "code": "1898",
+    "name": "世紀東急工業",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:19:14.384176+00:00"
+  },
+  {
+    "code": "190A",
+    "name": "Ｃｈｏｒｄｉａ　Ｔｈｅｒａｐｅｕｔｉｃｓ",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:19:14.641909+00:00"
+  },
+  {
+    "code": "1871",
+    "name": "ピーエス・コンストラクション",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:18:27.094882+00:00"
+  },
+  {
+    "code": "1897",
+    "name": "金下建設",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:19:14.341154+00:00"
+  },
+  {
+    "code": "1928",
+    "name": "積水ハウス",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:19:15.019801+00:00"
+  },
+  {
+    "code": "1925",
+    "name": "大和ハウス工業",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:19:14.851369+00:00"
+  },
+  {
+    "code": "1909",
+    "name": "日本ドライケミカル",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:19:14.593921+00:00"
+  },
+  {
+    "code": "1926",
+    "name": "ライト工業",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:19:14.977829+00:00"
+  },
+  {
+    "code": "1914",
+    "name": "日本基礎技術",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:19:14.729783+00:00"
+  },
+  {
+    "code": "1905",
+    "name": "テノックス",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:19:14.558888+00:00"
+  },
+  {
+    "code": "1921",
+    "name": "巴コーポレーション",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:19:14.807449+00:00"
+  },
+  {
+    "code": "1911",
+    "name": "住友林業",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-28T22:19:14.681345+00:00"
+  }
+]
