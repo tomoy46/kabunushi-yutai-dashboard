@@ -92,6 +92,29 @@ test('workflow reports all saved outcomes and commit status', () => {
   assert.ok(command.includes('confirmed=0; OpenAI calls='));
 });
 
+test('a successful data commit deploys and verifies GitHub Pages without relying on push chaining', () => {
+  assert.equal(parsedWorkflow.permissions.contents, 'write');
+  assert.equal(parsedWorkflow.permissions.pages, 'write');
+  assert.equal(parsedWorkflow.permissions['id-token'], 'write');
+  assert.equal(parsedWorkflow.jobs.discover.environment.name, 'github-pages');
+
+  for (const [name, action] of [
+    ['Configure GitHub Pages', 'actions/configure-pages@v5'],
+    ['Upload GitHub Pages artifact', 'actions/upload-pages-artifact@v3'],
+    ['Deploy GitHub Pages', 'actions/deploy-pages@v4'],
+  ]) {
+    const step = stepNamed(name);
+    assert.equal(step.if, "${{ steps.commit_results.outputs.committed == 'yes' }}");
+    assert.equal(step.uses, action);
+  }
+
+  const verify = stepNamed('Verify deployed shareholder benefits');
+  assert.equal(verify.if, "${{ steps.commit_results.outputs.committed == 'yes' }}");
+  assert.ok(verify.run.includes("{'7550', '7616', '7412'}"));
+  assert.ok(verify.run.includes('confirmed != 14'));
+  assert.ok(verify.run.includes('/data/benefits.json?v='));
+});
+
 test('production inputs and startup log are wired to workflow_dispatch values', () => {
   const command = stepNamed('Discover from official sources').run.replace(/[\s'"]/g, '');
   const expectedWiring = {
