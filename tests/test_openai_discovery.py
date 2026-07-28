@@ -960,6 +960,34 @@ class GenericOfficialDiscoveryTests(unittest.TestCase):
         self.assertNotIn("tools", payload)
         self.assertIn("株主優待 100株", payload["input"])
 
+    def test_twenty_five_company_regression_keeps_all_priority_bands_eligible(self):
+        """Workflow #40 must not collapse a 25-company batch to one API call."""
+        fixtures = ([('high', 1)] + [('medium', 1)] + [('low', 0)] * 23)
+        sent = []
+        low_sent = 0
+        for priority, facts in fixtures:
+            if discovery.openai_eligible(priority, [f"https://{priority}.example/ir"], facts, low_sent):
+                sent.append(priority)
+                low_sent += priority == "low"
+        self.assertGreaterEqual(len(sent), 7)
+        self.assertGreaterEqual(sent.count("low"), 5)
+        self.assertEqual({"high", "medium", "low"}, set(sent))
+
+    def test_openai_gate_requires_a_url_or_pdf_not_two_extracted_fields(self):
+        self.assertTrue(discovery.openai_eligible("low", ["https://issuer.example/"], 0, 0))
+        self.assertTrue(discovery.openai_eligible("high", ["https://issuer.example/notice.pdf"], 1, 0))
+        self.assertFalse(discovery.openai_eligible("high", [], 3, 0))
+
+    def test_unresolved_is_separate_from_research_log(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(discovery, "DATA", Path(directory)):
+                discovery.append_unresolved({"code": "4321", "name": "新規テスト"},
+                                            ["official_site_discovery_failed"],
+                                            ["https://new.example/", "https://new.example/ir/"])
+            unresolved = json.loads((Path(directory) / "unresolved.json").read_text())
+            self.assertEqual(unresolved[0]["result"], "official_site_discovery_failed")
+            self.assertFalse((Path(directory) / "research-log.json").exists())
+
     def test_static_html_javascript_json_and_pdf_share_one_crawler(self):
         company = {"code": "4321", "name": "新規テスト", "official_domain": "new.example"}
         home = "https://new.example/"
