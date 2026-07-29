@@ -1192,5 +1192,85 @@
         "error": "HTTP Error 403: Forbidden"
       }
     ]
+  },
+  {
+    "executed_at": "2026-07-29T03:49:45.420592+00:00",
+    "model": "gpt-5.4-nano",
+    "diagnostic_mode": false,
+    "processed_companies": 24,
+    "responses_api_calls": 2,
+    "responses_with_web_search": 0,
+    "web_search_output_items": 0,
+    "web_search_calls": 0,
+    "input_tokens": 6874,
+    "cached_input_tokens": 0,
+    "output_tokens": 655,
+    "successes": 0,
+    "verification_required": 24,
+    "research_log_saved": 3,
+    "failures": 1,
+    "free_candidates_checked": 25,
+    "benefit_candidates": 2,
+    "free_extraction_success": 1,
+    "research_reasons": {
+      "official_site_discovery_failed": 22,
+      "benefit_page_not_found": 0,
+      "required_shares_missing": 1,
+      "benefit_content_missing": 2,
+      "record_month_missing": 2,
+      "confidence_low": 3,
+      "redirect_domain_rejected": 0,
+      "pdf_parse_failed": 0
+    },
+    "high": 0,
+    "medium": 2,
+    "low": 22,
+    "official_domains_found": 2,
+    "official_url_candidates_found": 14,
+    "official_company_url_candidates": 14,
+    "non_official_urls_excluded": 328,
+    "official_material_fetch_success": 2,
+    "post_official_fetch_openai_calls": 2,
+    "pre_openai_excluded": 22,
+    "unresolved": 22,
+    "official_homepages_found": 2,
+    "official_ir_pages_found": 0,
+    "benefit_pages_found": 0,
+    "benefit_page_not_found": 0,
+    "official_domains_saved": 2,
+    "unique_web_search_call_ids": 0,
+    "estimated_cost_jpy": 0.329033,
+    "daily_estimated_cost_jpy": 0.329033,
+    "pricing": {
+      "input_usd_per_million": 0.2,
+      "cached_input_usd_per_million": 0.02,
+      "output_usd_per_million": 1.25,
+      "usd_to_jpy": 150.0,
+      "source": "https://openai.com/api/pricing/",
+      "verified_at": "2026-07-28"
+    },
+    "company_usage": [
+      {
+        "code": "1926",
+        "input_tokens": 3049,
+        "cached_input_tokens": 0,
+        "output_tokens": 293,
+        "estimated_cost_jpy": 0.146408
+      },
+      {
+        "code": "1929",
+        "input_tokens": 3825,
+        "cached_input_tokens": 0,
+        "output_tokens": 362,
+        "estimated_cost_jpy": 0.182625
+      }
+    ],
+    "duration_seconds": 33.731,
+    "errors": [
+      {
+        "code": "1928",
+        "error": "HTTP Error 403: Forbidden"
+      }
+    ]
   }
 ]

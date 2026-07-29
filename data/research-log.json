@@ -1597,5 +1597,39 @@
     ],
     "checked_at": "2026-07-28T23:13:39.793329+00:00",
     "source_url": "https://taisei-oncho.co.jp/ir/"
+  },
+  {
+    "code": "1928",
+    "name": "積水ハウス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T03:49:34.740805+00:00"
+  },
+  {
+    "code": "1929",
+    "name": "日特建設",
+    "result": "not_officially_verified",
+    "reasons": [
+      "benefit_content_missing",
+      "record_month_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T03:49:44.118544+00:00",
+    "source_url": "https://www.nittoc.co.jp/ir/"
+  },
+  {
+    "code": "1926",
+    "name": "ライト工業",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "benefit_content_missing",
+      "record_month_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T03:49:34.005439+00:00",
+    "source_url": "https://www.raito.co.jp/ir/"
   }
 ]
