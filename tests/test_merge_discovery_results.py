@@ -17,7 +17,7 @@ class MergeDiscoveryResultsTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "data").mkdir(); bundle = root / "bundle"
-            (bundle / "base").mkdir(parents=True); (bundle / "result").mkdir()
+            bundle.mkdir()
             base = {
                 "benefits.json": [{"code": "1000", "name": "old"}],
                 "research-log.json": [{"code": "1000", "checked_at": "t0"}],
@@ -42,12 +42,25 @@ class MergeDiscoveryResultsTests(unittest.TestCase):
                 "discovery-progress.json": {"processed_codes": ["1000", "3000"], "failed_codes": ["3000"], "next_index": 3, "updated_at": "t1", "uninvestigated_count": 7},
                 "official-benefit-sources.json": {"1000": {"url": "old"}, "3000": {"url": "remote"}},
             })
+            changes = {}
+            list_keys = {"benefits.json": ("code",), "research-log.json": ("code", "checked_at"),
+                         "openai-api-usage.json": ("executed_at",), "verification-queue.json": ("code",)}
             for name in base:
-                for folder, value in ((bundle / "base", base[name]), (bundle / "result", local[name]), (root / "data", remote[name])):
-                    (folder / name).write_text(json.dumps(value), encoding="utf-8")
-            for folder, rows in ((bundle / "base", [{"code": "1000", "name": "old"}]),
-                                 (bundle / "result", [{"code": "1000", "name": "old"}, {"code": "2000", "name": "run"}]),
-                                 (root / "data", [{"code": "1000", "name": "old"}, {"code": "3000", "name": "remote"}])):
+                (root / "data" / name).write_text(json.dumps(remote[name]), encoding="utf-8")
+                if name in list_keys:
+                    before = merge_results.keyed(base[name], list_keys[name]); after = merge_results.keyed(local[name], list_keys[name])
+                    changes[name] = [{"key": list(key), "before": before.get(key), "after": after.get(key)}
+                                     for key in before.keys() | after.keys() if before.get(key) != after.get(key)]
+                else:
+                    changes[name] = {key: {"before": base[name].get(key), "after": local[name].get(key)}
+                                     for key in set(base[name]) | set(local[name]) if base[name].get(key) != local[name].get(key)}
+            csv_base = [{"code": "1000", "name": "old"}]
+            csv_local = csv_base + [{"code": "2000", "name": "run"}]
+            before = merge_results.keyed(csv_base); after = merge_results.keyed(csv_local)
+            changes["benefits.csv"] = [{"key": list(key), "before": before.get(key), "after": after.get(key)}
+                                        for key in before.keys() | after.keys() if before.get(key) != after.get(key)]
+            (bundle / "recovery-manifest.json").write_text(json.dumps({"version": 2, "changes": changes}), encoding="utf-8")
+            for folder, rows in ((root / "data", [{"code": "1000", "name": "old"}, {"code": "3000", "name": "remote"}]),):
                 with (folder / "benefits.csv").open("w", newline="", encoding="utf-8") as stream:
                     writer = csv.DictWriter(stream, fieldnames=["code", "name"]); writer.writeheader(); writer.writerows(rows)
             old = Path.cwd()

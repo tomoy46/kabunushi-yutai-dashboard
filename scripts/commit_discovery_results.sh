@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-bundle="${DISCOVERY_RESULTS_BUNDLE:-.discovery-results}"
+bundle="${DISCOVERY_RESULTS_BUNDLE:-recovery-results}"
 if [[ "${USE_EXISTING_DISCOVERY_BUNDLE:-false}" != true ]]; then
   rm -rf "$bundle"
   python scripts/merge_discovery_results.py capture --bundle "$bundle"
@@ -29,6 +29,13 @@ for attempt in 1 2 3; do
   fi
   git commit -m "chore: update OpenAI benefit discovery"
   if git push origin HEAD:main; then
+    python - "$bundle" <<'PY'
+import json, pathlib, sys
+for name in ("manifest.json", "recovery-manifest.json"):
+    path = pathlib.Path(sys.argv[1], name)
+    value = json.loads(path.read_text(encoding="utf-8")); value["committed"] = True
+    path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+PY
     echo "committed=yes" >> "${GITHUB_OUTPUT:-/dev/null}"
     exit 0
   fi

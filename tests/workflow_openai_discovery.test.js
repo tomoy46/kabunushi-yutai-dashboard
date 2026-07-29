@@ -71,12 +71,26 @@ test('commit helper fetches main and retries a data-aware merge three times', ()
   assert.ok(!helper.includes('git pull'));
 });
 
-test('failed commits preserve a recovery artifact', () => {
+test('confirmed=1 with no commit still preserves a recovery artifact', () => {
   const preserve = stepNamed('Preserve uncommitted discovery results');
   assert.equal(preserve.uses, 'actions/upload-artifact@v4');
-  assert.equal(preserve.if, '${{ failure() && inputs.diagnostic_mode != true }}');
+  assert.equal(preserve.if, '${{ always() }}');
   assert.ok(preserve.with.name.includes('discovery-results-'));
-  assert.equal(preserve.with.path, '.discovery-results/');
+  assert.equal(preserve.with.path, 'recovery-results/');
+  assert.equal(preserve.with['if-no-files-found'], 'warn');
+  assert.equal(preserve.with['include-hidden-files'], true);
+  assert.equal(stepNamed('Require recovery manifest').if, '${{ always() }}');
+  assert.ok(stepNamed('Require recovery manifest').run.includes('recovery-manifest.json'));
+  assert.equal(stepNamed('Finalize recovery bundle').if, '${{ always() }}');
+  assert.ok(stepNamed('Finalize recovery bundle').run.includes('merge_discovery_results.py capture'));
+  assert.equal(stepNamed('Commit verified results').env.USE_EXISTING_DISCOVERY_BUNDLE, 'true');
+});
+
+test('recovery is finalized after an exceptional discovery and before commit', () => {
+  const discoveryIndex = steps.findIndex((step) => step.name === 'Discover from official sources');
+  const finalizeIndex = steps.findIndex((step) => step.name === 'Finalize recovery bundle');
+  const commitIndex = steps.findIndex((step) => step.name === 'Commit verified results');
+  assert.ok(discoveryIndex < finalizeIndex && finalizeIndex < commitIndex);
 });
 
 test('tests run before discovery and a failed test blocks API use and commit', () => {
