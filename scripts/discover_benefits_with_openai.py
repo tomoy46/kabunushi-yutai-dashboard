@@ -90,6 +90,9 @@ BROWSER_USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                       "Chrome/124.0.0.0 Safari/537.36")
 REEXTRACT_REASONS = {"record_date_unknown", "minimum_shares_unknown", "low_confidence", "current_program_not_confirmed"}
 HTTP_403_EVENTS = []
+ROBOTS_CACHE = {}
+BLOCKED_OFFICIAL_URLS = DATA / "blocked-official-urls.json"
+OFFICIAL_HOST_COOLDOWN = dt.timedelta(hours=24)
 DISCOVERY_TERMS = re.compile(
     r"株主優待|優待制度|shareholder.?benefit|stockholder.?benefit|complimentary|yutai",
     re.I,
@@ -189,6 +192,81 @@ def normalize_japanese_text(value):
     return re.sub(r"\s+", " ", value).strip()
 
 
+def browser_headers(url, referer=None):
+    """Return stable browser-like headers without leaking a cross-site referrer."""
+    headers = {
+        "User-Agent": BROWSER_USER_AGENT,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,application/pdf;q=0.8,*/*;q=0.7",
+        "Accept-Language": "ja-JP,ja;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive",
+    }
+    if referer and normalized_host(url) == normalized_host(referer):
+        headers["Referer"] = canonical_url(referer) or referer
+    return headers
+
+
+def _blocked_records():
+    value = load(BLOCKED_OFFICIAL_URLS, [])
+    return value if isinstance(value, list) else []
+
+
+def official_request_blocked(url, now=None):
+    """Avoid a URL for the day and its host for 24 hours after a 403."""
+    now = now or dt.datetime.now(dt.timezone.utc)
+    identity, host = url_identity(url), normalized_host(url)
+    for record in _blocked_records():
+        try:
+            blocked_at = dt.datetime.fromisoformat(record["blocked_at"])
+            if blocked_at.tzinfo is None:
+                blocked_at = blocked_at.replace(tzinfo=dt.timezone.utc)
+        except (KeyError, TypeError, ValueError):
+            continue
+        if url_identity(record.get("url")) == identity and blocked_at.date() == now.date():
+            return True
+        if normalized_host(record.get("host")) == host and now - blocked_at < OFFICIAL_HOST_COOLDOWN:
+            return True
+    return False
+
+
+def remember_official_403(url, security_code, now=None):
+    now = now or dt.datetime.now(dt.timezone.utc)
+    records = _blocked_records()
+    identity = url_identity(url)
+    records = [record for record in records if url_identity(record.get("url")) != identity]
+    records.append({"url": canonical_url(url), "host": normalized_host(url),
+                    "security_code": str(security_code or "unknown"),
+                    "blocked_at": now.isoformat()})
+    atomic(BLOCKED_OFFICIAL_URLS, records)
+
+
+def robots_allowed(url, opener=None):
+    """Honor explicit robots.txt disallow rules; an unavailable file is permissive."""
+    opener = opener or urlopen
+    parsed = urlparse(url)
+    if parsed.path == "/robots.txt" or is_subdomain(parsed.hostname, "jpx.co.jp") or is_subdomain(parsed.hostname, "tdnet.info"):
+        return True
+    origin = f"{parsed.scheme}://{parsed.netloc}"
+    if origin not in ROBOTS_CACHE:
+        try:
+            request = Request(origin + "/robots.txt", headers=browser_headers(origin + "/robots.txt", origin + "/"))
+            with opener(request, timeout=10) as response:
+                ROBOTS_CACHE[origin] = safe_text(response.read(500_000))
+        except Exception:
+            ROBOTS_CACHE[origin] = ""
+    groups, applies = [], False
+    for raw in ROBOTS_CACHE[origin].splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if not line or ":" not in line:
+            continue
+        key, value = (part.strip() for part in line.split(":", 1))
+        if key.lower() == "user-agent":
+            applies = value == "*" or "chrome" in value.lower()
+        elif applies and key.lower() == "disallow" and value:
+            groups.append(value)
+    return not any(parsed.path.startswith(path) for path in groups)
+
+
 class APIError(Exception):
     def __init__(self, status, message, error_type=None, code=None, param=None, request_id=None,
                  method="POST", endpoint=ENDPOINT, stage="openai_responses_api",
@@ -249,6 +327,8 @@ def log_http_403(stage, security_code, url, method, error, body=b"", content_typ
              "response_body": text_body, "exception_class": type(error).__name__,
              "exception_message": safe_message(error)}
     HTTP_403_EVENTS.append(event)
+    if stage not in ("openai_auth_check", "openai_responses_api"):
+        remember_official_403(url, security_code)
     print("HTTP 403 diagnostic: " + " | ".join(f"{name}={value}" for name, value in event.items()))
 
 
@@ -613,13 +693,24 @@ def structured_without_search(company, evidence, model):
             "store": False, "reasoning": {"effort": "none"}, "text": {"format": response_format()}}
 
 
+def benefit_excerpt(text, limit=20_000):
+    """Keep benefit neighbourhoods and table-like rows instead of whole pages."""
+    text = normalize_japanese_text(text)
+    spans = [text[max(0, match.start() - 1_500):match.end() + 3_500]
+             for match in re.finditer(DISCOVERY_TERMS, text)]
+    table_rows = re.findall(
+        r"[^。]{0,300}(?:保有株式数|所有株式数|株数|基準日|権利確定)[^。]{0,700}", text)
+    excerpt = "\n[TABLE]\n".join([*spans, *table_rows]) or text[:limit]
+    return excerpt[:limit]
+
+
 def official_page_payload(company, url, text, initial, model):
     """Build the single, tool-free official-page correction request."""
     prompt = {
         "company": {"name": company["name"], "code": str(company["code"])},
         "verified_official_url": url,
         "official_candidate_metadata": company.get("official_candidate_metadata") or {},
-        "official_page_shareholder_benefit_excerpt": text[:20_000],
+        "official_page_shareholder_benefit_excerpt": benefit_excerpt(text),
         "initial_structured_result": initial,
     }
     instructions = ("検証済み企業公式ページの本文だけを使い、株主優待情報を再抽出する。"
@@ -725,7 +816,8 @@ def pdf_text(body, diagnostic=None):
             if completed.returncode == 0 and output.exists():
                 text = output.read_text(encoding="utf-8", errors="replace")
                 if text.strip():
-                    return re.sub(r"\s+", " ", text).strip()
+                    text = re.sub(r"(?<=\d)\s+(?=[,，\d])|(?<=[一-龠ァ-ヶ])\s+(?=[一-龠ァ-ヶ])", "", text)
+                    return normalize_japanese_text(text)
             if completed.returncode != 0:
                 raise OfficialSourceFetchError(
                     "pdf_conversion_failure",
@@ -756,24 +848,27 @@ def evidence_facts(text):
     text = normalize_japanese_text(text)
     return {
         "required_shares": bool(re.search(
-            r"\d[\d,]*\s*株(?:以上)?|1\s*単元(?:以上)?|保有株式数|所有株式数に応じて", text)),
+            r"(?:保有|所有)?株式数\s*[0-9一二三四五六七八九十百千万,，]+\s*株(?:以上)?|"
+            r"[0-9一二三四五六七八九十百千万,，]+\s*株(?:以上)?|"
+            r"1\s*単元(?:\s*[（(]\s*100\s*株\s*[）)])?(?:以上)?|所有株式数に応じて", text)),
         "benefit_content": bool(re.search(
             r"株主(?:ご|様ご)?優待|優待(?:制度|券|内容|品|ポイント|食事)|\d[\d,]*\s*(?:円|ポイント)", text)),
-        "record_month": bool(re.search(r"権利確定|基準日|(?:毎年\s*)?\d{1,2}\s*月(?:末日|\d{1,2}\s*日)?", text)),
+        "record_month": bool(re.search(
+            r"権利確定|基準日|株主名簿に(?:記載|記録)|(?:毎年\s*)?\d{1,2}\s*月(?:末(?:日|現在)?|\d{1,2}\s*日)?", text)),
         "long_term_condition": bool(re.search(r"継続保有|長期保有|保有期間|保有条件", text)),
     }
 
 
 def regex_official_facts(text):
     """Re-extract shares/months from flattened HTML tables, lists and PDF text."""
-    text = normalize_japanese_text(text)
+    text = normalize_japanese_text(text).replace("，", ",")
     shares = [int(value.replace(",", "")) for value in re.findall(
         r"(?:保有|所有)?株式数?\s*(?<!\d)(\d{1,3}(?:,\d{3})*|\d+)\s*株(?:以上)?|"
         r"(?<!\d)(\d{1,3}(?:,\d{3})*|\d+)\s*株(?:以上)?", text)
               for value in value if value]
     # Japanese listed-company trading units are 100 shares.  The explicit
     # wording is useful in image-adjacent/OCR text even when the table omits it.
-    if re.search(r"1\s*単元(?:以上)?", text):
+    if re.search(r"1\s*単元(?:\s*[（(]\s*100\s*株\s*[）)])?(?:以上)?", text):
         shares.append(100)
     months = [int(value) for value in re.findall(
         r"(?:毎年\s*)?(1[0-2]|0?[1-9])\s*月(?:末日|\d{1,2}\s*日)?", text)]
@@ -897,8 +992,11 @@ def document_links(body, base_url):
 
 def fetch_discovery_document(url, allowed_domains, company=None):
     """Download one discovery document and reject unrelated redirects."""
-    request = Request(url, headers={"User-Agent": BROWSER_USER_AGENT,
-                                    "Accept": "text/html,application/xhtml+xml,application/xml,application/json,application/pdf"})
+    if official_request_blocked(url):
+        raise OfficialSourceFetchError("official_host_cooldown", ValueError("blocked_after_403"))
+    if not robots_allowed(url):
+        raise OfficialSourceFetchError("robots_disallowed", ValueError("robots_disallowed"))
+    request = Request(url, headers=browser_headers(url))
     try:
         with urlopen(request, timeout=25) as response:
             if response.status != 200:
@@ -1138,9 +1236,11 @@ def fetch_official_page(url, company, source_urls, registered=False, follow_link
         raise ValueError("source_url_not_in_search_results")
     if not any(allowed_url(normalized, domain) for domain in registered_domains(company) or (None,)):
         raise ValueError("source_url_not_allowed")
-    request = Request(normalized, headers={"User-Agent": BROWSER_USER_AGENT,
-                                           "Accept": "text/html,application/xhtml+xml,application/pdf",
-                                           "Accept-Encoding": "gzip, br, deflate"})
+    if official_request_blocked(normalized):
+        raise OfficialSourceFetchError("official_host_cooldown", ValueError("blocked_after_403"))
+    if not robots_allowed(normalized):
+        raise OfficialSourceFetchError("robots_disallowed", ValueError("robots_disallowed"))
+    request = Request(normalized, headers=browser_headers(normalized))
     status = None
     try:
         with urlopen(request, timeout=25) as response:
@@ -1835,7 +1935,10 @@ def publish_workflow_counts(totals):
                      "official_material_fetch_success", "post_official_fetch_openai_calls",
                      "pre_openai_excluded", "unresolved", "official_homepages_found",
                      "official_ir_pages_found", "benefit_pages_found",
-                     "benefit_page_not_found", "official_domains_saved"):
+                     "benefit_page_not_found", "official_domains_saved",
+                     "pre_openai_three_facts", "pre_openai_two_facts",
+                     "pre_openai_one_or_zero_skipped", "official_403_fallback_companies",
+                     "fallback_confirmed"):
             stream.write(f"{name}={totals.get(name, 0)}\n")
         for name in ("official_site_403_count", "official_pdf_403_count", "openai_403_count"):
             stream.write(f"{name}={totals.get(name, 0)}\n")
@@ -1922,6 +2025,9 @@ def run(args):
               "official_url_candidates_found": 0, "official_company_url_candidates": 0,
               "non_official_urls_excluded": 0, "official_material_fetch_success": 0,
               "post_official_fetch_openai_calls": 0, "pre_openai_excluded": 0, "unresolved": 0}
+    totals.update({"pre_openai_three_facts": 0, "pre_openai_two_facts": 0,
+                   "pre_openai_one_or_zero_skipped": 0, "official_403_fallback_companies": 0,
+                   "fallback_confirmed": 0})
     totals.update({"official_site_403_count": 0, "official_pdf_403_count": 0,
                    "openai_403_count": 0, "403_hosts": [],
                    "stopped_openai_after_403": False, "affected_security_codes": []})
@@ -2064,11 +2170,9 @@ def run(args):
                         totals["official_ir_pages_found"] += 1
                         break
             totals["official_url_candidates_found"] += len(explored_urls)
-            if any(event["security_code"] == str(company["code"]) and
-                   event["stage"] not in ("openai_auth_check", "openai_responses_api")
-                   for event in HTTP_403_EVENTS):
-                raise OfficialSourceFetchError("official_site_forbidden", HTTPError(
-                    (explored_urls[0] if explored_urls else ""), 403, "Forbidden", {}, None))
+            had_official_403 = any(event["security_code"] == str(company["code"]) and
+                event["stage"] not in ("openai_auth_check", "openai_responses_api")
+                for event in HTTP_403_EVENTS)
             accepted_urls = []
             for explored in explored_urls:
                 accepted, reason = official_url_decision(explored, company, "discovery_pipeline")
@@ -2122,6 +2226,25 @@ def run(args):
                     f"{name}={'found' if value else 'missing'}" for name, value in facts.items()))
                 core_count = sum(facts[name] for name in
                                  ("required_shares", "benefit_content", "record_month"))
+                exchange_special = (any(is_subdomain(hostname(candidate_url), host) for host in OFFICIAL_HOSTS)
+                                    and bool(re.search(r"株主優待制度.{0,20}(?:導入|変更)|(?:導入|変更).{0,20}株主優待制度",
+                                                      official_text)))
+                if core_count == 3:
+                    totals["pre_openai_three_facts"] += 1
+                elif core_count == 2:
+                    totals["pre_openai_two_facts"] += 1
+                if core_count < 2 and not exchange_special:
+                    totals["pre_openai_one_or_zero_skipped"] += 1
+                    totals["pre_openai_excluded"] += 1
+                    totals["unresolved"] += 1
+                    totals["processed_companies"] += 1
+                    reasons = classified_reasons([], facts)
+                    if not args.diagnostic_mode:
+                        append_unresolved(company, reasons, explored_urls)
+                        persist_production_state(benefits, queue, progress)
+                    print(f'{"FIXTURE RESULT" if fixture else "PRODUCTION RESULT"} '
+                          f'{company["code"]} {company["name"]}: unresolved (OpenAI skipped: sparse evidence)')
+                    continue
                 if not openai_eligible(fetched_priority, explored_urls, core_count, low_sent):
                     raise AssertionError("official candidate gate invariant violated")
                 if fetched_priority == "low":
@@ -2197,6 +2320,10 @@ def run(args):
                 save_progress(progress, company["code"])
                 confirmed_codes.append(company["code"])
                 outcome = "confirmed"
+                if had_official_403:
+                    totals["fallback_confirmed"] += 1
+            if had_official_403 and final_url:
+                totals["official_403_fallback_companies"] += 1
             if registered:
                 official_source_log(company, registered["url"], final_outcome=outcome,
                                     final_reason=",".join(reasons) if reasons else "officially_confirmed")

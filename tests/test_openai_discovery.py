@@ -19,6 +19,13 @@ import discover_benefits_with_openai as discovery
 class OpenAIDiscoveryTests(unittest.TestCase):
     def setUp(self):
         self.company = {"code": "1301", "name": "極洋", "official_domain": "kyokuyo.co.jp"}
+        self.blocked_directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.blocked_directory.cleanup)
+        self.blocked_patch = patch.object(
+            discovery, "BLOCKED_OFFICIAL_URLS", Path(self.blocked_directory.name) / "blocked.json")
+        self.blocked_patch.start()
+        self.addCleanup(self.blocked_patch.stop)
+        discovery.ROBOTS_CACHE.clear()
         self.openai_preflight = patch.object(discovery, "verify_openai_access", return_value={"id": "model"})
         self.openai_preflight.start()
         self.addCleanup(self.openai_preflight.stop)
@@ -161,6 +168,34 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         self.assertIn("security_code=9999", output.getvalue())
         self.assertIn("response_body=blocked by corporate WAF", output.getvalue())
         self.assertNotIn("Authorization", output.getvalue())
+
+    def test_browser_headers_and_same_origin_referer(self):
+        headers = discovery.browser_headers("https://example.co.jp/ir/", "https://example.co.jp/")
+        for name in ("User-Agent", "Accept", "Accept-Language", "Accept-Encoding", "Connection", "Referer"):
+            self.assertIn(name, headers)
+        self.assertNotIn("Referer", discovery.browser_headers(
+            "https://example.co.jp/ir/", "https://outside.example/"))
+
+    def test_robots_disallow_and_403_cooldown(self):
+        discovery.ROBOTS_CACHE["https://example.co.jp"] = "User-agent: *\nDisallow: /private/"
+        self.assertFalse(discovery.robots_allowed("https://example.co.jp/private/benefit"))
+        self.assertTrue(discovery.robots_allowed("https://example.co.jp/ir/benefit"))
+        now = discovery.dt.datetime(2026, 7, 29, tzinfo=discovery.dt.timezone.utc)
+        discovery.remember_official_403("https://example.co.jp/ir/blocked", "9999", now)
+        self.assertTrue(discovery.official_request_blocked(
+            "https://example.co.jp/ir/alternative", now + discovery.dt.timedelta(hours=23)))
+        self.assertFalse(discovery.official_request_blocked(
+            "https://example.co.jp/ir/alternative", now + discovery.dt.timedelta(hours=25)))
+
+    def test_expanded_free_extraction_and_bounded_excerpt(self):
+        text = "株主優待制度 保有株式数100株以上 自社商品を贈呈 毎年3月末現在の株主名簿に記載された株主"
+        facts = discovery.evidence_facts(text)
+        self.assertTrue(all(facts[name] for name in ("required_shares", "benefit_content", "record_month")))
+        self.assertEqual(discovery.regex_official_facts("1単元(100株) 2月末日および8月末日"),
+                         {"minimum_shares": 100, "record_months": [2, 8]})
+        excerpt = discovery.benefit_excerpt("無関係" * 10000 + text + "末尾" * 10000)
+        self.assertIn("株主優待", excerpt)
+        self.assertLessEqual(len(excerpt), 20_000)
 
     def test_non_api_exception_is_bounded_and_redacted(self):
         secret = "sk-another-secret-value"
