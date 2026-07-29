@@ -51,6 +51,19 @@ jobs:
           echo "retry_research_log=${RETRY_RESEARCH_LOG}"
       - name: Test before using the production API
         run: npm test
+      - name: Validate OpenAI configuration without calling the API
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+        run: |
+          test -n "${OPENAI_API_KEY}" || { echo "::error::OPENAI_API_KEY is empty"; exit 1; }
+          case "${OPENAI_API_KEY}" in
+            sk-*) ;;
+            *) echo "::error::OPENAI_API_KEY does not have the expected OpenAI key prefix"; exit 1 ;;
+          esac
+          echo "OPENAI_API_KEY is present; value is not printed"
+          echo "OpenAI host: api.openai.com"
+          echo "OpenAI model: ${OPENAI_MODEL:-gpt-5.4-nano}"
       - name: Verify maintained official sources over real HTTP
         env:
           RUN_LIVE_OFFICIAL_SOURCES: '1'
