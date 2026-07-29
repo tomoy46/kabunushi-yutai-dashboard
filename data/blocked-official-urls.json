@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "url": "https://www.akikawabokuen.com/wp-json/oembed/1.0/embed/?url=https%3A%2F%2Fwww.akikawabokuen.com%2Fir-yutai%2F",
+    "host": "akikawabokuen.com",
+    "security_code": "1380",
+    "blocked_at": "2026-07-29T15:26:06.175835+00:00"
+  },
+  {
+    "url": "https://www.densetsuko.co.jp/wp/xmlrpc.php?rsd=",
+    "host": "densetsuko.co.jp",
+    "security_code": "1950",
+    "blocked_at": "2026-07-29T15:31:29.029497+00:00"
+  },
+  {
+    "url": "https://www.kandenko.co.jp/ir/",
+    "host": "kandenko.co.jp",
+    "security_code": "unknown",
+    "blocked_at": "2026-07-29T15:30:57.791062+00:00"
+  },
+  {
+    "url": "https://www.yukiguni-factory.co.jp/wp-json/oembed/1.0/embed/?url=https%3A%2F%2Fwww.yukiguni-factory.co.jp%2Fir%2Fbenefit%2F",
+    "host": "yukiguni-factory.co.jp",
+    "security_code": "1375",
+    "blocked_at": "2026-07-29T15:25:33.747174+00:00"
+  }
+]

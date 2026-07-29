@@ -1867,5 +1867,23 @@
     ],
     "checked_at": "2026-07-29T06:48:47.961447+00:00",
     "source_url": "https://www.takada.co.jp/ir/"
+  },
+  {
+    "code": "192A",
+    "name": "インテグループ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T15:30:49.493833+00:00"
+  },
+  {
+    "code": "196A",
+    "name": "ＭＦＳ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T15:31:38.434147+00:00"
   }
 ]
