@@ -19,11 +19,12 @@ jobs:
           name: ${{ inputs.artifact_name }}
           run-id: ${{ inputs.run_id }}
           github-token: ${{ github.token }}
-          path: .discovery-results
+          path: recovery-results
       - name: Show preserved security codes
-        run: cat .discovery-results/manifest.json
+        run: cat recovery-results/manifest.json
       - name: Merge, validate, and commit without rerunning the API
         id: commit_results
         env:
           USE_EXISTING_DISCOVERY_BUNDLE: 'true'
+          DISCOVERY_RESULTS_BUNDLE: recovery-results
         run: scripts/commit_discovery_results.sh

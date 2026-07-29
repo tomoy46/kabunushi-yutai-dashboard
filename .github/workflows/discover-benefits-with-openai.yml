@@ -21,6 +21,24 @@ jobs:
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
+      - name: Initialize recovery bundle
+        env:
+          WORKFLOW_INPUTS: ${{ toJSON(inputs) }}
+          REQUESTED_SECURITY_CODES: ${{ inputs.security_codes }}
+        run: |
+          mkdir -p recovery-results
+          python - <<'PY'
+          import datetime, json, os, pathlib
+          value = {
+              "version": 2,
+              "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              "committed": False,
+              "security_codes": [code.strip() for code in os.environ.get("REQUESTED_SECURITY_CODES", "").split(",") if code.strip()],
+              "workflow_inputs": json.loads(os.environ.get("WORKFLOW_INPUTS", "{}")),
+              "files": [],
+          }
+          pathlib.Path("recovery-results/manifest.json").write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
+          PY
       - uses: actions/setup-node@v4
         with: {node-version: 22}
       - uses: actions/setup-python@v5
@@ -85,21 +103,45 @@ jobs:
           ${{ inputs.retry_failed == true && '--retry-failed' || '' }}
           ${{ inputs.official_only == true && '--official-only' || '' }}
           ${{ inputs.diagnostic_mode == true && '--diagnostic-mode' || '' }}
+      - name: Finalize recovery bundle
+        if: ${{ always() }}
+        env:
+          WORKFLOW_INPUTS: ${{ toJSON(inputs) }}
+          REQUESTED_SECURITY_CODES: ${{ inputs.security_codes }}
+          DISCOVERY_OUTCOME: ${{ steps.discovery.outcome }}
+        run: |
+          python scripts/merge_discovery_results.py capture --bundle recovery-results
+          python - <<'PY'
+          import json, os, pathlib
+          path = pathlib.Path('recovery-results/recovery-manifest.json')
+          value = json.loads(path.read_text())
+          value['workflow_inputs'] = json.loads(os.environ.get('WORKFLOW_INPUTS', '{}'))
+          value['requested_security_codes'] = [x.strip() for x in os.environ.get('REQUESTED_SECURITY_CODES', '').split(',') if x.strip()]
+          value['discovery_outcome'] = os.environ.get('DISCOVERY_OUTCOME', 'unknown')
+          path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + '\n')
+          PY
       - name: Commit verified results
         id: commit_results
         # Per-company research failures are recorded without failing discovery,
         # so confirmed results still reach this step. A failed test or structural
         # discovery failure blocks the step via success().
         if: ${{ success() && inputs.diagnostic_mode != true }}
+        env:
+          USE_EXISTING_DISCOVERY_BUNDLE: 'true'
+          DISCOVERY_RESULTS_BUNDLE: recovery-results
         run: |
           scripts/commit_discovery_results.sh
+      - name: Require recovery manifest
+        if: ${{ always() }}
+        run: test -f recovery-results/manifest.json && test -f recovery-results/recovery-manifest.json
       - name: Preserve uncommitted discovery results
-        if: ${{ failure() && inputs.diagnostic_mode != true }}
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: discovery-results-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .discovery-results/
-          if-no-files-found: error
+          path: recovery-results/
+          if-no-files-found: warn
+          include-hidden-files: true
           retention-days: 30
       - name: Configure GitHub Pages
         if: ${{ steps.commit_results.outputs.committed == 'yes' && steps.discovery.outputs.confirmed != '0' }}
