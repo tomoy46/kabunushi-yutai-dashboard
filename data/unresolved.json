@@ -1008,5 +1008,51 @@
     ],
     "explored_urls": [],
     "checked_at": "2026-07-29T03:49:44.602918+00:00"
+  },
+  {
+    "code": "1942",
+    "name": "関電工",
+    "result": "official_site_discovery_failed",
+    "reasons": [
+      "official_site_discovery_failed"
+    ],
+    "explored_urls": [],
+    "checked_at": "2026-07-29T06:35:49.908577+00:00"
+  },
+  {
+    "code": "192A",
+    "name": "インテグループ",
+    "result": "official_site_forbidden",
+    "reasons": [
+      "official_site_forbidden"
+    ],
+    "explored_urls": [
+      "https://www.integroup.jp/ir/"
+    ],
+    "checked_at": "2026-07-29T06:35:02.047797+00:00"
+  },
+  {
+    "code": "1938",
+    "name": "日本リーテック",
+    "result": "official_site_forbidden",
+    "reasons": [
+      "official_site_forbidden"
+    ],
+    "explored_urls": [
+      "https://www.j-rietec.co.jp/ir/"
+    ],
+    "checked_at": "2026-07-29T06:35:32.074788+00:00"
+  },
+  {
+    "code": "1950",
+    "name": "日本電設工業",
+    "result": "official_site_forbidden",
+    "reasons": [
+      "official_site_forbidden"
+    ],
+    "explored_urls": [
+      "https://www.densetsuko.co.jp/company/ir/irlibrary/"
+    ],
+    "checked_at": "2026-07-29T06:36:48.159291+00:00"
   }
 ]

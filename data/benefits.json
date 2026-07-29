@@ -1427,5 +1427,53 @@
     "market": "グロース",
     "sector": "医薬品",
     "industry": "医薬品"
+  },
+  {
+    "code": "1965",
+    "name": "テクノ菱和",
+    "benefit_status": "official_confirmed",
+    "record_months": [
+      3
+    ],
+    "record_date": null,
+    "annual_occurrences": 1,
+    "minimum_shares": 1,
+    "maximum_shares": null,
+    "benefit_tiers": [
+      {
+        "shares": 1,
+        "maximum_shares": null,
+        "description": "優待内容未取得",
+        "annual_value_yen": null
+      }
+    ],
+    "benefit_title": null,
+    "benefit_description": null,
+    "category": null,
+    "annual_value_yen": null,
+    "valuation_type": "not_calculated",
+    "long_term_required": false,
+    "holding_period_months": null,
+    "long_term_condition_verified": false,
+    "conditions": null,
+    "official_source_url": "https://www.techno-ryowa.co.jp/ir-library/",
+    "official_source_title": "IRライブラリー | 株式会社テクノ菱和",
+    "official_verified_at": "2026-07-29",
+    "abolished_at": null,
+    "last_record_date": null,
+    "change_or_abolition_note": null,
+    "confidence_score": 90,
+    "evidence_text": "提供された「検証済み企業公式ページの本文」には、株主ご優待制度（贈呈内容・株数条件・贈呈時期等）の記載が確認できませんでした。本文中に「株主ご優待制度」という導線（メニュー項目）はありますが、優待の具体条件・区分・贈呈時期・金額などの情報本文が含まれていないため、再抽出できません。",
+    "error_reason": "本文に株主優待制度の具体情報（株数区分、金額/内容、贈呈時期、基準日など）が含まれていないため、推測せず空値扱いとしました。",
+    "source_published_at": null,
+    "source_updated_at": null,
+    "data_confidence": "official_confirmed",
+    "benefit_summary": "優待内容未取得",
+    "last_checked_at": "2026-07-29",
+    "long_term_condition": "公式資料に長期保有条件の記載なし",
+    "notes": null,
+    "market": "スタンダード",
+    "sector": "建設業",
+    "industry": "建設業"
   }
 ]

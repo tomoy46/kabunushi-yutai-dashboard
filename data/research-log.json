@@ -1631,5 +1631,241 @@
     ],
     "checked_at": "2026-07-29T03:49:34.005439+00:00",
     "source_url": "https://www.raito.co.jp/ir/"
+  },
+  {
+    "code": "1934",
+    "name": "ユアテック",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "benefit_content_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T06:35:15.729322+00:00",
+    "source_url": "https://www.yurtec.co.jp/ir/"
+  },
+  {
+    "code": "1964",
+    "name": "中外炉工業",
+    "result": "not_officially_verified",
+    "reasons": [
+      "benefit_content_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T06:48:26.678085+00:00",
+    "source_url": "https://chugai.co.jp/ir/"
+  },
+  {
+    "code": "1941",
+    "name": "中電工",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "benefit_content_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T06:35:46.461044+00:00",
+    "source_url": "https://www.chudenko.co.jp/info/"
+  },
+  {
+    "code": "1967",
+    "name": "ヤマト",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T06:49:18.004229+00:00",
+    "source_url": "https://www.yamato-se.co.jp/ir/"
+  },
+  {
+    "code": "1951",
+    "name": "エクシオグループ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "benefit_content_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T06:42:05.053404+00:00",
+    "source_url": "https://www.exeo.co.jp/ir/ir.html"
+  },
+  {
+    "code": "195A",
+    "name": "ＭＵＳＣＡＴ　ＧＲＯＵＰ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "benefit_content_missing",
+      "record_month_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T06:42:42.774859+00:00",
+    "source_url": "https://muscatgroup.co.jp/ir/"
+  },
+  {
+    "code": "1959",
+    "name": "クラフティア",
+    "result": "not_officially_verified",
+    "reasons": [
+      "benefit_content_missing",
+      "record_month_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T06:42:22.665420+00:00",
+    "source_url": "https://www.kraftia.co.jp/ir/"
+  },
+  {
+    "code": "1946",
+    "name": "トーエネック",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "benefit_content_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T06:36:08.280345+00:00",
+    "source_url": "https://www.toenec.co.jp/ir/"
+  },
+  {
+    "code": "1960",
+    "name": "サンテック",
+    "result": "not_officially_verified",
+    "reasons": [
+      "benefit_content_missing",
+      "record_month_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T06:42:52.017887+00:00",
+    "source_url": "https://www.suntec-sec.co.jp/ir/"
+  },
+  {
+    "code": "1952",
+    "name": "新日本空調",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "benefit_content_missing",
+      "record_month_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T06:42:14.979523+00:00",
+    "source_url": "https://www.snk.co.jp/ir/"
+  },
+  {
+    "code": "1939",
+    "name": "四電工",
+    "result": "not_officially_verified",
+    "reasons": [
+      "benefit_content_missing",
+      "record_month_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T06:35:42.010140+00:00",
+    "source_url": "https://www.yondenko.co.jp/ir/"
+  },
+  {
+    "code": "1963",
+    "name": "日揮ホールディングス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "benefit_content_missing",
+      "record_month_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T06:47:43.186246+00:00",
+    "source_url": "https://www.jgc.com/jp/ir/"
+  },
+  {
+    "code": "1945",
+    "name": "東京エネシス",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "benefit_content_missing",
+      "record_month_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T06:36:02.322846+00:00",
+    "source_url": "https://www.qtes.co.jp/ir/"
+  },
+  {
+    "code": "1961",
+    "name": "三機工業",
+    "result": "not_officially_verified",
+    "reasons": [
+      "benefit_content_missing",
+      "record_month_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T06:43:01.525121+00:00",
+    "source_url": "https://www.sanki.co.jp/ir/"
+  },
+  {
+    "code": "1948",
+    "name": "弘電社",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "benefit_content_missing",
+      "record_month_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T06:36:15.040792+00:00",
+    "source_url": "https://www.kk-kodensha.co.jp/"
+  },
+  {
+    "code": "1968",
+    "name": "太平電業",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "benefit_content_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T06:49:24.584013+00:00",
+    "source_url": "https://www.taihei-dengyo.co.jp/ir/"
+  },
+  {
+    "code": "194A",
+    "name": "ＷＯＬＶＥＳ　ＨＡＮＤ",
+    "result": "not_officially_verified",
+    "reasons": [
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T06:36:20.487248+00:00"
+  },
+  {
+    "code": "1930",
+    "name": "北陸電気工事",
+    "result": "not_officially_verified",
+    "reasons": [
+      "required_shares_missing",
+      "benefit_content_missing",
+      "record_month_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T06:35:09.997232+00:00",
+    "source_url": "https://www.rikudenko.co.jp/ir/"
+  },
+  {
+    "code": "1944",
+    "name": "きんでん",
+    "result": "not_officially_verified",
+    "reasons": [
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T06:35:55.228745+00:00"
+  },
+  {
+    "code": "1966",
+    "name": "高田工業所",
+    "result": "not_officially_verified",
+    "reasons": [
+      "benefit_content_missing",
+      "record_month_missing",
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-29T06:48:47.961447+00:00",
+    "source_url": "https://www.takada.co.jp/ir/"
   }
 ]

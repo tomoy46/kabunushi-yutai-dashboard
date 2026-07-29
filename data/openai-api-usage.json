@@ -1272,5 +1272,225 @@
         "error": "HTTP Error 403: Forbidden"
       }
     ]
+  },
+  {
+    "executed_at": "2026-07-29T06:49:24.586252+00:00",
+    "model": "gpt-5.4-nano",
+    "diagnostic_mode": false,
+    "processed_companies": 23,
+    "responses_api_calls": 19,
+    "responses_with_web_search": 0,
+    "web_search_output_items": 0,
+    "web_search_calls": 0,
+    "input_tokens": 74940,
+    "cached_input_tokens": 0,
+    "output_tokens": 5987,
+    "successes": 1,
+    "verification_required": 22,
+    "research_log_saved": 20,
+    "failures": 2,
+    "free_candidates_checked": 25,
+    "benefit_candidates": 19,
+    "free_extraction_success": 14,
+    "research_reasons": {
+      "official_site_discovery_failed": 1,
+      "benefit_page_not_found": 0,
+      "required_shares_missing": 10,
+      "benefit_content_missing": 17,
+      "record_month_missing": 11,
+      "confidence_low": 20,
+      "redirect_domain_rejected": 0,
+      "pdf_parse_failed": 0
+    },
+    "high": 0,
+    "medium": 19,
+    "low": 1,
+    "official_domains_found": 19,
+    "official_url_candidates_found": 237,
+    "official_company_url_candidates": 237,
+    "non_official_urls_excluded": 242,
+    "official_material_fetch_success": 19,
+    "post_official_fetch_openai_calls": 19,
+    "pre_openai_excluded": 1,
+    "unresolved": 4,
+    "official_site_403_count": 27,
+    "official_pdf_403_count": 0,
+    "openai_403_count": 0,
+    "403_hosts": [
+      "integroup.jp",
+      "wolveshand.jp",
+      "www.densetsuko.co.jp",
+      "www.j-rietec.co.jp",
+      "www.kandenko.co.jp",
+      "www.kinden.co.jp"
+    ],
+    "stopped_openai_after_403": false,
+    "affected_security_codes": [
+      "192A",
+      "1938",
+      "1950"
+    ],
+    "official_homepages_found": 22,
+    "official_ir_pages_found": 3,
+    "benefit_pages_found": 2,
+    "benefit_page_not_found": 0,
+    "official_domains_saved": 22,
+    "unique_web_search_call_ids": 0,
+    "estimated_cost_jpy": 3.370762,
+    "daily_estimated_cost_jpy": 3.699795,
+    "pricing": {
+      "input_usd_per_million": 0.2,
+      "cached_input_usd_per_million": 0.02,
+      "output_usd_per_million": 1.25,
+      "usd_to_jpy": 150.0,
+      "source": "https://openai.com/api/pricing/",
+      "verified_at": "2026-07-28"
+    },
+    "company_usage": [
+      {
+        "code": "1930",
+        "input_tokens": 2188,
+        "cached_input_tokens": 0,
+        "output_tokens": 282,
+        "estimated_cost_jpy": 0.118515
+      },
+      {
+        "code": "1934",
+        "input_tokens": 1532,
+        "cached_input_tokens": 0,
+        "output_tokens": 297,
+        "estimated_cost_jpy": 0.101648
+      },
+      {
+        "code": "1939",
+        "input_tokens": 3983,
+        "cached_input_tokens": 0,
+        "output_tokens": 304,
+        "estimated_cost_jpy": 0.17649
+      },
+      {
+        "code": "1941",
+        "input_tokens": 2977,
+        "cached_input_tokens": 0,
+        "output_tokens": 292,
+        "estimated_cost_jpy": 0.14406
+      },
+      {
+        "code": "1945",
+        "input_tokens": 3801,
+        "cached_input_tokens": 0,
+        "output_tokens": 258,
+        "estimated_cost_jpy": 0.162405
+      },
+      {
+        "code": "1946",
+        "input_tokens": 3353,
+        "cached_input_tokens": 0,
+        "output_tokens": 348,
+        "estimated_cost_jpy": 0.16584
+      },
+      {
+        "code": "1948",
+        "input_tokens": 2280,
+        "cached_input_tokens": 0,
+        "output_tokens": 346,
+        "estimated_cost_jpy": 0.133275
+      },
+      {
+        "code": "1951",
+        "input_tokens": 10818,
+        "cached_input_tokens": 0,
+        "output_tokens": 308,
+        "estimated_cost_jpy": 0.38229
+      },
+      {
+        "code": "1952",
+        "input_tokens": 5341,
+        "cached_input_tokens": 0,
+        "output_tokens": 316,
+        "estimated_cost_jpy": 0.21948
+      },
+      {
+        "code": "1959",
+        "input_tokens": 2919,
+        "cached_input_tokens": 0,
+        "output_tokens": 338,
+        "estimated_cost_jpy": 0.150945
+      },
+      {
+        "code": "195A",
+        "input_tokens": 2271,
+        "cached_input_tokens": 0,
+        "output_tokens": 356,
+        "estimated_cost_jpy": 0.13488
+      },
+      {
+        "code": "1960",
+        "input_tokens": 2450,
+        "cached_input_tokens": 0,
+        "output_tokens": 309,
+        "estimated_cost_jpy": 0.131437
+      },
+      {
+        "code": "1961",
+        "input_tokens": 2688,
+        "cached_input_tokens": 0,
+        "output_tokens": 255,
+        "estimated_cost_jpy": 0.128452
+      },
+      {
+        "code": "1963",
+        "input_tokens": 4097,
+        "cached_input_tokens": 0,
+        "output_tokens": 288,
+        "estimated_cost_jpy": 0.17691
+      },
+      {
+        "code": "1964",
+        "input_tokens": 4000,
+        "cached_input_tokens": 0,
+        "output_tokens": 293,
+        "estimated_cost_jpy": 0.174937
+      },
+      {
+        "code": "1965",
+        "input_tokens": 7635,
+        "cached_input_tokens": 0,
+        "output_tokens": 370,
+        "estimated_cost_jpy": 0.298425
+      },
+      {
+        "code": "1966",
+        "input_tokens": 4428,
+        "cached_input_tokens": 0,
+        "output_tokens": 366,
+        "estimated_cost_jpy": 0.201465
+      },
+      {
+        "code": "1967",
+        "input_tokens": 4445,
+        "cached_input_tokens": 0,
+        "output_tokens": 357,
+        "estimated_cost_jpy": 0.200288
+      },
+      {
+        "code": "1968",
+        "input_tokens": 3734,
+        "cached_input_tokens": 0,
+        "output_tokens": 304,
+        "estimated_cost_jpy": 0.16902
+      }
+    ],
+    "duration_seconds": 867.671,
+    "errors": [
+      {
+        "code": "1944",
+        "error": "HTTP Error 405: Not Allowed"
+      },
+      {
+        "code": "194A",
+        "error": "HTTP Error 405: Not Allowed"
+      }
+    ]
   }
 ]

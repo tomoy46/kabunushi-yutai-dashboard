@@ -1,5 +1,5 @@
 {
-  "next_index": 16,
+  "next_index": 17,
   "processed_codes": [
     "7550",
     "7616",
@@ -16,10 +16,11 @@
     "1766",
     "1780",
     "1783",
-    "190A"
+    "190A",
+    "1965"
   ],
   "failed_codes": [],
-  "updated_at": "2026-07-28T22:39:17.005442+00:00",
+  "updated_at": "2026-07-29T06:48:40.300743+00:00",
   "total_companies": 3709,
   "uninvestigated_count": 3709
 }
