@@ -89,6 +89,7 @@ BROWSER_USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                       "AppleWebKit/537.36 (KHTML, like Gecko) "
                       "Chrome/124.0.0.0 Safari/537.36")
 REEXTRACT_REASONS = {"record_date_unknown", "minimum_shares_unknown", "low_confidence", "current_program_not_confirmed"}
+HTTP_403_EVENTS = []
 DISCOVERY_TERMS = re.compile(
     r"株主優待|優待制度|shareholder.?benefit|stockholder.?benefit|complimentary|yutai",
     re.I,
@@ -190,7 +191,8 @@ def normalize_japanese_text(value):
 
 class APIError(Exception):
     def __init__(self, status, message, error_type=None, code=None, param=None, request_id=None,
-                 method="POST", endpoint=ENDPOINT, stage="responses_api"):
+                 method="POST", endpoint=ENDPOINT, stage="openai_responses_api",
+                 content_type="", response_body="", model=None):
         self.status = status
         self.error_type = error_type
         self.code = code
@@ -198,6 +200,8 @@ class APIError(Exception):
         self.request_id = request_id
         self.message = safe_message(message)
         self.method, self.endpoint, self.stage = method, endpoint, stage
+        self.content_type, self.response_body = content_type, response_body
+        self.model = model
         super().__init__(f"Responses API HTTP {status}: {self.message}")
 
 
@@ -206,9 +210,15 @@ def safe_error_lines(error, key=None):
     if isinstance(error, APIError):
         fields = (
             ("Processing stage", error.stage),
+            ("Security code", "workflow"), ("Request URL", error.endpoint),
             ("Request host", urlparse(error.endpoint).hostname),
             ("HTTP method", error.method), ("HTTP status", error.status),
+            ("Response Content-Type", error.content_type),
+            ("Response body (first 300 chars)", safe_message(error.response_body, key)[:300]),
+            ("Exception class", type(error).__name__),
+            ("Exception message", safe_message(error, key)),
             ("API endpoint", error.endpoint), ("Error type", error.error_type),
+            ("Model", error.model),
             ("Error code", error.code), ("Error param", error.param),
             ("Error message", safe_message(error.message, key)),
             ("Request ID", error.request_id),
@@ -216,6 +226,30 @@ def safe_error_lines(error, key=None):
         return [f"{label}: {value}" for label, value in fields if value not in (None, "")]
     return [f"Exception type: {type(error).__name__}",
             f"Error message: {safe_message(error, key)}"]
+
+
+def http_stage(url, is_pdf=False):
+    """Assign every first-party fetch to a stable diagnostic stage."""
+    host = normalized_host(urlparse(safe_text(url)).hostname)
+    if is_subdomain(host, "tdnet.info"):
+        return "tdnet_fetch"
+    if is_subdomain(host, "jpx.co.jp"):
+        return "jpx_fetch"
+    if is_pdf or urlparse(safe_text(url)).path.lower().endswith(".pdf"):
+        return "official_pdf_fetch"
+    return "official_site_fetch"
+
+
+def log_http_403(stage, security_code, url, method, error, body=b"", content_type=""):
+    """Log only allow-listed, secret-free fields and retain aggregate metadata."""
+    text_body = safe_message(safe_text(body))[:300]
+    event = {"stage": stage, "security_code": str(security_code or "unknown"),
+             "request_url": safe_text(url), "request_host": urlparse(safe_text(url)).hostname or "",
+             "method": method, "status_code": 403, "content_type": safe_text(content_type),
+             "response_body": text_body, "exception_class": type(error).__name__,
+             "exception_message": safe_message(error)}
+    HTTP_403_EVENTS.append(event)
+    print("HTTP 403 diagnostic: " + " | ".join(f"{name}={value}" for name, value in event.items()))
 
 
 def diagnostic_stage(label, state, error=None, key=None, detail=None):
@@ -411,7 +445,7 @@ def build_payload(company, evidence="", model=DEFAULT_MODEL):
 
 
 _last_call = 0.0
-def openai_request(endpoint, method, key, payload=None, max_retries=3, stage="responses_api"):
+def openai_request(endpoint, method, key, payload=None, max_retries=3, stage="openai_responses_api"):
     """Send an OpenAI request; authentication is always a Bearer token."""
     global _last_call
     if urlparse(endpoint).hostname != API_HOST:
@@ -430,8 +464,9 @@ def openai_request(endpoint, method, key, payload=None, max_retries=3, stage="re
                 return json.loads(response.read())
         except HTTPError as error:
             detail = {}
+            raw_body = error.read()
             try:
-                parsed = json.loads(error.read().decode("utf-8", "replace"))
+                parsed = json.loads(safe_text(raw_body))
                 if isinstance(parsed, dict) and isinstance(parsed.get("error"), dict):
                     detail = parsed["error"]
             except (ValueError, AttributeError, TypeError):
@@ -440,12 +475,19 @@ def openai_request(endpoint, method, key, payload=None, max_retries=3, stage="re
             request_id = None
             if headers:
                 request_id = headers.get("x-request-id") or headers.get("request-id")
+            content_type = headers.get("Content-Type", "") if headers else ""
             api_error = APIError(
                 error.code, safe_message(detail.get("message", error.reason), key),
                 error_type=detail.get("type"), code=detail.get("code"),
                 param=detail.get("param"), request_id=request_id, method=method,
                 endpoint=endpoint, stage=stage,
+                content_type=content_type, response_body=safe_text(raw_body)[:300],
+                model=(payload or {}).get("model") if isinstance(payload, dict) else
+                      urlparse(endpoint).path.rsplit("/", 1)[-1],
             )
+            if error.code == 403:
+                log_http_403(stage, "workflow", endpoint, method, api_error,
+                             raw_body, content_type)
             if error.code in (401, 403, 404, 429) or error.code not in (500, 502, 503, 504) or attempt == max_retries - 1:
                 raise api_error from None
         except (URLError, socket.timeout) as error:
@@ -462,7 +504,7 @@ def request_response(payload, key, max_retries=3):
 def verify_openai_access(key, model):
     """Perform one token-free key/project/model preflight for the entire run."""
     endpoint = f"https://{API_HOST}/v1/models/{model}"
-    return openai_request(endpoint, "GET", key, max_retries=1, stage="authentication_preflight")
+    return openai_request(endpoint, "GET", key, max_retries=1, stage="openai_auth_check")
 
 
 def evidence_artifact_path(code):
@@ -494,7 +536,7 @@ def save_workflow_error(error, model):
     path = base / ".discovery-results" / "workflow-error.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     atomic(path, {"scope": "workflow", "classification": {
-        401: "invalid_api_key", 403: "permission_project_model_or_organization_restriction",
+        401: "invalid_api_key", 403: "workflow_openai_forbidden",
         429: "quota_or_rate_limit"}.get(error.status, "openai_api_error"),
         "status": error.status, "request_id": error.request_id, "error_type": error.error_type,
         "error_code": error.code, "message": error.message, "model": model,
@@ -853,17 +895,26 @@ def document_links(body, base_url):
     return list(dict.fromkeys(links))
 
 
-def fetch_discovery_document(url, allowed_domains):
+def fetch_discovery_document(url, allowed_domains, company=None):
     """Download one discovery document and reject unrelated redirects."""
     request = Request(url, headers={"User-Agent": BROWSER_USER_AGENT,
                                     "Accept": "text/html,application/xhtml+xml,application/xml,application/json,application/pdf"})
-    with urlopen(request, timeout=25) as response:
-        if response.status != 200:
-            raise ValueError(f"HTTP_status_{response.status}")
-        final = canonical_url(response.geturl())
-        if not final or not any(is_subdomain(hostname(final), domain) for domain in allowed_domains):
-            raise ValueError("redirect_host_not_verified")
-        return final, response.read(2_000_000), str(getattr(response, "headers", {}).get("Content-Type", ""))
+    try:
+        with urlopen(request, timeout=25) as response:
+            if response.status != 200:
+                raise ValueError(f"HTTP_status_{response.status}")
+            final = canonical_url(response.geturl())
+            if not final or not any(is_subdomain(hostname(final), domain) for domain in allowed_domains):
+                raise ValueError("redirect_host_not_verified")
+            return final, response.read(2_000_000), str(getattr(response, "headers", {}).get("Content-Type", ""))
+    except HTTPError as error:
+        if error.code == 403:
+            body = error.read(2_000_000)
+            content_type = error.headers.get("Content-Type", "") if error.headers else ""
+            log_http_403(http_stage(url), (company or {}).get("code"), url, "GET", error,
+                         body, content_type)
+            raise OfficialSourceFetchError("official_site_forbidden", error) from error
+        raise
 
 
 def corporate_identity_matches(company, url, body, content_type="text/html"):
@@ -912,7 +963,7 @@ def discover_corporate_candidates(company, fetcher=None, max_pages=24):
     domains = registered_domains(company)
     if not domains:
         return []
-    fetcher = fetcher or fetch_discovery_document
+    fetcher = fetcher or (lambda url, allowed: fetch_discovery_document(url, allowed, company))
     seeds = [canonical_url(f"https://{domains[0]}{path}") for path in
              ("/", "/ir/", "/ir/stock/", "/ir/shareholder/", "/company/ir/",
               "/company/", "/company/profile/", "/corporate/profile/", "/stock/",
@@ -925,6 +976,10 @@ def discover_corporate_candidates(company, fetcher=None, max_pages=24):
         seen.add(url)
         try:
             final, body, content_type = fetcher(url, domains)
+        except OfficialSourceFetchError as error:
+            if error.reason == "official_site_forbidden":
+                raise
+            continue
         except Exception:
             continue
         text = page_text(body, content_type)
@@ -1117,13 +1172,18 @@ def fetch_official_page(url, company, source_urls, registered=False, follow_link
                 content_encoding = ""
             body = decode_content(body, content_encoding)
     except HTTPError as error:
+        body = error.read(2_000_000) if error.code == 403 else b""
+        content_type = error.headers.get("Content-Type", "") if error.headers else ""
+        if error.code == 403:
+            log_http_403(http_stage(normalized), company.get("code"), normalized, "GET", error,
+                         body, content_type)
         if registered:
             official_source_log(company, normalized, http_status=error.code, final_url=error.geturl(),
                                 reason="http_404" if error.code == 404 else ("http_403" if error.code == 403 else f"http_{error.code}"),
                                 exception_class=type(error).__name__, exception_message=error)
         if error.code == 404:
             raise OfficialSourceNotFound("official_source_http_404") from None
-        reason = "http_403" if error.code == 403 else f"http_{error.code}"
+        reason = "official_site_forbidden" if error.code == 403 else f"http_{error.code}"
         raise OfficialSourceFetchError(reason, error) from error
     except OfficialSourceNotFound:
         if registered:
@@ -1285,7 +1345,14 @@ def linked_official_sources(sources, company):
                 final = canonical_url(response.geturl()) or overview
                 body = response.read(2_000_000)
             html = body.decode("utf-8", "ignore")
-        except (HTTPError, URLError, socket.timeout, ValueError):
+        except HTTPError as error:
+            if error.code == 403:
+                body = error.read(2_000_000)
+                content_type = error.headers.get("Content-Type", "") if error.headers else ""
+                log_http_403("jpx_fetch", company.get("code"), overview, "GET", error,
+                             body, content_type)
+            continue
+        except (URLError, socket.timeout, ValueError):
             continue
         for match in re.finditer(r'''(?is)\bhref\s*=\s*["']([^"'#]+)["']''', html):
             linked = canonical_url(urljoin(final, match.group(1)))
@@ -1693,7 +1760,9 @@ def append_unresolved(company, reasons, explored_urls=()):
     """Persist issuer-site discovery failures separately from sparse benefits."""
     path = DATA / "unresolved.json"
     entries = load(path, [])
-    result = "benefit_page_not_found" if "benefit_page_not_found" in reasons else "official_site_discovery_failed"
+    result = ("official_site_forbidden" if "official_site_forbidden" in reasons else
+              ("benefit_page_not_found" if "benefit_page_not_found" in reasons else
+               "official_site_discovery_failed"))
     entry = {"code": str(company["code"]), "name": company["name"],
              "result": result, "reasons": list(reasons),
              "explored_urls": list(dict.fromkeys(canonical_url(url) for url in explored_urls
@@ -1768,6 +1837,12 @@ def publish_workflow_counts(totals):
                      "official_ir_pages_found", "benefit_pages_found",
                      "benefit_page_not_found", "official_domains_saved"):
             stream.write(f"{name}={totals.get(name, 0)}\n")
+        for name in ("official_site_403_count", "official_pdf_403_count", "openai_403_count"):
+            stream.write(f"{name}={totals.get(name, 0)}\n")
+        stream.write("403_hosts=" + json.dumps(totals.get("403_hosts", []), ensure_ascii=False) + "\n")
+        stream.write(f"stopped_openai_after_403={'true' if totals.get('stopped_openai_after_403') else 'false'}\n")
+        stream.write("affected_security_codes=" + json.dumps(
+            totals.get("affected_security_codes", []), ensure_ascii=False) + "\n")
         stream.write("research_reasons=" + json.dumps(totals.get("research_reasons", {}),
                                                        ensure_ascii=False, separators=(",", ":")) + "\n")
         cause = totals.get("zero_confirmed_cause") or "none"
@@ -1784,6 +1859,7 @@ def diagnostic_outcome(totals, failed_stage):
 
 
 def run(args):
+    HTTP_403_EVENTS.clear()
     fixture = is_test_fixture()
     if fixture:
         print("TEST FIXTURE")
@@ -1846,6 +1922,9 @@ def run(args):
               "official_url_candidates_found": 0, "official_company_url_candidates": 0,
               "non_official_urls_excluded": 0, "official_material_fetch_success": 0,
               "post_official_fetch_openai_calls": 0, "pre_openai_excluded": 0, "unresolved": 0}
+    totals.update({"official_site_403_count": 0, "official_pdf_403_count": 0,
+                   "openai_403_count": 0, "403_hosts": [],
+                   "stopped_openai_after_403": False, "affected_security_codes": []})
     totals.update({"official_homepages_found": 0, "official_ir_pages_found": 0,
                    "benefit_pages_found": 0, "benefit_page_not_found": 0,
                    "official_domains_saved": 0})
@@ -1946,7 +2025,7 @@ def run(args):
                             continue
                         try:
                             fetched, body, content_type = fetch_discovery_document(
-                                material_url, registered_domains(company))
+                                material_url, registered_domains(company), company)
                             material_text = page_text(body, content_type)
                         except Exception:
                             continue
@@ -1976,7 +2055,7 @@ def run(args):
                         continue
                     try:
                         fetched, body, content_type = fetch_discovery_document(
-                            material_url, registered_domains(company))
+                            material_url, registered_domains(company), company)
                         material_text = page_text(body, content_type)
                     except Exception:
                         continue
@@ -1985,6 +2064,11 @@ def run(args):
                         totals["official_ir_pages_found"] += 1
                         break
             totals["official_url_candidates_found"] += len(explored_urls)
+            if any(event["security_code"] == str(company["code"]) and
+                   event["stage"] not in ("openai_auth_check", "openai_responses_api")
+                   for event in HTTP_403_EVENTS):
+                raise OfficialSourceFetchError("official_site_forbidden", HTTPError(
+                    (explored_urls[0] if explored_urls else ""), 403, "Forbidden", {}, None))
             accepted_urls = []
             for explored in explored_urls:
                 accepted, reason = official_url_decision(explored, company, "discovery_pipeline")
@@ -2140,7 +2224,31 @@ def run(args):
                 persist_production_state(benefits, queue, progress)
                 label = "FIXTURE RESULT" if fixture else "PRODUCTION RESULT"
                 print(f'{label} {company["code"]} {company["name"]}: research_log')
+        except OfficialSourceFetchError as error:
+            totals["processed_companies"] += 1
+            totals["verification_required"] += 1
+            if error.reason == "official_site_forbidden":
+                totals["unresolved"] += 1
+            if not args.diagnostic_mode and error.reason == "official_site_forbidden":
+                append_unresolved(company, ["official_site_forbidden"], explored_urls)
+                persist_production_state(benefits, queue, progress)
+            elif not args.diagnostic_mode:
+                reasons = classified_reasons([error.reason])
+                for reason in reasons: totals["research_reasons"][reason] += 1
+                append_research_log(company, "not_officially_verified", reasons,
+                                    registered.get("url") if registered else None)
+                totals["research_log_saved"] += 1
+                persist_production_state(benefits, queue, progress)
+            outcome = ("unresolved (official_site_forbidden)" if error.reason == "official_site_forbidden"
+                       else "research_log")
+            print(f'{"FIXTURE RESULT" if fixture else "PRODUCTION RESULT"} '
+                  f'{company["code"]} {company["name"]}: {outcome}')
         except APIError as error:
+            if error.status == 403 and not any(
+                    event["stage"] == error.stage and event["request_url"] == error.endpoint
+                    for event in HTTP_403_EVENTS):
+                log_http_403(error.stage, "workflow", error.endpoint, error.method, error,
+                             error.response_body, error.content_type)
             if args.diagnostic_mode and not failure_logged:
                 failed_stage = failed_stage or active_failed_stage
                 diagnostic_stage(active_label, "failure", error, key)
@@ -2154,6 +2262,8 @@ def run(args):
             if error.status in (401, 403):
                 save_workflow_error(error, model)
                 abort_openai = True
+                if error.status == 403:
+                    totals["stopped_openai_after_403"] = True
             elif not args.diagnostic_mode and not registered:
                 append_research_log(company, "api_failed", [error.message])
                 totals["research_log_saved"] += 1
@@ -2198,6 +2308,15 @@ def run(args):
                 label = "FIXTURE RESULT" if fixture else "PRODUCTION RESULT"
                 print(f'{label} {company["code"]} {company["name"]}: failed')
     if not args.diagnostic_mode:
+        totals["official_pdf_403_count"] = sum(e["stage"] == "official_pdf_fetch" for e in HTTP_403_EVENTS)
+        totals["official_site_403_count"] = sum(e["stage"] in
+            ("official_site_fetch", "tdnet_fetch", "jpx_fetch") for e in HTTP_403_EVENTS)
+        # One OpenAI denial is a workflow outcome, even if a caller logged it twice.
+        totals["openai_403_count"] = int(any(e["stage"] in
+            ("openai_auth_check", "openai_responses_api") for e in HTTP_403_EVENTS))
+        totals["403_hosts"] = sorted({e["request_host"] for e in HTTP_403_EVENTS if e["request_host"]})
+        totals["affected_security_codes"] = sorted({e["security_code"] for e in HTTP_403_EVENTS
+                                                     if e["security_code"] != "unknown"})
         totals["unique_web_search_call_ids"] = len(unique_web_search_call_ids)
         record = {"executed_at": dt.datetime.now(dt.timezone.utc).isoformat(), "model": model,
                   "diagnostic_mode": False, **totals,
@@ -2242,8 +2361,12 @@ def run(args):
             print("PRODUCTION SAVED CODES: " + (", ".join(confirmed_codes) or "none"))
             print("PRODUCTION CHANGED FILES: " + (", ".join(changed) or "none"))
         if totals["successes"] == 0:
-            causes = sorted({safe_text(error.get("error")) for error in errors if error.get("error")})
-            totals["zero_confirmed_cause"] = "; ".join(causes)[:500] or (
+            reason_counts = {reason: count for reason, count in totals["research_reasons"].items() if count}
+            reason_counts.update({"official_site_forbidden": totals["official_site_403_count"],
+                                  "workflow_openai_forbidden": totals["openai_403_count"]})
+            # Deterministic tie-break: reason name, rather than whichever exception happened first.
+            dominant = min(reason_counts, key=lambda reason: (-reason_counts[reason], reason)) if reason_counts else None
+            totals["zero_confirmed_cause"] = dominant or (
                 "all_results_require_research" if totals["verification_required"] else "no_eligible_targets")
             print(f"ZERO CONFIRMED: OpenAI API calls={totals['responses_api_calls']} "
                   f"input_tokens={totals['input_tokens']} output_tokens={totals['output_tokens']} "

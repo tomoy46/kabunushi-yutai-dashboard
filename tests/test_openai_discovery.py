@@ -9,6 +9,7 @@ from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
+from urllib.error import HTTPError
 
 import sys
 sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
@@ -129,11 +130,37 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         with patch.object(discovery, "urlopen", side_effect=failure) as opener:
             with self.assertRaises(discovery.APIError) as raised:
                 discovery.openai_request("https://api.openai.com/v1/models/test", "GET", "secret",
-                                         max_retries=3, stage="authentication_preflight")
+                                         max_retries=3, stage="openai_auth_check")
         self.assertEqual(opener.call_count, 1)
         self.assertEqual(raised.exception.status, 403)
         self.assertEqual(raised.exception.request_id, "req_403")
-        self.assertEqual(raised.exception.stage, "authentication_preflight")
+        self.assertEqual(raised.exception.stage, "openai_auth_check")
+        output = "\n".join(discovery.safe_error_lines(raised.exception, "secret"))
+        for field in ("Processing stage: openai_auth_check", "Security code: workflow",
+                      "Request URL: https://api.openai.com/v1/models/test",
+                      "Request host: api.openai.com", "HTTP method: GET", "HTTP status: 403",
+                      "Response body (first 300 chars)", "Exception class: APIError",
+                      "Request ID: req_403", "Error type: permission_error",
+                      "Error code: model_not_allowed", "Error message: model denied"):
+            self.assertIn(field, output)
+
+    def test_official_site_403_is_logged_and_classified_separately(self):
+        error_body = b"blocked by corporate WAF"
+        failure = HTTPError("https://example.co.jp/ir/benefit", 403, "Forbidden",
+                            {"Content-Type": "text/html"}, None)
+        failure.read = lambda *_args: error_body
+        company = {"code": "9999", "name": "Example", "official_domain": "example.co.jp"}
+        output = StringIO()
+        discovery.HTTP_403_EVENTS.clear()
+        with patch.object(discovery, "urlopen", side_effect=failure), redirect_stdout(output):
+            with self.assertRaises(discovery.OfficialSourceFetchError) as raised:
+                discovery.fetch_official_page("https://example.co.jp/ir/benefit", company,
+                                              ["https://example.co.jp/ir/benefit"])
+        self.assertEqual(raised.exception.reason, "official_site_forbidden")
+        self.assertEqual(discovery.HTTP_403_EVENTS[-1]["stage"], "official_site_fetch")
+        self.assertIn("security_code=9999", output.getvalue())
+        self.assertIn("response_body=blocked by corporate WAF", output.getvalue())
+        self.assertNotIn("Authorization", output.getvalue())
 
     def test_non_api_exception_is_bounded_and_redacted(self):
         secret = "sk-another-secret-value"
@@ -502,7 +529,7 @@ class OpenAIDiscoveryTests(unittest.TestCase):
             denial = discovery.APIError(403, "denied", "permission_error", "model_not_allowed",
                                         request_id="req_denied", method="GET",
                                         endpoint="https://api.openai.com/v1/models/gpt-5.4-nano",
-                                        stage="authentication_preflight")
+                                        stage="openai_auth_check")
             output = StringIO()
             with patch.object(discovery, "DATA", root), patch.dict(os.environ, {"OPENAI_API_KEY": "mock"}), \
                  patch.object(discovery, "discover_verified_official_source",

@@ -197,6 +197,12 @@ jobs:
           OFFICIAL_DOMAINS_SAVED: ${{ steps.discovery.outputs.official_domains_saved }}
           RESEARCH_REASONS: ${{ steps.discovery.outputs.research_reasons }}
           ZERO_CONFIRMED_CAUSE: ${{ steps.discovery.outputs.zero_confirmed_cause }}
+          OFFICIAL_SITE_403_COUNT: ${{ steps.discovery.outputs.official_site_403_count }}
+          OFFICIAL_PDF_403_COUNT: ${{ steps.discovery.outputs.official_pdf_403_count }}
+          OPENAI_403_COUNT: ${{ steps.discovery.outputs.openai_403_count }}
+          FORBIDDEN_HOSTS: ${{ steps.discovery.outputs['403_hosts'] }}
+          STOPPED_OPENAI_AFTER_403: ${{ steps.discovery.outputs.stopped_openai_after_403 }}
+          AFFECTED_SECURITY_CODES: ${{ steps.discovery.outputs.affected_security_codes }}
           COMMITTED: ${{ steps.commit_results.outputs.committed }}
         run: |
           committed="${COMMITTED:-no}"
@@ -232,6 +238,12 @@ jobs:
             fi
             echo "- OpenAI解析前に除外: ${PRE_OPENAI_EXCLUDED:-0}"
             echo "- unresolved: ${UNRESOLVED_COUNT:-0}"
+            echo "- official_site_403_count: ${OFFICIAL_SITE_403_COUNT:-0}"
+            echo "- official_pdf_403_count: ${OFFICIAL_PDF_403_COUNT:-0}"
+            echo "- openai_403_count: ${OPENAI_403_COUNT:-0}"
+            echo "- 403_hosts: ${FORBIDDEN_HOSTS:-[]}"
+            echo "- stopped_openai_after_403: ${STOPPED_OPENAI_AFTER_403:-false}"
+            echo "- affected_security_codes: ${AFFECTED_SECURITY_CODES:-[]}"
             processed=$((${CONFIRMED_COUNT:-0} + ${RESEARCH_LOG_COUNT:-0}))
             if [ "$processed" -gt 0 ]; then
               echo "- confirmed率: $((100 * ${CONFIRMED_COUNT:-0} / processed))%"
