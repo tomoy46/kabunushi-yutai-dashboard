@@ -29,6 +29,8 @@ from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
 from urllib.request import Request, urlopen
 from html import unescape
 
+from benefit_candidates import disclosure_action, select_candidates, weekly_fallback_allowed
+
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 ENDPOINT = "https://api.openai.com/v1/responses"
@@ -898,6 +900,19 @@ def apply_regex_official_facts(item, text):
     return item
 
 
+def free_official_extraction(company, url, text):
+    """Create a confirmed record when all three core facts are explicit."""
+    item = apply_regex_official_facts(empty_extraction(company, url), text)
+    excerpt = benefit_excerpt(text)
+    match = re.search(r".{0,80}(?:株主優待|優待券|優待品|優待ポイント).{0,160}", excerpt)
+    item.update({"benefit_status": "official_confirmed", "benefit_title": "株主優待",
+                 "benefit_description": normalize_japanese_text(match.group(0) if match else excerpt[:240]),
+                 "confidence_score": 95, "evidence_text": normalize_japanese_text(excerpt[:200]),
+                 "official_source_title": company.get("benefit_candidate", {}).get("candidate_title")})
+    item, _facts, _stale = apply_official_evidence_policy(item, text, url)
+    return item
+
+
 def apply_official_evidence_policy(item, text, url):
     """Apply registration policy to already downloaded first-party evidence."""
     facts = evidence_facts(text)
@@ -1561,6 +1576,19 @@ def parsed_time(value):
         return None
 
 
+def mark_candidate_verified(company, status):
+    row = company.get("benefit_candidate") or {}
+    path = DATA / "benefit-candidates.json"
+    values = load(path, [])
+    for item in values:
+        if (str(item.get("security_code")) == str(company["code"]) and
+                url_identity(item.get("candidate_url")) == url_identity(row.get("candidate_url"))):
+            item["verification_status"] = status
+            item["verified_at"] = dt.datetime.now(dt.timezone.utc).isoformat()
+    if row and values:
+        atomic(path, values)
+
+
 def excluded_security(company):
     """Reject non-operating securities and delisted master rows for auto mode."""
     text = " ".join(str(company.get(key) or "") for key in
@@ -1674,7 +1702,7 @@ def openai_eligible(priority, official_candidates, extracted_fact_count=0, low_s
 
 
 def choose(companies, args, progress, benefits, queue=None, now=None):
-    """Choose manual targets first, otherwise scan genuinely unresearched issuers."""
+    """Choose manual targets, then high/medium discoveries, then a weekly fallback."""
     immutable = {x["code"] for x in benefits if x.get("benefit_status") in ("official_confirmed", "abolished")}
     manual = parse_security_codes(getattr(args, "security_codes", ""))
     by_code = {str(company["code"]): company for company in companies}
@@ -1682,7 +1710,12 @@ def choose(companies, args, progress, benefits, queue=None, now=None):
     if manual:
         ordered = manual
     elif auto is True:
-        ordered = [str(company["code"]) for company in companies]
+        candidate_rows = select_candidates(load(DATA / "benefit-candidates.json", []),
+                                           load(DATA / "unresolved.json", []), 25)
+        ordered = [row["security_code"] for row in candidate_rows]
+        for row in candidate_rows:
+            if row["security_code"] in by_code:
+                by_code[row["security_code"]]["benefit_candidate"] = row
     elif auto is None:  # compatibility for callers predating the workflow input
         eligible = load_benefit_universe(DATA / "benefit-universe.csv") | tdnet_codes(
             load(DATA / "review-queue.json", []))
@@ -1707,6 +1740,17 @@ def choose(companies, args, progress, benefits, queue=None, now=None):
     if not getattr(args, "retry_failed", False):
         candidates = [c for c in candidates if str(c["code"]) not in recent_failed]
     companies_per_run = max(0, getattr(args, "companies_per_run", getattr(args, "batch_size", 25)))
+    if not manual and auto is True:
+        candidate_codes = [str(c["code"]) for c in candidates]
+        excluded_codes = set(candidate_codes) | recent_research | recent_failed
+        if (weekly_fallback_allowed(now) or is_test_fixture()) and len(candidate_codes) < companies_per_run:
+            fallback = [str(c["code"]) for c in companies
+                        if str(c["code"]) not in excluded_codes
+                        and str(c["code"]) not in immutable and not excluded_security(c)
+                        ][:min(5, companies_per_run-len(candidate_codes))]
+            for code in fallback:
+                by_code[code]["full_scan_fallback"] = True
+            candidates.extend(by_code[code] for code in fallback)
     if manual or auto is not True:
         return candidates[:companies_per_run]
     review = load(DATA / "review-queue.json", [])
@@ -1714,7 +1758,8 @@ def choose(companies, args, progress, benefits, queue=None, now=None):
     universe = load_benefit_universe(DATA / "benefit-universe.csv")
     fresh = [c for c in candidates if str(c["code"]) not in recent_research]
     retry = [c for c in candidates if str(c["code"]) in recent_research][:5]
-    ordered = quota_order(fresh, companies_per_run, review, sources, universe)
+    # Candidate discovery has already assigned the requested 20/5 quotas.
+    ordered = fresh[:companies_per_run]
     # Explicit retries never displace more than five newly researched companies.
     if getattr(args, "retry_research_log", False) and retry:
         keep = max(0, companies_per_run - min(5, len(retry)))
@@ -1950,7 +1995,8 @@ def publish_workflow_counts(totals):
                      "benefit_page_not_found", "official_domains_saved",
                      "pre_openai_three_facts", "pre_openai_two_facts",
                      "pre_openai_one_or_zero_skipped", "official_403_fallback_companies",
-                     "fallback_confirmed"):
+                     "fallback_confirmed", "abolished", "updated_candidates", "tdnet_candidates",
+                     "jpx_candidates", "full_scan_processed"):
             stream.write(f"{name}={totals.get(name, 0)}\n")
         for name in ("official_site_403_count", "official_pdf_403_count", "openai_403_count"):
             stream.write(f"{name}={totals.get(name, 0)}\n")
@@ -2065,6 +2111,10 @@ def run(args):
     totals.update({"official_homepages_found": 0, "official_ir_pages_found": 0,
                    "benefit_pages_found": 0, "benefit_page_not_found": 0,
                    "official_domains_saved": 0})
+    totals.update({"abolished": 0, "updated_candidates": 0,
+                   "tdnet_candidates": sum(c.get("benefit_candidate", {}).get("candidate_source") == "tdnet" for c in selected),
+                   "jpx_candidates": sum(c.get("benefit_candidate", {}).get("candidate_source") == "jpx" for c in selected),
+                   "full_scan_processed": sum(bool(c.get("full_scan_fallback")) for c in selected)})
     company_usage = []
     budget_deferred = 0
     low_sent = 0
@@ -2111,6 +2161,13 @@ def run(args):
             print(f"Free priority before fetch {company['code']}: score={before_score} "
                   f"priority={before_priority}")
             registered = registered_sources.get(str(company["code"]).upper())
+            discovered_candidate = company.get("benefit_candidate") or {}
+            if discovered_candidate.get("candidate_url"):
+                candidate_url = canonical_url(discovered_candidate["candidate_url"])
+                registered = {"url": candidate_url, "allowed_domains": [hostname(candidate_url)]}
+                # A high-priority exchange disclosure is fetched directly; no
+                # corporate-homepage discovery is required or attempted.
+                company["official_domain"] = company.get("official_domain") or hostname(candidate_url)
             active_label = "Official source discovery and extraction"
             active_failed_stage = "official_discovery"
             if registered:
@@ -2257,11 +2314,49 @@ def run(args):
                     f"{name}={'found' if value else 'missing'}" for name, value in facts.items()))
                 core_count = sum(facts[name] for name in
                                  ("required_shares", "benefit_content", "record_month"))
+                action = disclosure_action(official_text + " " +
+                    safe_text(discovered_candidate.get("candidate_title")))
+                if action == "updated_candidate":
+                    # Never overwrite a confirmed record from a change notice.
+                    before = next((x for x in benefits if x.get("code") == company["code"]), None)
+                    append_research_log(company, "updated_candidate",
+                                        ["change_disclosure_requires_before_after_review"], final_url)
+                    log = load(DATA / "research-log.json", [])
+                    if log:
+                        log[-1]["change_before"] = before
+                        log[-1]["change_after_evidence"] = benefit_excerpt(official_text)[:1000]
+                        atomic(DATA / "research-log.json", log)
+                    totals["updated_candidates"] += 1
+                    totals["research_log_saved"] += 1
+                    totals["processed_companies"] += 1
+                    mark_candidate_verified(company, "review_required")
+                    persist_production_state(benefits, queue, progress)
+                    continue
+                if action == "abolished":
+                    item = free_official_extraction(company, candidate_url, official_text)
+                    item["benefit_status"] = "abolished"
+                    item["abolished_at"] = discovered_candidate.get("candidate_date") or dt.date.today().isoformat()
+                    item = normalize_for_storage(item, company)
+                    benefits = [value for value in benefits if value.get("code") != company["code"]] + [item]
+                    totals["abolished"] += 1; totals["processed_companies"] += 1
+                    mark_candidate_verified(company, "abolished")
+                    persist_production_state(benefits, queue, progress)
+                    continue
                 exchange_special = (any(is_subdomain(hostname(candidate_url), host) for host in OFFICIAL_HOSTS)
                                     and bool(re.search(r"株主優待制度.{0,20}(?:導入|変更)|(?:導入|変更).{0,20}株主優待制度",
                                                       official_text)))
                 if core_count == 3:
                     totals["pre_openai_three_facts"] += 1
+                    item = normalize_for_storage(
+                        free_official_extraction(company, candidate_url, official_text), company)
+                    benefits = [value for value in benefits if value.get("code") != company["code"]] + [item]
+                    upsert_benefit_csv(DATA / "benefits.csv", item)
+                    totals["successes"] += 1; totals["free_extraction_success"] += 1
+                    totals["processed_companies"] += 1
+                    mark_candidate_verified(company, "confirmed")
+                    confirmed_codes.append(company["code"])
+                    persist_production_state(benefits, queue, progress)
+                    continue
                 elif core_count == 2:
                     totals["pre_openai_two_facts"] += 1
                 if core_count < 2 and not exchange_special:
