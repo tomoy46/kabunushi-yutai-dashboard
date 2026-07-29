@@ -18,6 +18,9 @@ import discover_benefits_with_openai as discovery
 class OpenAIDiscoveryTests(unittest.TestCase):
     def setUp(self):
         self.company = {"code": "1301", "name": "極洋", "official_domain": "kyokuyo.co.jp"}
+        self.openai_preflight = patch.object(discovery, "verify_openai_access", return_value={"id": "model"})
+        self.openai_preflight.start()
+        self.addCleanup(self.openai_preflight.stop)
 
     def item(self, url="https://www.kyokuyo.co.jp/ir/benefit.html"):
         value = {key: None for key in discovery.FIELDS}
@@ -98,6 +101,39 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         self.assertIn("Request ID: req_123", output)
         self.assertNotIn(secret, output)
         self.assertIn("[REDACTED]", output)
+
+    def test_openai_request_uses_only_official_host_and_bearer_header(self):
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *_args): return None
+            def read(self): return b'{"id":"model"}'
+        captured = []
+        def opener(request, timeout):
+            captured.append(request)
+            return Response()
+        with patch.object(discovery, "urlopen", side_effect=opener):
+            discovery.openai_request("https://api.openai.com/v1/models/test", "GET", "secret", max_retries=1)
+        self.assertEqual(captured[0].host, "api.openai.com")
+        self.assertEqual(captured[0].get_method(), "GET")
+        self.assertEqual(captured[0].get_header("Authorization"), "Bearer secret")
+        with self.assertRaises(ValueError):
+            discovery.openai_request("https://example.com/v1/models/test", "GET", "secret")
+
+    def test_403_preflight_is_not_retried_and_has_zero_usage(self):
+        error_body = json.dumps({"error": {"type": "permission_error", "code": "model_not_allowed",
+                                           "message": "model denied"}}).encode()
+        from urllib.error import HTTPError
+        failure = HTTPError("https://api.openai.com/v1/models/test", 403, "Forbidden",
+                            {"x-request-id": "req_403"}, None)
+        failure.read = lambda: error_body
+        with patch.object(discovery, "urlopen", side_effect=failure) as opener:
+            with self.assertRaises(discovery.APIError) as raised:
+                discovery.openai_request("https://api.openai.com/v1/models/test", "GET", "secret",
+                                         max_retries=3, stage="authentication_preflight")
+        self.assertEqual(opener.call_count, 1)
+        self.assertEqual(raised.exception.status, 403)
+        self.assertEqual(raised.exception.request_id, "req_403")
+        self.assertEqual(raised.exception.stage, "authentication_preflight")
 
     def test_non_api_exception_is_bounded_and_redacted(self):
         secret = "sk-another-secret-value"
@@ -447,6 +483,40 @@ class OpenAIDiscoveryTests(unittest.TestCase):
              patch.dict(os.environ, {"OPENAI_API_KEY": "mock"}), redirect_stdout(StringIO()):
             self.assertEqual(discovery.run(args), 1)
         request.assert_not_called()
+
+    def test_403_preflight_aborts_remaining_four_companies_without_research_log_spam(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            companies = [{"code": str(1301 + index), "name": f"会社{index}",
+                          "official_domain": "example.co.jp"} for index in range(5)]
+            fixtures = {"listed-companies.json": companies, "company-domains.json": {},
+                        "benefits.json": [], "verification-queue.json": [], "research-log.json": [],
+                        "review-queue.json": [], "discovery-progress.json": {}, "openai-api-usage.json": []}
+            for name, value in fixtures.items():
+                (root / name).write_text(json.dumps(value), encoding="utf-8")
+            args = type("Args", (), {"diagnostic_mode": False,
+                "security_codes": ",".join(company["code"] for company in companies),
+                "companies_per_run": 5, "max_openai_calls_per_run": 5,
+                "max_openai_calls_per_day": 100, "max_openai_budget_jpy_per_day": 100,
+                "retry_failed": False, "retry_research_log": False, "official_only": False})()
+            denial = discovery.APIError(403, "denied", "permission_error", "model_not_allowed",
+                                        request_id="req_denied", method="GET",
+                                        endpoint="https://api.openai.com/v1/models/gpt-5.4-nano",
+                                        stage="authentication_preflight")
+            output = StringIO()
+            with patch.object(discovery, "DATA", root), patch.dict(os.environ, {"OPENAI_API_KEY": "mock"}), \
+                 patch.object(discovery, "discover_verified_official_source",
+                              return_value=("https://example.co.jp/benefit", "株主優待 100株 3月 優待券")), \
+                 patch.object(discovery, "verify_openai_access", side_effect=denial) as preflight, \
+                 patch.object(discovery, "request_response") as response, redirect_stdout(output):
+                self.assertEqual(discovery.run(args), 1)
+            preflight.assert_called_once()
+            response.assert_not_called()
+            self.assertEqual(json.loads((root / "research-log.json").read_text()), [])
+            self.assertIn("deferred_companies=4", output.getvalue())
+            workflow_error = json.loads((root / ".discovery-results" / "workflow-error.json").read_text())
+            self.assertEqual(workflow_error["status"], 403)
+            self.assertEqual(workflow_error["token_usage"]["input_tokens"], 0)
 
     def test_registered_sources_are_confirmed_without_web_search(self):
         targets = [

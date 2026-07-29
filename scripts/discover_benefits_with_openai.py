@@ -32,6 +32,7 @@ from html import unescape
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 ENDPOINT = "https://api.openai.com/v1/responses"
+API_HOST = "api.openai.com"
 DEFAULT_MODEL = "gpt-5.4-nano"
 PRICING_CONFIG = ROOT / "config" / "openai-pricing.json"
 OFFICIAL_HOSTS = ("jpx.co.jp", "tdnet.info")
@@ -188,13 +189,15 @@ def normalize_japanese_text(value):
 
 
 class APIError(Exception):
-    def __init__(self, status, message, error_type=None, code=None, param=None, request_id=None):
+    def __init__(self, status, message, error_type=None, code=None, param=None, request_id=None,
+                 method="POST", endpoint=ENDPOINT, stage="responses_api"):
         self.status = status
         self.error_type = error_type
         self.code = code
         self.param = param
         self.request_id = request_id
         self.message = safe_message(message)
+        self.method, self.endpoint, self.stage = method, endpoint, stage
         super().__init__(f"Responses API HTTP {status}: {self.message}")
 
 
@@ -202,7 +205,10 @@ def safe_error_lines(error, key=None):
     """Format only the allow-listed API error fields for diagnostic output."""
     if isinstance(error, APIError):
         fields = (
-            ("HTTP status", error.status), ("Error type", error.error_type),
+            ("Processing stage", error.stage),
+            ("Request host", urlparse(error.endpoint).hostname),
+            ("HTTP method", error.method), ("HTTP status", error.status),
+            ("API endpoint", error.endpoint), ("Error type", error.error_type),
             ("Error code", error.code), ("Error param", error.param),
             ("Error message", safe_message(error.message, key)),
             ("Request ID", error.request_id),
@@ -405,10 +411,13 @@ def build_payload(company, evidence="", model=DEFAULT_MODEL):
 
 
 _last_call = 0.0
-def request_response(payload, key, max_retries=3):
+def openai_request(endpoint, method, key, payload=None, max_retries=3, stage="responses_api"):
+    """Send an OpenAI request; authentication is always a Bearer token."""
     global _last_call
-    body = json.dumps(payload).encode()
-    request = Request(ENDPOINT, data=body, method="POST", headers={
+    if urlparse(endpoint).hostname != API_HOST:
+        raise ValueError("OpenAI endpoint host is not allowed")
+    body = json.dumps(payload).encode() if payload is not None else None
+    request = Request(endpoint, data=body, method=method, headers={
         "Authorization": "Bearer " + key, "Content-Type": "application/json",
     })
     for attempt in range(max_retries):
@@ -434,7 +443,8 @@ def request_response(payload, key, max_retries=3):
             api_error = APIError(
                 error.code, safe_message(detail.get("message", error.reason), key),
                 error_type=detail.get("type"), code=detail.get("code"),
-                param=detail.get("param"), request_id=request_id,
+                param=detail.get("param"), request_id=request_id, method=method,
+                endpoint=endpoint, stage=stage,
             )
             if error.code in (401, 403, 404, 429) or error.code not in (500, 502, 503, 504) or attempt == max_retries - 1:
                 raise api_error from None
@@ -443,6 +453,53 @@ def request_response(payload, key, max_retries=3):
                 message = error.reason if isinstance(error, URLError) else error
                 raise APIError(0, safe_message(message, key)) from None
         time.sleep(2 ** attempt + random.random())
+
+
+def request_response(payload, key, max_retries=3):
+    return openai_request(ENDPOINT, "POST", key, payload, max_retries)
+
+
+def verify_openai_access(key, model):
+    """Perform one token-free key/project/model preflight for the entire run."""
+    endpoint = f"https://{API_HOST}/v1/models/{model}"
+    return openai_request(endpoint, "GET", key, max_retries=1, stage="authentication_preflight")
+
+
+def evidence_artifact_path(code):
+    base = ROOT if DATA.resolve() == (ROOT / "data").resolve() else DATA
+    return base / ".discovery-results" / "official-evidence" / f"{code}.json"
+
+
+def save_evidence_artifact(company, url, evidence):
+    """Checkpoint fetched official material before any paid API request."""
+    path = evidence_artifact_path(company["code"])
+    path.parent.mkdir(parents=True, exist_ok=True)
+    atomic(path, {"company": {"code": str(company["code"]), "name": company["name"],
+                              "official_domain": company.get("official_domain")},
+                  "official_source_url": canonical_url(url), "official_document_text": evidence,
+                  "saved_at": dt.datetime.now(dt.timezone.utc).isoformat()})
+
+
+def load_evidence_artifact(company):
+    value = load(evidence_artifact_path(company["code"]), None)
+    if not isinstance(value, dict) or value.get("company", {}).get("name") != company["name"]:
+        return None
+    url = canonical_url(value.get("official_source_url"))
+    text = safe_text(value.get("official_document_text"))
+    return (url, text) if url and text else None
+
+
+def save_workflow_error(error, model):
+    base = ROOT if DATA.resolve() == (ROOT / "data").resolve() else DATA
+    path = base / ".discovery-results" / "workflow-error.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    atomic(path, {"scope": "workflow", "classification": {
+        401: "invalid_api_key", 403: "permission_project_model_or_organization_restriction",
+        429: "quota_or_rate_limit"}.get(error.status, "openai_api_error"),
+        "status": error.status, "request_id": error.request_id, "error_type": error.error_type,
+        "error_code": error.code, "message": error.message, "model": model,
+        "endpoint": error.endpoint, "method": error.method, "stage": error.stage,
+        "token_usage": {"input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0}})
 
 
 def output_text(response):
@@ -1796,6 +1853,9 @@ def run(args):
     budget_deferred = 0
     low_sent = 0
     run_estimated_cost_jpy = 0.0
+    failed_request_estimated_cost_jpy = 0.0
+    access_verified = False
+    abort_openai = False
     confirmed_codes = []
     unique_web_search_call_ids = set()
     web_search_action_types = set()
@@ -1803,7 +1863,14 @@ def run(args):
     if args.diagnostic_mode:
         print(f"OpenAI model: {model}")
         diagnostic_stage("API key check", "start")
-        diagnostic_stage("API key check", "success")
+        try:
+            verify_openai_access(key, model)
+            access_verified = True
+            diagnostic_stage("API key check", "success")
+        except APIError as error:
+            diagnostic_stage("API key check", "failure", error, key)
+            save_workflow_error(error, model)
+            return 1
         diagnostic_stage("Plain Responses API", "start")
         try:
             plain = {"model": model, "input": "OKとだけ回答してください。", "store": False,
@@ -1839,8 +1906,14 @@ def run(args):
                     company["official_domain"] = company["official_domains"][0]
             review_items = load(DATA / "review-queue.json", [])
             explored_urls = []
-            final_url, official_text = discover_verified_official_source(
-                company, registered, review_items, explored_out=explored_urls)
+            cached_evidence = load_evidence_artifact(company)
+            if cached_evidence:
+                final_url, official_text = cached_evidence
+                explored_urls.append(final_url)
+                print(f"Official evidence artifact resumed {company['code']}: site fetch skipped")
+            else:
+                final_url, official_text = discover_verified_official_source(
+                    company, registered, review_items, explored_out=explored_urls)
             if not final_url and not registered and not fixture:
                 search_decisions = []
                 rejection_path = DATA / "rejected-official-candidates.json"
@@ -1973,6 +2046,7 @@ def run(args):
                     totals["free_extraction_success"] += 1
                 company["official_candidate_metadata"] = candidate_metadata(
                     company, candidate_url, official_text, review_items, explored_urls)
+                save_evidence_artifact(company, candidate_url, official_text)
                 # OpenAI receives already-fetched text and performs structure
                 # extraction only.  It never participates in URL discovery or IO.
                 payload = official_page_payload(company, candidate_url, official_text,
@@ -1990,6 +2064,11 @@ def run(args):
                     item = empty_extraction(company, candidate_url)
                     reasons = ["openai_call_budget_exhausted"]
                     raise OpenAICallBudgetExhausted(item, reasons, candidate_url)
+                if not access_verified:
+                    print(f"OpenAI authentication preflight: model={model} endpoint=https://{API_HOST}/v1/models/{model}")
+                    verify_openai_access(key, model)
+                    access_verified = True
+                    print("OpenAI authentication preflight: success")
                 totals["responses_api_calls"] += 1
                 totals["post_official_fetch_openai_calls"] += 1
                 correction = request_response(payload, key)
@@ -2065,8 +2144,17 @@ def run(args):
             if args.diagnostic_mode and not failure_logged:
                 failed_stage = failed_stage or active_failed_stage
                 diagnostic_stage(active_label, "failure", error, key)
-            totals["failures"] += 1; errors.append({"code": company["code"], "status": error.status, "error": error.message})
-            if not args.diagnostic_mode and not registered:
+            classification = {401: "invalid API key", 403: "permission/project/model/organization restriction",
+                              429: "quota or rate limit"}.get(error.status, "OpenAI API failure")
+            print(f"OpenAI failure classification: {classification}; model={model}")
+            for line in safe_error_lines(error, key):
+                print(line)
+            totals["failures"] += 1; errors.append({"code": company["code"], "status": error.status,
+                                                     "error": error.message, "classification": classification})
+            if error.status in (401, 403):
+                save_workflow_error(error, model)
+                abort_openai = True
+            elif not args.diagnostic_mode and not registered:
                 append_research_log(company, "api_failed", [error.message])
                 totals["research_log_saved"] += 1
             if not args.diagnostic_mode:
@@ -2077,6 +2165,10 @@ def run(args):
                 persist_production_state(benefits, queue, progress)
                 label = "FIXTURE RESULT" if fixture else "PRODUCTION RESULT"
                 print(f'{label} {company["code"]} {company["name"]}: failed')
+            if abort_openai:
+                budget_deferred = len(selected) - company_index - 1
+                print(f"OPENAI CALLS ABORTED: status={error.status} deferred_companies={budget_deferred}; no retry")
+                break
         except SparseOfficialEvidence as sparse:
             totals["processed_companies"] += 1
             totals["verification_required"] += 1
@@ -2140,7 +2232,8 @@ def run(args):
         print("RESEARCH-LOG REASONS: " + " ".join(
             f"{reason}={totals['research_reasons'][reason]}" for reason in RESEARCH_REASONS))
         print(f"API USAGE: input_tokens={totals['input_tokens']} output_tokens={totals['output_tokens']} "
-              f"estimated_cost_jpy={run_estimated_cost_jpy:.6f} "
+              f"actual_usage_estimated_cost_jpy={run_estimated_cost_jpy:.6f} "
+              f"failed_requests_estimated_cost_jpy={failed_request_estimated_cost_jpy:.6f} "
               f"daily_estimated_cost_jpy={prior_daily_cost_jpy + run_estimated_cost_jpy:.6f}")
         if not fixture:
             changed = subprocess.run(
@@ -2158,6 +2251,8 @@ def run(args):
         publish_workflow_counts(totals)
         if accounted + budget_deferred != len(selected):
             print(f"ERROR: selected {len(selected)} companies but persisted outcomes for {accounted}", file=sys.stderr)
+            return 1
+        if abort_openai:
             return 1
     if args.diagnostic_mode:
         result, exit_code = diagnostic_outcome(totals, failed_stage)
