@@ -999,6 +999,23 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                         (expected_result, expected_exit_code),
                     )
 
+    def test_nine_company_failures_with_one_confirmed_is_partial_success(self):
+        totals = {"successes": 1, "research_log_saved": 9, "unresolved": 0,
+                  "failures": 9}
+        self.assertEqual(discovery.production_outcome(totals, 10), (True, False, 0))
+
+    def test_all_companies_failed_without_saved_result_is_failure(self):
+        totals = {"successes": 0, "research_log_saved": 0, "unresolved": 0,
+                  "failures": 9}
+        self.assertEqual(discovery.production_outcome(totals, 9), (False, False, 1))
+
+    def test_broken_benefits_csv_is_a_structural_error(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "benefits.csv"
+            path.write_text("wrong,columns\nvalue,other\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "missing required columns"):
+                discovery.validate_benefits_csv(path)
+
     def legacy_test_multiple_search_items_continue_through_official_validation(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
