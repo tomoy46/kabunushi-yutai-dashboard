@@ -568,7 +568,7 @@ class OpenAIDiscoveryTests(unittest.TestCase):
             output = StringIO()
             with patch.object(discovery, "DATA", root), patch.dict(os.environ, {"OPENAI_API_KEY": "mock"}), \
                  patch.object(discovery, "discover_verified_official_source",
-                              return_value=("https://example.co.jp/benefit", "株主優待 100株 3月 優待券")), \
+                              return_value=("https://example.co.jp/benefit", "株主優待 100株 優待券")), \
                  patch.object(discovery, "verify_openai_access", side_effect=denial) as preflight, \
                  patch.object(discovery, "request_response") as response, redirect_stdout(output):
                 self.assertEqual(discovery.run(args), 1)

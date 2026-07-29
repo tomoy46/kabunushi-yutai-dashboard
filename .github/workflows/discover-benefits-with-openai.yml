@@ -69,6 +69,9 @@ jobs:
           echo "retry_research_log=${RETRY_RESEARCH_LOG}"
       - name: Test before using the production API
         run: npm test
+      - name: Discover free benefit candidates
+        id: candidates
+        run: python scripts/discover_benefit_candidates.py
       - name: Validate OpenAI configuration without calling the API
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -253,6 +256,12 @@ jobs:
           PARTIAL_SUCCESS: ${{ steps.discovery.outputs.partial_success }}
           FATAL_ERROR: ${{ steps.discovery.outputs.fatal_error }}
           COMMITTED: ${{ steps.commit_results.outputs.committed }}
+          NEW_CANDIDATES: ${{ steps.candidates.outputs.new_candidates }}
+          TDNET_CANDIDATES: ${{ steps.discovery.outputs.tdnet_candidates }}
+          JPX_CANDIDATES: ${{ steps.discovery.outputs.jpx_candidates }}
+          ABOLISHED_COUNT: ${{ steps.discovery.outputs.abolished }}
+          UPDATED_CANDIDATES: ${{ steps.discovery.outputs.updated_candidates }}
+          FULL_SCAN_PROCESSED: ${{ steps.discovery.outputs.full_scan_processed }}
         run: |
           committed="${COMMITTED:-no}"
           committed_confirmed_count=0
@@ -276,6 +285,7 @@ jobs:
           fi
           {
             echo "### Shareholder benefit discovery"
+            echo "- 新規候補発見数: ${NEW_CANDIDATES:-0}"
             echo "- confirmedとして保存: ${CONFIRMED_COUNT:-0}"
             echo "- research-logへ保存: ${RESEARCH_LOG_COUNT:-0}"
             echo "- failed: ${FAILED_COUNT:-0}"
@@ -287,6 +297,8 @@ jobs:
             echo "- OpenAI API calls: ${OPENAI_CALLS:-0}"
             echo "- high候補数: ${HIGH_COUNT:-0}"
             echo "- medium候補数: ${MEDIUM_COUNT:-0}"
+            echo "- TDnet候補数: ${TDNET_CANDIDATES:-0}"
+            echo "- JPX候補数: ${JPX_CANDIDATES:-0}"
             echo "- low候補数: ${LOW_COUNT:-0}"
             echo "- 無料抽出成功数: ${FREE_EXTRACTION_SUCCESS:-0}"
             echo "- 公式ドメイン発見数: ${OFFICIAL_DOMAINS_FOUND:-0}"
@@ -294,6 +306,9 @@ jobs:
             echo "- 企業公式URL候補数: ${OFFICIAL_COMPANY_URL_CANDIDATES:-0}"
             echo "- 非公式URL除外数: ${NON_OFFICIAL_URLS_EXCLUDED:-0}"
             echo "- 公式資料取得成功数: ${OFFICIAL_MATERIAL_FETCH_SUCCESS:-0}"
+            echo "- abolished数: ${ABOLISHED_COUNT:-0}"
+            echo "- updated候補数: ${UPDATED_CANDIDATES:-0}"
+            echo "- 全社総当たり処理数: ${FULL_SCAN_PROCESSED:-0}"
             echo "- 公式トップページ発見数: ${OFFICIAL_HOMEPAGES_FOUND:-0}"
             echo "- 公式IRページ発見数: ${OFFICIAL_IR_PAGES_FOUND:-0}"
             echo "- 優待ページ発見数: ${BENEFIT_PAGES_FOUND:-0}"
