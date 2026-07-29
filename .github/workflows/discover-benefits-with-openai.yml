@@ -250,9 +250,19 @@ jobs:
           PRE_OPENAI_SPARSE_SKIPPED: ${{ steps.discovery.outputs.pre_openai_one_or_zero_skipped }}
           OFFICIAL_403_FALLBACK_COMPANIES: ${{ steps.discovery.outputs.official_403_fallback_companies }}
           FALLBACK_CONFIRMED: ${{ steps.discovery.outputs.fallback_confirmed }}
+          PARTIAL_SUCCESS: ${{ steps.discovery.outputs.partial_success }}
+          FATAL_ERROR: ${{ steps.discovery.outputs.fatal_error }}
           COMMITTED: ${{ steps.commit_results.outputs.committed }}
         run: |
           committed="${COMMITTED:-no}"
+          committed_confirmed_count=0
+          committed_research_log_count=0
+          committed_failed_count=0
+          if [ "$committed" = yes ]; then
+            committed_confirmed_count="${CONFIRMED_COUNT:-0}"
+            committed_research_log_count="${RESEARCH_LOG_COUNT:-0}"
+            committed_failed_count="${FAILED_COUNT:-0}"
+          fi
           echo "WORKFLOW SUMMARY: confirmed saved=${CONFIRMED_COUNT:-0} research-log saved=${RESEARCH_LOG_COUNT:-0} failed=${FAILED_COUNT:-0} git committed=${committed}"
           if [ "${CONFIRMED_COUNT:-0}" = 0 ]; then
             echo "::warning::confirmed=0; OpenAI calls=${OPENAI_CALLS:-0}; cause=${ZERO_CONFIRMED_CAUSE:-not_reported}"
@@ -269,6 +279,11 @@ jobs:
             echo "- confirmedとして保存: ${CONFIRMED_COUNT:-0}"
             echo "- research-logへ保存: ${RESEARCH_LOG_COUNT:-0}"
             echo "- failed: ${FAILED_COUNT:-0}"
+            echo "- partial_success: ${PARTIAL_SUCCESS:-false}"
+            echo "- fatal_error: ${FATAL_ERROR:-false}"
+            echo "- committed_confirmed_count: ${committed_confirmed_count}"
+            echo "- committed_research_log_count: ${committed_research_log_count}"
+            echo "- committed_failed_count: ${committed_failed_count}"
             echo "- OpenAI API calls: ${OPENAI_CALLS:-0}"
             echo "- high候補数: ${HIGH_COUNT:-0}"
             echo "- medium候補数: ${MEDIUM_COUNT:-0}"

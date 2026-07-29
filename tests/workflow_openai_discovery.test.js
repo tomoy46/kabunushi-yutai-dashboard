@@ -130,6 +130,10 @@ test('workflow reports all saved outcomes and commit status', () => {
   for (const text of ['confirmed saved=', 'research-log saved=', 'failed=', 'git committed=']) {
     assert.ok(command.includes(text));
   }
+  for (const metric of ['partial_success:', 'fatal_error:', 'committed_confirmed_count:',
+    'committed_research_log_count:', 'committed_failed_count:']) {
+    assert.ok(command.includes(metric));
+  }
   assert.equal(report.env.OPENAI_CALLS, '${{ steps.discovery.outputs.openai_calls }}');
   assert.equal(report.env.ZERO_CONFIRMED_CAUSE, '${{ steps.discovery.outputs.zero_confirmed_cause }}');
   assert.ok(command.includes('confirmed=0; OpenAI calls='));

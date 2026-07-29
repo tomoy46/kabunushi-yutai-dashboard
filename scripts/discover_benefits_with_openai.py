@@ -352,6 +352,18 @@ def atomic(path, value):
     temporary.replace(path)
 
 
+def validate_benefits_csv(path):
+    """Fail before API work when the commit-source CSV is structurally corrupt."""
+    with path.open(encoding="utf-8", newline="") as source:
+        reader = csv.DictReader(source)
+        required = {"code", "name"}
+        if not reader.fieldnames or not required.issubset(reader.fieldnames):
+            raise ValueError("benefits.csv is missing required columns: code, name")
+        for row_number, row in enumerate(reader, start=2):
+            if None in row:
+                raise ValueError(f"benefits.csv has excess fields at row {row_number}")
+
+
 def canonical_url(value):
     value = safe_text(value)
     try:
@@ -1950,6 +1962,23 @@ def publish_workflow_counts(totals):
                                                        ensure_ascii=False, separators=(",", ":")) + "\n")
         cause = totals.get("zero_confirmed_cause") or "none"
         stream.write(f"zero_confirmed_cause={cause}\n")
+        stream.write(f"partial_success={'true' if totals.get('partial_success') else 'false'}\n")
+        stream.write(f"fatal_error={'true' if totals.get('fatal_error') else 'false'}\n")
+
+
+def production_outcome(totals, selected_count, fatal_error=False):
+    """Return the exit status after every durable partial result has been saved.
+
+    Company-scoped failures are intentionally non-fatal when another company was
+    saved to benefits, research-log, or unresolved.  Authentication failures and
+    structural/persistence failures are workflow-scoped and remain fatal.
+    """
+    saved = (totals.get("successes", 0) + totals.get("research_log_saved", 0) +
+             totals.get("unresolved", 0))
+    failures = totals.get("failures", 0)
+    partial_success = failures > 0 and saved > 0
+    all_failed = selected_count > 0 and failures == selected_count and saved == 0
+    return partial_success, bool(fatal_error), 1 if fatal_error or all_failed else 0
 
 
 def diagnostic_outcome(totals, failed_stage):
@@ -2003,6 +2032,8 @@ def run(args):
         companies = [x for x in companies if x.get("code") == "1301"]
         if not companies: companies = [{"code": "1301", "name": "極洋", "official_domain": domains.get("1301")}]
     benefits = load(DATA / "benefits.json", []); queue = load(DATA / "verification-queue.json", [])
+    if not fixture or (DATA / "benefits.csv").exists():
+        validate_benefits_csv(DATA / "benefits.csv")
     progress = load(DATA / "discovery-progress.json", {"next_index": 0, "processed_codes": [], "failed_codes": []})
     selected = companies if args.diagnostic_mode else choose(companies, args, progress, benefits, queue)
     previous_usage = load(DATA / "openai-api-usage.json", [])
@@ -2353,11 +2384,15 @@ def run(args):
                 print(f'{label} {company["code"]} {company["name"]}: research_log')
         except OfficialSourceFetchError as error:
             totals["processed_companies"] += 1
-            totals["verification_required"] += 1
+            # 403s, timeouts, decoding errors, and PDF conversion failures are
+            # issuer-scoped failures.  Persist them and continue with the next
+            # issuer; they must never discard an earlier confirmed result.
+            totals["failures"] += 1
             if error.reason == "official_site_forbidden":
                 totals["unresolved"] += 1
             if not args.diagnostic_mode and error.reason == "official_site_forbidden":
                 append_unresolved(company, ["official_site_forbidden"], explored_urls)
+                save_progress(progress, company["code"], failed=True)
                 persist_production_state(benefits, queue, progress)
             elif not args.diagnostic_mode:
                 reasons = classified_reasons([error.reason])
@@ -2365,6 +2400,7 @@ def run(args):
                 append_research_log(company, "not_officially_verified", reasons,
                                     registered.get("url") if registered else None)
                 totals["research_log_saved"] += 1
+                save_progress(progress, company["code"], failed=True)
                 persist_production_state(benefits, queue, progress)
             outcome = ("unresolved (official_site_forbidden)" if error.reason == "official_site_forbidden"
                        else "research_log")
@@ -2395,6 +2431,7 @@ def run(args):
                 append_research_log(company, "api_failed", [error.message])
                 totals["research_log_saved"] += 1
             if not args.diagnostic_mode:
+                save_progress(progress, company["code"], failed=True)
                 if registered:
                     official_source_log(company, registered["url"], final_outcome="failed",
                                         final_reason="openai_api_failure",
@@ -2431,6 +2468,7 @@ def run(args):
                     official_source_log(company, registered["url"], final_outcome="failed",
                                         final_reason=getattr(error, "reason", "unhandled_exception"),
                                         exception_class=type(error).__name__, exception_message=error)
+                save_progress(progress, company["code"], failed=True)
                 persist_production_state(benefits, queue, progress)
                 label = "FIXTURE RESULT" if fixture else "PRODUCTION RESULT"
                 print(f'{label} {company["code"]} {company["name"]}: failed')
@@ -2498,12 +2536,17 @@ def run(args):
             print(f"ZERO CONFIRMED: OpenAI API calls={totals['responses_api_calls']} "
                   f"input_tokens={totals['input_tokens']} output_tokens={totals['output_tokens']} "
                   f"cause={totals['zero_confirmed_cause']}")
+        accounting_error = accounted + budget_deferred != len(selected)
+        partial_success, fatal_error, exit_code = production_outcome(
+            totals, len(selected), fatal_error=abort_openai or accounting_error)
+        totals["partial_success"] = partial_success
+        totals["fatal_error"] = fatal_error
+        print(f"WORKFLOW OUTCOME: partial_success={str(partial_success).lower()} "
+              f"fatal_error={str(fatal_error).lower()}")
         publish_workflow_counts(totals)
-        if accounted + budget_deferred != len(selected):
+        if accounting_error:
             print(f"ERROR: selected {len(selected)} companies but persisted outcomes for {accounted}", file=sys.stderr)
-            return 1
-        if abort_openai:
-            return 1
+        return exit_code
     if args.diagnostic_mode:
         result, exit_code = diagnostic_outcome(totals, failed_stage)
         verification_required = result == "success_with_verification_required"
@@ -2537,5 +2580,19 @@ def parser():
     result.add_argument("--official-only", action="store_true"); result.add_argument("--diagnostic-mode", action="store_true"); return result
 
 
+def main():
+    try:
+        return run(parser().parse_args())
+    except Exception as error:
+        # Structural input/persistence errors and unexpected exceptions are the
+        # workflow-scoped failures.  Still publish a machine-readable outcome
+        # so the always() summary and recovery steps can report it.
+        print(f"FATAL WORKFLOW ERROR: {type(error).__name__}: {safe_message(error)}", file=sys.stderr)
+        publish_workflow_counts({"successes": 0, "research_log_saved": 0, "failures": 0,
+                                 "responses_api_calls": 0, "partial_success": False,
+                                 "fatal_error": True})
+        return 1
+
+
 if __name__ == "__main__":
-    raise SystemExit(run(parser().parse_args()))
+    raise SystemExit(main())
