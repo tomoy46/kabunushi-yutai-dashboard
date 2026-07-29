@@ -12,7 +12,7 @@ from pathlib import Path
 DATA_FILES = (
     "benefits.json", "benefits.csv", "verification-queue.json",
     "discovery-progress.json", "research-log.json", "openai-api-usage.json",
-    "official-benefit-sources.json", "unresolved.json",
+    "official-benefit-sources.json", "unresolved.json", "blocked-official-urls.json",
 )
 
 
@@ -79,7 +79,7 @@ def capture(bundle):
 def apply(bundle):
     for name in DATA_FILES:
         base_path, local_path, target = bundle / "base" / name, bundle / "result" / name, Path("data") / name
-        if name == "unresolved.json" and (not base_path.exists() or not local_path.exists()):
+        if name in ("unresolved.json", "blocked-official-urls.json") and (not base_path.exists() or not local_path.exists()):
             # Recovery artifacts created before the unresolved queue existed are
             # still valid and simply carry no changes for this file.
             if not target.exists():
@@ -99,6 +99,8 @@ def apply(bundle):
         base, local, remote = load_json(base_path), load_json(local_path), load_json(target)
         if name in ("research-log.json", "unresolved.json"):
             merged = merge_changed([], local, remote, ("code", "checked_at"))
+        elif name == "blocked-official-urls.json":
+            merged = merge_changed([], local, remote, ("url", "blocked_at"))
         elif name == "openai-api-usage.json":
             merged = merge_changed([], local, remote, ("executed_at",))
         elif name in ("benefits.json", "verification-queue.json"):

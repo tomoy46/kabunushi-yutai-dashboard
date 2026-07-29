@@ -20,8 +20,9 @@ for attempt in 1 2 3; do
   python -m json.tool data/openai-api-usage.json >/dev/null
   python -m json.tool data/official-benefit-sources.json >/dev/null
   python -m json.tool data/unresolved.json >/dev/null
+  python -m json.tool data/blocked-official-urls.json >/dev/null
   npm test
-  git add data/benefits.csv data/benefits.json data/verification-queue.json data/discovery-progress.json data/research-log.json data/openai-api-usage.json data/official-benefit-sources.json data/unresolved.json
+  git add data/benefits.csv data/benefits.json data/verification-queue.json data/discovery-progress.json data/research-log.json data/openai-api-usage.json data/official-benefit-sources.json data/unresolved.json data/blocked-official-urls.json
   if git diff --cached --quiet; then
     echo "committed=no" >> "${GITHUB_OUTPUT:-/dev/null}"
     exit 0
