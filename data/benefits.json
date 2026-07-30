@@ -1,18 +1,18 @@
 [
   {
-    "name": "イオン",
-    "last_record_date": null,
-    "market": "プライム",
-    "official_verified_at": "2026-07-26",
-    "category": "買い物",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "8267",
     "official_source_url": "https://www.aeon.info/ir/stock/benefit/",
-    "industry": "小売業",
+    "code": "8267",
+    "category": "買い物",
+    "market": "プライム",
     "change_or_abolition_note": "2025年9月1日の株式分割に伴い区分変更",
+    "industry": "小売業",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-26",
+    "name": "イオン",
     "record_months": [
       2,
       8
@@ -50,19 +50,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "すかいらーくホールディングス",
-    "last_record_date": null,
-    "market": "プライム",
-    "official_verified_at": "2026-07-26",
-    "category": "食事券",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "3197",
     "official_source_url": "https://corp.skylark.co.jp/ir/stock/incentive/",
-    "industry": "小売業",
+    "code": "3197",
+    "category": "食事券",
+    "market": "プライム",
     "change_or_abolition_note": "変更・廃止予定の公式発表なし",
+    "industry": "小売業",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-26",
+    "name": "すかいらーくホールディングス",
     "record_months": [
       6,
       12
@@ -95,19 +95,19 @@
     "annual_value_yen": 4000
   },
   {
-    "name": "日本マクドナルドホールディングス",
-    "last_record_date": null,
-    "market": "スタンダード",
-    "official_verified_at": "2026-07-26",
-    "category": "食事券",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "継続保有1年以上",
-    "abolished_at": null,
-    "code": "2702",
     "official_source_url": "https://www.mcd-holdings.co.jp/ir/individual/shareholder_benefits/",
-    "industry": "小売業",
+    "code": "2702",
+    "category": "食事券",
+    "market": "スタンダード",
     "change_or_abolition_note": "変更・廃止予定の公式発表なし",
+    "industry": "小売業",
+    "last_record_date": null,
+    "long_term_condition": "継続保有1年以上",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-26",
+    "name": "日本マクドナルドホールディングス",
     "record_months": [
       6,
       12
@@ -135,19 +135,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "日本たばこ産業",
-    "last_record_date": "2022-12-31",
-    "market": "プライム",
-    "official_verified_at": "2026-07-26",
-    "category": "商品",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "廃止済み",
-    "abolished_at": "2022-12-31",
-    "code": "2914",
     "official_source_url": "https://www.jti.co.jp/investors/stock/privilege/index.html",
-    "industry": "食料品",
+    "code": "2914",
+    "category": "商品",
+    "market": "プライム",
     "change_or_abolition_note": "2022年12月31日基準の対象者への贈呈をもって廃止",
+    "industry": "食料品",
+    "last_record_date": "2022-12-31",
+    "long_term_condition": "廃止済み",
     "benefit_status": "abolished",
+    "abolished_at": "2022-12-31",
+    "official_verified_at": "2026-07-26",
+    "name": "日本たばこ産業",
     "record_months": [
       12
     ],
@@ -164,19 +164,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "オリックス",
-    "last_record_date": "2024-03-31",
-    "market": "プライム",
-    "official_verified_at": "2026-07-26",
-    "category": "廃止済み",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "廃止済み",
-    "abolished_at": "2024-03-31",
-    "code": "8591",
     "official_source_url": "https://www.orix.co.jp/grp/company/newsroom/newsrelease/220511_ORIXG.html",
-    "industry": "その他金融業",
+    "code": "8591",
+    "category": "廃止済み",
+    "market": "プライム",
     "change_or_abolition_note": "2024年3月31日基準の対象者への贈呈をもって廃止",
+    "industry": "その他金融業",
+    "last_record_date": "2024-03-31",
+    "long_term_condition": "廃止済み",
     "benefit_status": "abolished",
+    "abolished_at": "2024-03-31",
+    "official_verified_at": "2026-07-26",
+    "name": "オリックス",
     "record_months": [
       3
     ],
@@ -193,19 +193,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "KDDI",
-    "last_record_date": null,
-    "market": "プライム",
-    "official_verified_at": "2026-07-26",
-    "category": "デジタルギフト",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "継続保有1年以上",
-    "abolished_at": null,
-    "code": "9433",
     "official_source_url": "https://www.kddi.com/corporate/ir/individual/stockholder/",
-    "industry": "情報・通信業",
+    "code": "9433",
+    "category": "デジタルギフト",
+    "market": "プライム",
     "change_or_abolition_note": "2026年度から200株以上・1年以上へ条件変更",
+    "industry": "情報・通信業",
+    "last_record_date": null,
+    "long_term_condition": "継続保有1年以上",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-26",
+    "name": "KDDI",
     "record_months": [
       3
     ],
@@ -227,19 +227,19 @@
     "annual_value_yen": 2000
   },
   {
-    "name": "オリエンタルランド",
-    "last_record_date": null,
-    "market": "プライム",
-    "official_verified_at": "2026-07-26",
-    "category": "レジャー",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "通常制度は500株以上。100株以上を3年以上継続保有する株主向け長期保有制度あり",
-    "abolished_at": null,
-    "code": "4661",
     "official_source_url": "https://www.olc.co.jp/ja/ir/benefit.html",
-    "industry": "サービス業",
+    "code": "4661",
+    "category": "レジャー",
+    "market": "プライム",
     "change_or_abolition_note": "変更・廃止予定の公式発表なし",
+    "industry": "サービス業",
+    "last_record_date": null,
+    "long_term_condition": "通常制度は500株以上。100株以上を3年以上継続保有する株主向け長期保有制度あり",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-26",
+    "name": "オリエンタルランド",
     "record_months": [
       3,
       9
@@ -292,19 +292,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "日本航空",
-    "last_record_date": null,
-    "market": "プライム",
-    "official_verified_at": "2026-07-26",
-    "category": "割引券",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし（長期保有株主への追加発行あり）",
-    "abolished_at": null,
-    "code": "9201",
     "official_source_url": "https://www.jal.com/ja/investor/individual/guidance/",
-    "industry": "空運業",
+    "code": "9201",
+    "category": "割引券",
+    "market": "プライム",
     "change_or_abolition_note": "変更・廃止予定の公式発表なし",
+    "industry": "空運業",
+    "last_record_date": null,
+    "long_term_condition": "なし（長期保有株主への追加発行あり）",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-26",
+    "name": "日本航空",
     "record_months": [
       3,
       9
@@ -332,19 +332,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "東宝",
-    "last_record_date": null,
-    "market": "プライム",
-    "official_verified_at": "2026-07-26",
-    "category": "映画",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "9602",
     "official_source_url": "https://www.toho.co.jp/company/ir/stock/bond.html",
-    "industry": "情報・通信業",
+    "code": "9602",
+    "category": "映画",
+    "market": "プライム",
     "change_or_abolition_note": "変更・廃止予定の公式発表なし",
+    "industry": "情報・通信業",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-26",
+    "name": "東宝",
     "record_months": [
       2,
       8
@@ -377,19 +377,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "キリンホールディングス",
-    "last_record_date": null,
-    "market": "プライム",
-    "official_verified_at": "2026-07-26",
-    "category": "商品",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "継続保有1年以上",
-    "abolished_at": null,
-    "code": "2503",
     "official_source_url": "https://www.kirinholdings.com/jp/investors/stock/benefit/",
-    "industry": "食料品",
+    "code": "2503",
+    "category": "商品",
+    "market": "プライム",
     "change_or_abolition_note": "2024年12月末基準から継続保有期間に応じる制度へ変更",
+    "industry": "食料品",
+    "last_record_date": null,
+    "long_term_condition": "継続保有1年以上",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-26",
+    "name": "キリンホールディングス",
     "record_months": [
       12
     ],
@@ -421,19 +421,19 @@
     "annual_value_yen": 500
   },
   {
-    "name": "ドトール・日レスホールディングス",
-    "last_record_date": null,
-    "market": "プライム",
-    "official_verified_at": "2026-07-26",
-    "category": "食事券",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "3087",
     "official_source_url": "https://www.dnh.co.jp/html/ir/stock.html",
-    "industry": "小売業",
+    "code": "3087",
+    "category": "食事券",
+    "market": "プライム",
     "change_or_abolition_note": "変更・廃止予定の公式発表なし",
+    "industry": "小売業",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-26",
+    "name": "ドトール・日レスホールディングス",
     "record_months": [
       2
     ],
@@ -460,19 +460,19 @@
     "annual_value_yen": 1000
   },
   {
-    "name": "サンリオ",
-    "last_record_date": null,
-    "market": "プライム",
-    "official_verified_at": "2026-07-26",
-    "category": "レジャー",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "8136",
     "official_source_url": "https://corporate.sanrio.co.jp/ir/stock/benefit/",
-    "industry": "卸売業",
+    "code": "8136",
+    "category": "レジャー",
+    "market": "プライム",
     "change_or_abolition_note": "変更・廃止予定の公式発表なし",
+    "industry": "卸売業",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-26",
+    "name": "サンリオ",
     "record_months": [
       3,
       9
@@ -510,19 +510,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "極洋",
-    "last_record_date": null,
-    "market": "プライム",
-    "official_verified_at": "2026-07-26",
-    "category": "食料品・水産加工品（自社製品）",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "1301",
     "official_source_url": "https://www.kyokuyo.co.jp/ir/concept/",
-    "industry": "水産・農林業",
+    "code": "1301",
+    "category": "食料品・水産加工品（自社製品）",
+    "market": "プライム",
     "change_or_abolition_note": "3月31日現在の株主に保有株式数に応じた自社製品を毎年7月贈呈予定",
+    "industry": "水産・農林業",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-26",
+    "name": "極洋",
     "record_months": [
       3
     ],
@@ -546,19 +546,19 @@
     "annual_value_yen": 2500
   },
   {
-    "name": "ゼンショーホールディングス",
-    "last_record_date": null,
-    "market": "プライム",
-    "official_verified_at": "2026-07-27",
-    "category": "食事券（株主優待券）",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "公式資料に長期保有条件の記載なし",
-    "abolished_at": null,
-    "code": "7550",
     "official_source_url": "https://www.zensho.co.jp/jp/ir/investor/complimentary.html",
-    "industry": "小売業",
+    "code": "7550",
+    "category": "食事券（株主優待券）",
+    "market": "プライム",
     "change_or_abolition_note": "株主優待券の発送方法について、2026年3月末日現在の株主さまへの優待（2026年6月発送分）より、6月末頃発送から「株主総会招集ご通知」同封（6月初旬頃発送）へ変更。",
+    "industry": "小売業",
+    "last_record_date": null,
+    "long_term_condition": "公式資料に長期保有条件の記載なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-27",
+    "name": "ゼンショーホールディングス",
     "record_months": [
       3,
       9
@@ -601,19 +601,19 @@
     "annual_value_yen": 2000
   },
   {
-    "name": "コロワイド",
-    "last_record_date": null,
-    "market": "プライム",
-    "official_verified_at": "2026-07-27",
-    "category": "株主優待カード発送・ポイント付与",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "公式資料に長期保有条件の記載なし",
-    "abolished_at": null,
-    "code": "7616",
     "official_source_url": "https://www.colowide.co.jp/ir/stock_info/stockholder_qa/",
-    "industry": "小売業",
+    "code": "7616",
+    "category": "株主優待カード発送・ポイント付与",
+    "market": "プライム",
     "change_or_abolition_note": "",
+    "industry": "小売業",
+    "last_record_date": null,
+    "long_term_condition": "公式資料に長期保有条件の記載なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-27",
+    "name": "コロワイド",
     "record_months": [
       3,
       6,
@@ -634,19 +634,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "アトム",
-    "last_record_date": null,
-    "market": "スタンダード",
-    "official_verified_at": "2026-07-27",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "公式資料に長期保有条件の記載なし",
-    "abolished_at": null,
-    "code": "7412",
     "official_source_url": "https://www.atom-corp.co.jp/ir/shareholder.html",
-    "industry": "小売業",
+    "code": "7412",
+    "category": "",
+    "market": "スタンダード",
     "change_or_abolition_note": "2026年9月末を基準日とする株主優待（2026年12月ポイント付与分）より変更。詳細は2026年6月12日開示の「株主優待制度の変更に関するお知らせ」。",
+    "industry": "小売業",
+    "last_record_date": null,
+    "long_term_condition": "公式資料に長期保有条件の記載なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-27",
+    "name": "アトム",
     "record_months": [
       9,
       3
@@ -701,19 +701,19 @@
     "annual_value_yen": 2000
   },
   {
-    "name": "吉野家ホールディングス",
-    "last_record_date": null,
-    "market": "プライム",
-    "official_verified_at": "2026-07-28",
-    "category": "株主優待券",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "公式資料に長期保有条件の記載なし",
-    "abolished_at": null,
-    "code": "9861",
     "official_source_url": "https://www.yoshinoya-holdings.com/ir/info/dividend/",
-    "industry": "小売業",
+    "code": "9861",
+    "category": "株主優待券",
+    "market": "プライム",
     "change_or_abolition_note": "",
+    "industry": "小売業",
+    "last_record_date": null,
+    "long_term_condition": "公式資料に長期保有条件の記載なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-28",
+    "name": "吉野家ホールディングス",
     "record_months": [
       2,
       8
@@ -750,19 +750,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ニッスイ",
-    "last_record_date": null,
-    "market": "プライム",
-    "official_verified_at": "2026-07-28",
-    "category": "自社商品",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "",
-    "abolished_at": null,
-    "code": "1332",
     "official_source_url": "https://hayamarumaruhaya.com/nissui-yutai-haitou-2025/",
-    "industry": "水産・農林業",
+    "code": "1332",
+    "category": "自社商品",
+    "market": "プライム",
     "change_or_abolition_note": "",
+    "industry": "水産・農林業",
+    "last_record_date": null,
+    "long_term_condition": "",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-28",
+    "name": "ニッスイ",
     "record_months": [
       3,
       9
@@ -787,19 +787,19 @@
     "annual_value_yen": 3000
   },
   {
-    "name": "ベルグアース",
-    "last_record_date": null,
-    "market": "スタンダード",
-    "official_verified_at": "2026-07-28",
-    "category": "株主優待",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "1383",
     "official_source_url": "https://hayamarumaruhaya.com/berg-earth-yutai/",
-    "industry": "水産・農林業",
+    "code": "1383",
+    "category": "株主優待",
+    "market": "スタンダード",
     "change_or_abolition_note": "",
+    "industry": "水産・農林業",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-28",
+    "name": "ベルグアース",
     "record_months": [
       4,
       10
@@ -818,19 +818,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "光フードサービス",
-    "last_record_date": null,
-    "market": "グロース",
-    "official_verified_at": "2026-07-28",
-    "category": "株主優待（外食/居酒屋・電子チケット）",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "公式資料に長期保有条件の記載なし",
-    "abolished_at": null,
-    "code": "138A",
     "official_source_url": "https://nyobopao.com/?p=86",
-    "industry": "小売業",
+    "code": "138A",
+    "category": "株主優待（外食/居酒屋・電子チケット）",
+    "market": "グロース",
     "change_or_abolition_note": "",
+    "industry": "小売業",
+    "last_record_date": null,
+    "long_term_condition": "公式資料に長期保有条件の記載なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-28",
+    "name": "光フードサービス",
     "record_months": [
       2,
       5,
@@ -865,19 +865,19 @@
     "annual_value_yen": 10000
   },
   {
-    "name": "ミライト・ワン",
-    "last_record_date": null,
-    "market": "プライム",
-    "official_verified_at": "2026-07-28",
-    "category": "寄付・クオカード等（選択）",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "",
-    "abolished_at": null,
-    "code": "1417",
     "official_source_url": "https://smayu.jp/company/mirait-one/",
-    "industry": "建設業",
+    "code": "1417",
+    "category": "寄付・クオカード等（選択）",
+    "market": "プライム",
     "change_or_abolition_note": "",
+    "industry": "建設業",
+    "last_record_date": null,
+    "long_term_condition": "",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-28",
+    "name": "ミライト・ワン",
     "record_months": [
       3
     ],
@@ -925,19 +925,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "サンヨーホームズ",
-    "last_record_date": null,
-    "market": "スタンダード",
-    "official_verified_at": "2026-07-28",
-    "category": "株主優待",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "",
-    "abolished_at": null,
-    "code": "1420",
     "official_source_url": "https://www.sanyohomes.co.jp/ir/yutai.html",
-    "industry": "建設業",
+    "code": "1420",
+    "category": "株主優待",
+    "market": "スタンダード",
     "change_or_abolition_note": "",
+    "industry": "建設業",
+    "last_record_date": null,
+    "long_term_condition": "",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-28",
+    "name": "サンヨーホームズ",
     "record_months": [
       3
     ],
@@ -961,19 +961,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "Ｌｉｂ　Ｗｏｒｋ",
-    "last_record_date": null,
-    "market": "グロース",
-    "official_verified_at": "2026-07-28",
-    "category": "stockholder_benefit",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "",
-    "abolished_at": null,
-    "code": "1431",
     "official_source_url": "https://www.libwork.co.jp/ir-benefit/",
-    "industry": "建設業",
+    "code": "1431",
+    "category": "stockholder_benefit",
+    "market": "グロース",
     "change_or_abolition_note": "平成29年6月20日付で制度の一部変更（従来のMUJI GIFT CARDからクオカードおよび投資用アパート割引へ）。",
+    "industry": "建設業",
+    "last_record_date": null,
+    "long_term_condition": "",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-28",
+    "name": "Ｌｉｂ　Ｗｏｒｋ",
     "record_months": [
       9,
       12,
@@ -1024,19 +1024,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "日鉄鉱業",
-    "last_record_date": null,
-    "market": "プライム",
-    "official_verified_at": "2026-07-28",
-    "category": "株主優待",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "公式資料に長期保有条件の記載なし",
-    "abolished_at": null,
-    "code": "1515",
     "official_source_url": "https://www.nittetsukou.co.jp/ir/stock/compliments.html",
-    "industry": "鉱業",
+    "code": "1515",
+    "category": "株主優待",
+    "market": "プライム",
     "change_or_abolition_note": "",
+    "industry": "鉱業",
+    "last_record_date": null,
+    "long_term_condition": "公式資料に長期保有条件の記載なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-28",
+    "name": "日鉄鉱業",
     "record_months": [
       3
     ],
@@ -1072,19 +1072,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "三井松島ホールディングス",
-    "last_record_date": null,
-    "market": "プライム",
-    "official_verified_at": "2026-07-28",
-    "category": "stockholder_benefit",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "公式資料に長期保有条件の記載なし",
-    "abolished_at": null,
-    "code": "1518",
     "official_source_url": "https://www.mitsui-matsushima.co.jp/ir/specialtreatment/",
-    "industry": "その他製品",
+    "code": "1518",
+    "category": "stockholder_benefit",
+    "market": "プライム",
     "change_or_abolition_note": "",
+    "industry": "その他製品",
+    "last_record_date": null,
+    "long_term_condition": "公式資料に長期保有条件の記載なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-28",
+    "name": "三井松島ホールディングス",
     "record_months": [
       3,
       9
@@ -1139,19 +1139,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "東建コーポレーション",
-    "last_record_date": null,
-    "market": "プライム",
-    "official_verified_at": "2026-07-28",
-    "category": "株主優待",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "公式資料に長期保有条件の記載なし",
-    "abolished_at": null,
-    "code": "1766",
     "official_source_url": "https://www.token.co.jp/ir/investors/shareholder_privilege/",
-    "industry": "建設業",
+    "code": "1766",
+    "category": "株主優待",
+    "market": "プライム",
     "change_or_abolition_note": "",
+    "industry": "建設業",
+    "last_record_date": null,
+    "long_term_condition": "公式資料に長期保有条件の記載なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-28",
+    "name": "東建コーポレーション",
     "record_months": [
       4
     ],
@@ -1181,19 +1181,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ｆａｎｔａｓｉｓｔａ",
-    "last_record_date": null,
-    "market": "スタンダード",
-    "official_verified_at": "2026-07-28",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "公式資料に長期保有条件の記載なし",
-    "abolished_at": null,
-    "code": "1783",
     "official_source_url": "https://fantasista-tokyo.jp/ir/dividend/",
-    "industry": "不動産業",
+    "code": "1783",
+    "category": "",
+    "market": "スタンダード",
     "change_or_abolition_note": "",
+    "industry": "不動産業",
+    "last_record_date": null,
+    "long_term_condition": "公式資料に長期保有条件の記載なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-28",
+    "name": "ｆａｎｔａｓｉｓｔａ",
     "record_months": [
       9
     ],
@@ -1211,19 +1211,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ヤマウラ",
-    "last_record_date": null,
-    "market": "プライム",
-    "official_verified_at": "2026-07-28",
-    "category": "食品",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "公式資料に長期保有条件の記載なし",
-    "abolished_at": null,
-    "code": "1780",
     "official_source_url": "https://kabuusa.com/%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%83%A4%E3%83%9E%E3%82%A6%E3%83%A9%EF%BC%91%EF%BC%97%EF%BC%98%EF%BC%90%E3%81%AE%E6%A0%AA%E4%B8%BB%E5%84%AA%E5%BE%85/",
-    "industry": "建設業",
+    "code": "1780",
+    "category": "食品",
+    "market": "プライム",
     "change_or_abolition_note": "",
+    "industry": "建設業",
+    "last_record_date": null,
+    "long_term_condition": "公式資料に長期保有条件の記載なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-28",
+    "name": "ヤマウラ",
     "record_months": [
       3
     ],
@@ -1253,19 +1253,19 @@
     "annual_value_yen": 3000
   },
   {
-    "name": "Ｃｈｏｒｄｉａ　Ｔｈｅｒａｐｅｕｔｉｃｓ",
-    "last_record_date": null,
-    "market": "グロース",
-    "official_verified_at": "2026-07-28",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "公式資料に長期保有条件の記載なし",
-    "abolished_at": null,
-    "code": "190A",
     "official_source_url": "https://www.nikkei.com/nkd/company/?scode=190A",
-    "industry": "医薬品",
+    "code": "190A",
+    "category": "",
+    "market": "グロース",
     "change_or_abolition_note": "",
+    "industry": "医薬品",
+    "last_record_date": null,
+    "long_term_condition": "公式資料に長期保有条件の記載なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-28",
+    "name": "Ｃｈｏｒｄｉａ　Ｔｈｅｒａｐｅｕｔｉｃｓ",
     "record_months": [
       8,
       7,
@@ -1285,19 +1285,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "テクノ菱和",
-    "last_record_date": null,
-    "market": "スタンダード",
-    "official_verified_at": "2026-07-29",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "公式資料に長期保有条件の記載なし",
-    "abolished_at": null,
-    "code": "1965",
     "official_source_url": "https://www.techno-ryowa.co.jp/ir-library/",
-    "industry": "建設業",
+    "code": "1965",
+    "category": "",
+    "market": "スタンダード",
     "change_or_abolition_note": "",
+    "industry": "建設業",
+    "last_record_date": null,
+    "long_term_condition": "公式資料に長期保有条件の記載なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-29",
+    "name": "テクノ菱和",
     "record_months": [
       3
     ],
@@ -1315,19 +1315,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "雪国まいたけ",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "6か月以上継続保有",
-    "abolished_at": null,
-    "code": "1375",
     "official_source_url": "https://www.yukiguni-factory.co.jp/ir/benefit/",
-    "industry": "",
+    "code": "1375",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "6か月以上継続保有",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "雪国まいたけ",
     "record_months": [
       3
     ],
@@ -1344,19 +1344,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "秋川牧園",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "1380",
     "official_source_url": "https://www.akikawabokuen.com/ir-yutai/",
-    "industry": "",
+    "code": "1380",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "秋川牧園",
     "record_months": [
       3
     ],
@@ -1373,19 +1373,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "タマホーム",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "3年以上で優待額増額",
-    "abolished_at": null,
-    "code": "1419",
     "official_source_url": "https://www.tamahome.jp/company/ir/stock_bond/stock_bond_03.html",
-    "industry": "",
+    "code": "1419",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "3年以上で優待額増額",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "タマホーム",
     "record_months": [
       5,
       11
@@ -1403,19 +1403,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "新日本建設",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "1879",
     "official_source_url": "https://www.shinnihon-c.co.jp/ir/stock/benefit/",
-    "industry": "",
+    "code": "1879",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "新日本建設",
     "record_months": [
       3
     ],
@@ -1432,19 +1432,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "日本ドライケミカル",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "1909",
     "official_source_url": "https://www.ndc-group.co.jp/ir/stock/stock_preferential_treatment/index.html",
-    "industry": "",
+    "code": "1909",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "日本ドライケミカル",
     "record_months": [
       9
     ],
@@ -1461,19 +1461,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ニップン",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "2001",
     "official_source_url": "https://www.nippn.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "2001",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ニップン",
     "record_months": [
       3,
       9
@@ -1491,19 +1491,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "日清製粉グループ本社",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "2002",
     "official_source_url": "https://www.nisshin.com/ir/stock/benefit/",
-    "industry": "",
+    "code": "2002",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "日清製粉グループ本社",
     "record_months": [
       3
     ],
@@ -1520,19 +1520,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "森永製菓",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "6か月以上継続保有",
-    "abolished_at": null,
-    "code": "2201",
     "official_source_url": "https://www.morinaga.co.jp/company/ir/stock/benefit.html",
-    "industry": "",
+    "code": "2201",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "6か月以上継続保有",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "森永製菓",
     "record_months": [
       9
     ],
@@ -1549,19 +1549,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "江崎グリコ",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "6か月以上継続保有",
-    "abolished_at": null,
-    "code": "2206",
     "official_source_url": "https://www.glico.com/jp/company/ir/stock/benefit/",
-    "industry": "",
+    "code": "2206",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "6か月以上継続保有",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "江崎グリコ",
     "record_months": [
       6
     ],
@@ -1578,19 +1578,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "寿スピリッツ",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "2222",
     "official_source_url": "https://www.kotobukispirits.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "2222",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "寿スピリッツ",
     "record_months": [
       3
     ],
@@ -1607,19 +1607,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ヤクルト本社",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "2267",
     "official_source_url": "https://www.yakult.co.jp/company/ir/stock/benefit.html",
-    "industry": "",
+    "code": "2267",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ヤクルト本社",
     "record_months": [
       3,
       9
@@ -1637,19 +1637,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "明治ホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "2269",
     "official_source_url": "https://www.meiji.com/investor/stock_info/benefit/",
-    "industry": "",
+    "code": "2269",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "明治ホールディングス",
     "record_months": [
       3
     ],
@@ -1666,19 +1666,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "日本ハム",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "2282",
     "official_source_url": "https://www.nipponham.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "2282",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "日本ハム",
     "record_months": [
       3
     ],
@@ -1695,19 +1695,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "丸大食品",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "2288",
     "official_source_url": "https://www.marudai.jp/corporate/ir/stock/benefit.html",
-    "industry": "",
+    "code": "2288",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "丸大食品",
     "record_months": [
       9
     ],
@@ -1724,19 +1724,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "伊藤ハム米久ホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "2296",
     "official_source_url": "https://www.itoham-yonekyu-holdings.com/ir/stock/benefit.html",
-    "industry": "",
+    "code": "2296",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "伊藤ハム米久ホールディングス",
     "record_months": [
       3
     ],
@@ -1753,19 +1753,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "宝ホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "1年以上継続保有",
-    "abolished_at": null,
-    "code": "2531",
     "official_source_url": "https://www.takara.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "2531",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上継続保有",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "宝ホールディングス",
     "record_months": [
       3
     ],
@@ -1782,19 +1782,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ダイドーグループホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "5年以上継続保有（初回の記念品は100株・半年以上）",
-    "abolished_at": null,
-    "code": "2590",
     "official_source_url": "https://www.dydo-ghd.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "2590",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "5年以上継続保有（初回の記念品は100株・半年以上）",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ダイドーグループホールディングス",
     "record_months": [
       1
     ],
@@ -1811,19 +1811,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "キーコーヒー",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "2594",
     "official_source_url": "https://www.keycoffee.co.jp/ir/stock/benefit/",
-    "industry": "",
+    "code": "2594",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "キーコーヒー",
     "record_months": [
       3,
       9
@@ -1841,19 +1841,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "不二製油グループ本社",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "2607",
     "official_source_url": "https://www.fujioilholdings.com/ir/stock/benefit/",
-    "industry": "",
+    "code": "2607",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "不二製油グループ本社",
     "record_months": [
       3
     ],
@@ -1870,19 +1870,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "J-オイルミルズ",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "2613",
     "official_source_url": "https://www.j-oil.com/ir/stock/benefit.html",
-    "industry": "",
+    "code": "2613",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "J-オイルミルズ",
     "record_months": [
       3
     ],
@@ -1899,19 +1899,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "焼肉坂井ホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "2694",
     "official_source_url": "https://ys-holdings.co.jp/ir/benefit/",
-    "industry": "",
+    "code": "2694",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "焼肉坂井ホールディングス",
     "record_months": [
       3,
       9
@@ -1929,19 +1929,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "エディオン",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "1年以上で優待額増額",
-    "abolished_at": null,
-    "code": "2730",
     "official_source_url": "https://www.edion.co.jp/ir/benefit",
-    "industry": "",
+    "code": "2730",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上で優待額増額",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "エディオン",
     "record_months": [
       3
     ],
@@ -1958,19 +1958,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "フジオフードグループ本社",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "2752",
     "official_source_url": "https://fujiogroup.com/ir/stockholder.html",
-    "industry": "",
+    "code": "2752",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "フジオフードグループ本社",
     "record_months": [
       6,
       12
@@ -1988,19 +1988,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "キッコーマン",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "1年以上継続保有",
-    "abolished_at": null,
-    "code": "2801",
     "official_source_url": "https://www.kikkoman.com/jp/ir/shareholder/benefit.html",
-    "industry": "",
+    "code": "2801",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上継続保有",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "キッコーマン",
     "record_months": [
       3
     ],
@@ -2017,19 +2017,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ハウス食品グループ本社",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "6か月以上継続保有",
-    "abolished_at": null,
-    "code": "2810",
     "official_source_url": "https://housefoods-group.com/ir/stock/benefit.html",
-    "industry": "",
+    "code": "2810",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "6か月以上継続保有",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ハウス食品グループ本社",
     "record_months": [
       3,
       9
@@ -2047,19 +2047,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "カゴメ",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "6か月以上継続保有",
-    "abolished_at": null,
-    "code": "2811",
     "official_source_url": "https://www.kagome.co.jp/company/ir/stock/benefit/",
-    "industry": "",
+    "code": "2811",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "6か月以上継続保有",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "カゴメ",
     "record_months": [
       6
     ],
@@ -2076,19 +2076,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "東洋水産",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "1年以上継続保有",
-    "abolished_at": null,
-    "code": "2875",
     "official_source_url": "https://www.maruchan.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "2875",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上継続保有",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "東洋水産",
     "record_months": [
       3
     ],
@@ -2105,19 +2105,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "フジッコ",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "6か月以上継続保有",
-    "abolished_at": null,
-    "code": "2908",
     "official_source_url": "https://www.fujicco.co.jp/corp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "2908",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "6か月以上継続保有",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "フジッコ",
     "record_months": [
       3
     ],
@@ -2134,19 +2134,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "なとり",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "2922",
     "official_source_url": "https://www.natori.co.jp/corporate/ir/stock/benefit.html",
-    "industry": "",
+    "code": "2922",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "なとり",
     "record_months": [
       3
     ],
@@ -2163,19 +2163,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ピックルスホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "2935",
     "official_source_url": "https://www.pickles-hd.co.jp/ir/stock/benefit/",
-    "industry": "",
+    "code": "2935",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ピックルスホールディングス",
     "record_months": [
       2
     ],
@@ -2192,19 +2192,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "グンゼ",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "3002",
     "official_source_url": "https://www.gunze.co.jp/ir/stock/benefit/",
-    "industry": "",
+    "code": "3002",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "グンゼ",
     "record_months": [
       3,
       9
@@ -2222,19 +2222,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "神戸物産",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "3038",
     "official_source_url": "https://www.kobebussan.co.jp/ir/stockholder.php",
-    "industry": "",
+    "code": "3038",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "神戸物産",
     "record_months": [
       10
     ],
@@ -2251,19 +2251,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ビックカメラ",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "1年以上で追加贈呈",
-    "abolished_at": null,
-    "code": "3048",
     "official_source_url": "https://www.biccamera.co.jp/ir/service/index.html",
-    "industry": "",
+    "code": "3048",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上で追加贈呈",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ビックカメラ",
     "record_months": [
       2,
       8
@@ -2281,19 +2281,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ジェイグループホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "3063",
     "official_source_url": "https://www.jgroup.jp/ir/benefit.html",
-    "industry": "",
+    "code": "3063",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ジェイグループホールディングス",
     "record_months": [
       2,
       8
@@ -2311,19 +2311,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "WDI",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "3068",
     "official_source_url": "https://www.wdi.co.jp/ir/benefit",
-    "industry": "",
+    "code": "3068",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "WDI",
     "record_months": [
       3
     ],
@@ -2340,19 +2340,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "DDグループ",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "3073",
     "official_source_url": "https://www.dd-grp.com/ir/benefit/",
-    "industry": "",
+    "code": "3073",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "DDグループ",
     "record_months": [
       2
     ],
@@ -2369,19 +2369,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "マツキヨココカラ＆カンパニー",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "3088",
     "official_source_url": "https://www.matsukiyococokara.com/ir/stock/benefit/",
-    "industry": "",
+    "code": "3088",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "マツキヨココカラ＆カンパニー",
     "record_months": [
       3,
       9
@@ -2399,19 +2399,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "物語コーポレーション",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "3097",
     "official_source_url": "https://www.monogatari.co.jp/ir/stock/benefit/",
-    "industry": "",
+    "code": "3097",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "物語コーポレーション",
     "record_months": [
       6,
       12
@@ -2429,19 +2429,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ウエルシアホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "3141",
     "official_source_url": "https://www.welcia.co.jp/ja/ir/stock/benefit.html",
-    "industry": "",
+    "code": "3141",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ウエルシアホールディングス",
     "record_months": [
       2
     ],
@@ -2458,19 +2458,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "丸善CHIホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "3159",
     "official_source_url": "https://www.maruzen-chi.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "3159",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "丸善CHIホールディングス",
     "record_months": [
       7
     ],
@@ -2487,19 +2487,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "TOKAIホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "3167",
     "official_source_url": "https://www.tokaiholdings.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "3167",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "TOKAIホールディングス",
     "record_months": [
       3,
       9
@@ -2517,19 +2517,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "チムニー",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "3178",
     "official_source_url": "https://www.chimney.co.jp/ir/stockholder/benefit.html",
-    "industry": "",
+    "code": "3178",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "チムニー",
     "record_months": [
       3,
       9
@@ -2547,19 +2547,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "オイシックス・ラ・大地",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "3182",
     "official_source_url": "https://www.oisixradaichi.co.jp/investors/stock/benefit/",
-    "industry": "",
+    "code": "3182",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "オイシックス・ラ・大地",
     "record_months": [
       9
     ],
@@ -2576,19 +2576,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ユナイテッド・スーパーマーケット・ホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "3222",
     "official_source_url": "https://www.usmh.co.jp/ir/stockholder/benefit",
-    "industry": "",
+    "code": "3222",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ユナイテッド・スーパーマーケット・ホールディングス",
     "record_months": [
       2,
       8
@@ -2606,19 +2606,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "クリエイト・レストランツ・ホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "1年以上かつ400株以上で追加贈呈",
-    "abolished_at": null,
-    "code": "3387",
     "official_source_url": "https://www.createrestaurants.com/ir/stock/shareholder/",
-    "industry": "",
+    "code": "3387",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上かつ400株以上で追加贈呈",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "クリエイト・レストランツ・ホールディングス",
     "record_months": [
       2,
       8
@@ -2636,19 +2636,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "サンマルクホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "3395",
     "official_source_url": "https://www.saint-marc-hd.com/hd/ir/stock/benefit/",
-    "industry": "",
+    "code": "3395",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "サンマルクホールディングス",
     "record_months": [
       3
     ],
@@ -2665,19 +2665,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "コメダホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "3年以上かつ300株以上で追加贈呈",
-    "abolished_at": null,
-    "code": "3543",
     "official_source_url": "https://komeda-holdings.co.jp/ir/stockholder.html",
-    "industry": "",
+    "code": "3543",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "3年以上かつ300株以上で追加贈呈",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "コメダホールディングス",
     "record_months": [
       2,
       8
@@ -2695,19 +2695,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "FOOD & LIFE COMPANIES",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "3563",
     "official_source_url": "https://www.food-and-life.co.jp/investor/stock/benefit/",
-    "industry": "",
+    "code": "3563",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "FOOD & LIFE COMPANIES",
     "record_months": [
       3,
       9
@@ -2725,19 +2725,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ワコールホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "3591",
     "official_source_url": "https://www.wacoalholdings.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "3591",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ワコールホールディングス",
     "record_months": [
       3,
       9
@@ -2755,19 +2755,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "日本製紙",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "3863",
     "official_source_url": "https://www.nipponpapergroup.com/ir/stock/benefit/",
-    "industry": "",
+    "code": "3863",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "日本製紙",
     "record_months": [
       3
     ],
@@ -2784,19 +2784,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "第一工業製薬",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "6か月以上継続保有",
-    "abolished_at": null,
-    "code": "4461",
     "official_source_url": "https://www.dks-web.co.jp/ir/stock/benefit/",
-    "industry": "",
+    "code": "4461",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "6か月以上継続保有",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "第一工業製薬",
     "record_months": [
       3
     ],
@@ -2813,19 +2813,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "理研ビタミン",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "3年以上で優待額増額",
-    "abolished_at": null,
-    "code": "4526",
     "official_source_url": "https://www.rikenvitamin.jp/corporate/ir/stock/benefit.html",
-    "industry": "",
+    "code": "4526",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "3年以上で優待額増額",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "理研ビタミン",
     "record_months": [
       3,
       9
@@ -2843,19 +2843,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ダスキン",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "3年以上で追加贈呈",
-    "abolished_at": null,
-    "code": "4665",
     "official_source_url": "https://www.duskin.co.jp/ir/stock/benefit/",
-    "industry": "",
+    "code": "4665",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "3年以上で追加贈呈",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ダスキン",
     "record_months": [
       3,
       9
@@ -2873,19 +2873,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ラウンドワン",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "4680",
     "official_source_url": "https://www.round1-group.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "4680",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ラウンドワン",
     "record_months": [
       3,
       6,
@@ -2905,19 +2905,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "早稲田アカデミー",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "3年以上で優待額増額",
-    "abolished_at": null,
-    "code": "4718",
     "official_source_url": "https://www.waseda-ac.co.jp/corp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "4718",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "3年以上で優待額増額",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "早稲田アカデミー",
     "record_months": [
       3,
       9
@@ -2935,19 +2935,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ユー・エス・エス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "4732",
     "official_source_url": "https://www.ussnet.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "4732",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ユー・エス・エス",
     "record_months": [
       3,
       9
@@ -2965,19 +2965,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "資生堂",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "1年以上継続保有",
-    "abolished_at": null,
-    "code": "4911",
     "official_source_url": "https://corp.shiseido.com/jp/ir/shareholder/benefit/",
-    "industry": "",
+    "code": "4911",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上継続保有",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "資生堂",
     "record_months": [
       12
     ],
@@ -2994,19 +2994,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "コーセー",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "4922",
     "official_source_url": "https://corp.kose.co.jp/ja/ir/stock/benefit/",
-    "industry": "",
+    "code": "4922",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "コーセー",
     "record_months": [
       12
     ],
@@ -3023,19 +3023,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ライオン",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "1年以上継続保有",
-    "abolished_at": null,
-    "code": "4912",
     "official_source_url": "https://www.lion.co.jp/ja/ir/stock/benefit/",
-    "industry": "",
+    "code": "4912",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上継続保有",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ライオン",
     "record_months": [
       12
     ],
@@ -3052,19 +3052,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "小林製薬",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "4967",
     "official_source_url": "https://www.kobayashi.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "4967",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "小林製薬",
     "record_months": [
       6,
       12
@@ -3082,19 +3082,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "バリューHR",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "1年以上でポイント増額",
-    "abolished_at": null,
-    "code": "6078",
     "official_source_url": "https://www.valuehr.com/ir/stock/benefit/",
-    "industry": "",
+    "code": "6078",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上でポイント増額",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "バリューHR",
     "record_months": [
       12
     ],
@@ -3111,19 +3111,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "平和",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "1年以上継続保有",
-    "abolished_at": null,
-    "code": "6412",
     "official_source_url": "https://www.heiwanet.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "6412",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上継続保有",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "平和",
     "record_months": [
       3,
       9
@@ -3141,19 +3141,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "カッパ・クリエイト",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "7421",
     "official_source_url": "https://www.kappa-create.co.jp/stockholder/",
-    "industry": "",
+    "code": "7421",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "カッパ・クリエイト",
     "record_months": [
       3,
       9
@@ -3171,19 +3171,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "第一興商",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "7458",
     "official_source_url": "https://www.dkkaraoke.co.jp/stockinfo/benefit.html",
-    "industry": "",
+    "code": "7458",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "第一興商",
     "record_months": [
       3,
       9
@@ -3201,19 +3201,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "イオン北海道",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "7512",
     "official_source_url": "https://www.aeon-hokkaido.jp/corporation/ir/stock/benefit/",
-    "industry": "",
+    "code": "7512",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "イオン北海道",
     "record_months": [
       2
     ],
@@ -3230,19 +3230,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ワタミ",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "7522",
     "official_source_url": "https://www.watami.co.jp/ir/stock/benefit/",
-    "industry": "",
+    "code": "7522",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ワタミ",
     "record_months": [
       3,
       9
@@ -3260,19 +3260,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "壱番屋",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "7630",
     "official_source_url": "https://www.ichibanya.co.jp/comp/ir/stockholder.html",
-    "industry": "",
+    "code": "7630",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "壱番屋",
     "record_months": [
       2,
       8
@@ -3290,19 +3290,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "スギホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "7649",
     "official_source_url": "https://www.sugi-hd.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "7649",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "スギホールディングス",
     "record_months": [
       2
     ],
@@ -3319,19 +3319,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "木曽路",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "8160",
     "official_source_url": "https://www.kisoji.co.jp/ir/stockholder/",
-    "industry": "",
+    "code": "8160",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "木曽路",
     "record_months": [
       3,
       9
@@ -3349,19 +3349,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "SRSホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "8163",
     "official_source_url": "https://srs-holdings.co.jp/ir/stock/benefit/",
-    "industry": "",
+    "code": "8163",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "SRSホールディングス",
     "record_months": [
       3,
       9
@@ -3379,19 +3379,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "リンガーハット",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "3年以上で追加贈呈",
-    "abolished_at": null,
-    "code": "8200",
     "official_source_url": "https://www.ringerhut.co.jp/corporate/ir/stock/benefit/",
-    "industry": "",
+    "code": "8200",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "3年以上で追加贈呈",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "リンガーハット",
     "record_months": [
       2,
       8
@@ -3409,19 +3409,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "高島屋",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "8233",
     "official_source_url": "https://www.takashimaya.co.jp/corp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "8233",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "高島屋",
     "record_months": [
       2,
       8
@@ -3439,19 +3439,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "オンワードホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "1000株以上かつ1年以上で自社製品を追加贈呈",
-    "abolished_at": null,
-    "code": "8016",
     "official_source_url": "https://www.onward-hd.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "8016",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1000株以上かつ1年以上で自社製品を追加贈呈",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "オンワードホールディングス",
     "record_months": [
       2
     ],
@@ -3468,19 +3468,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ヤオコー",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "8279",
     "official_source_url": "https://www.yaoko-net.com/corporate/ir/stock/benefit.html",
-    "industry": "",
+    "code": "8279",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ヤオコー",
     "record_months": [
       3
     ],
@@ -3497,19 +3497,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ケーズホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "1年以上で追加贈呈",
-    "abolished_at": null,
-    "code": "8282",
     "official_source_url": "https://www.ksdenki.co.jp/ir/stockholder.html",
-    "industry": "",
+    "code": "8282",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上で追加贈呈",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ケーズホールディングス",
     "record_months": [
       3,
       9
@@ -3527,19 +3527,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "芙蓉総合リース",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "1年以上継続保有",
-    "abolished_at": null,
-    "code": "8424",
     "official_source_url": "https://www.fgl.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "8424",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上継続保有",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "芙蓉総合リース",
     "record_months": [
       3
     ],
@@ -3556,19 +3556,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "近鉄グループホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "9041",
     "official_source_url": "https://www.kintetsu-g-hd.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "9041",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "近鉄グループホールディングス",
     "record_months": [
       3,
       9
@@ -3586,19 +3586,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "阪急阪神ホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "9042",
     "official_source_url": "https://www.hankyu-hanshin.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "9042",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "阪急阪神ホールディングス",
     "record_months": [
       3,
       9
@@ -3616,19 +3616,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "南海電気鉄道",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "9044",
     "official_source_url": "https://www.nankai.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "9044",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "南海電気鉄道",
     "record_months": [
       3,
       9
@@ -3646,19 +3646,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "名古屋鉄道",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "9048",
     "official_source_url": "https://www.meitetsu.co.jp/ir/stock/benefit/",
-    "industry": "",
+    "code": "9048",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "名古屋鉄道",
     "record_months": [
       3,
       9
@@ -3676,19 +3676,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ANAホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "9202",
     "official_source_url": "https://www.ana.co.jp/group/investors/stock/benefit/",
-    "industry": "",
+    "code": "9202",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ANAホールディングス",
     "record_months": [
       3,
       9
@@ -3706,19 +3706,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ギフトホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "1年以上で追加贈呈",
-    "abolished_at": null,
-    "code": "9279",
     "official_source_url": "https://www.gift-group.co.jp/ir/benefit.html",
-    "industry": "",
+    "code": "9279",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上で追加贈呈",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ギフトホールディングス",
     "record_months": [
       4,
       10
@@ -3736,19 +3736,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "日本テレビホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "9404",
     "official_source_url": "https://www.ntvhd.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "9404",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "日本テレビホールディングス",
     "record_months": [
       3,
       9
@@ -3766,19 +3766,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "日本電信電話",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "2年以上継続保有（進呈は保有2年・5年時）",
-    "abolished_at": null,
-    "code": "9432",
     "official_source_url": "https://group.ntt/jp/ir/shares/dividend.html",
-    "industry": "",
+    "code": "9432",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "2年以上継続保有（進呈は保有2年・5年時）",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "日本電信電話",
     "record_months": [
       3
     ],
@@ -3795,19 +3795,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "共立メンテナンス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "3年以上で追加贈呈",
-    "abolished_at": null,
-    "code": "9616",
     "official_source_url": "https://www.kyoritsugroup.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "9616",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "3年以上で追加贈呈",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "共立メンテナンス",
     "record_months": [
       3,
       9
@@ -3825,19 +3825,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "東京テアトル",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "9633",
     "official_source_url": "https://www.theatres.co.jp/ir/stock/benefit/",
-    "industry": "",
+    "code": "9633",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "東京テアトル",
     "record_months": [
       3,
       9
@@ -3855,19 +3855,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "松竹",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "9601",
     "official_source_url": "https://www.shochiku.co.jp/company/ir/benefit/",
-    "industry": "",
+    "code": "9601",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "松竹",
     "record_months": [
       2,
       8
@@ -3885,19 +3885,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "藤田観光",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "9722",
     "official_source_url": "https://www.fujita-kanko.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "9722",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "藤田観光",
     "record_months": [
       6,
       12
@@ -3915,19 +3915,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "日本管財ホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "3年以上で優待額増額",
-    "abolished_at": null,
-    "code": "9728",
     "official_source_url": "https://www.nkanzaihd.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "9728",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "3年以上で優待額増額",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "日本管財ホールディングス",
     "record_months": [
       3,
       9
@@ -3945,19 +3945,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ヤマダホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "9831",
     "official_source_url": "https://www.yamada-holdings.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "9831",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ヤマダホールディングス",
     "record_months": [
       3,
       9
@@ -3975,19 +3975,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "オートバックスセブン",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "1年以上継続保有",
-    "abolished_at": null,
-    "code": "9832",
     "official_source_url": "https://www.autobacs.co.jp/ja/ir/stock/benefit.html",
-    "industry": "",
+    "code": "9832",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上継続保有",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "オートバックスセブン",
     "record_months": [
       3,
       9
@@ -4005,19 +4005,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "グルメ杵屋",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "9850",
     "official_source_url": "https://www.gourmet-kineya-hd.co.jp/ir/stock/benefit.php",
-    "industry": "",
+    "code": "9850",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "グルメ杵屋",
     "record_months": [
       3,
       9
@@ -4035,19 +4035,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "松屋フーズホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "1年以上継続保有",
-    "abolished_at": null,
-    "code": "9887",
     "official_source_url": "https://www.matsuyafoods-holdings.co.jp/ir/stock/benefit.html",
-    "industry": "",
+    "code": "9887",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上継続保有",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "松屋フーズホールディングス",
     "record_months": [
       3
     ],
@@ -4064,19 +4064,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "サガミホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "9900",
     "official_source_url": "https://www.sagami-holdings.co.jp/ir/stock/benefit/",
-    "industry": "",
+    "code": "9900",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "サガミホールディングス",
     "record_months": [
       3,
       9
@@ -4094,19 +4094,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "ミニストップ",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "9946",
     "official_source_url": "https://www.ministop.co.jp/corporate/ir/stock/benefit.html",
-    "industry": "",
+    "code": "9946",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ミニストップ",
     "record_months": [
       2,
       8
@@ -4124,19 +4124,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "アークス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "9948",
     "official_source_url": "https://www.arcs-g.co.jp/company/ir/stock/benefit/",
-    "industry": "",
+    "code": "9948",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "アークス",
     "record_months": [
       2
     ],
@@ -4153,19 +4153,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "大庄",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "9979",
     "official_source_url": "https://www.daisyo.co.jp/company/ir/stock/benefit.html",
-    "industry": "",
+    "code": "9979",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "大庄",
     "record_months": [
       2,
       8
@@ -4183,19 +4183,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "サックスバー ホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "9990",
     "official_source_url": "https://www.sacs-bar.co.jp/ir/stock/benefit/",
-    "industry": "",
+    "code": "9990",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "サックスバー ホールディングス",
     "record_months": [
       3
     ],
@@ -4212,19 +4212,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "AOKIホールディングス",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "8214",
     "official_source_url": "https://www.aoki-hd.co.jp/ja/ir/stock/benefit.html",
-    "industry": "",
+    "code": "8214",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "AOKIホールディングス",
     "record_months": [
       3,
       9
@@ -4242,19 +4242,19 @@
     "annual_value_yen": null
   },
   {
-    "name": "上新電機",
-    "last_record_date": null,
-    "market": "",
-    "official_verified_at": "2026-07-30",
-    "category": "",
     "data_confidence": "official_confirmed",
-    "long_term_condition": "なし",
-    "abolished_at": null,
-    "code": "8173",
     "official_source_url": "https://www.joshin.co.jp/ja/ir/stock/benefit.html",
-    "industry": "",
+    "code": "8173",
+    "category": "",
+    "market": "",
     "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
     "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "上新電機",
     "record_months": [
       9
     ],
@@ -4268,6 +4268,2938 @@
     ],
     "confidence_score": 95,
     "minimum_shares": 1,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://corporate.sakataseed.co.jp/ir/stock/benefit.html",
+    "code": "1377",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上継続保有が必要",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "サカタのタネ",
+    "record_months": [
+      5
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "商品カタログAコースから商品1点",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.hokto-kinoko.co.jp/corporate/ir/stock/benefit/",
+    "code": "1379",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ホクト",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "健康セット・レトルトセット・きのこセットから1点",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.fujiya-peko.co.jp/company/ir/stockholder.html",
+    "code": "2211",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "不二家",
+    "record_months": [
+      12
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "3,000円分の株主優待券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://koike-ya.com/company/ir/stockholder.html",
+    "code": "2226",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "湖池屋",
+    "record_months": [
+      9
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "2,500円相当の自社商品",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.morinagamilk.co.jp/ir/stock/benefit/",
+    "code": "2264",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "森永乳業",
+    "record_months": [
+      9
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "870円相当の自社商品",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.saint-care.com/ir/stock/benefit.html",
+    "code": "2374",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "3年以上で1,500円分に増額",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "セントケア・ホールディング",
+    "record_months": [
+      9
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "500円分のQUOカード",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.s-renaissance.co.jp/ir/stock/benefit/",
+    "code": "2378",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ルネサンス",
+    "record_months": [
+      3,
+      9
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間4枚の施設利用券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.oenon.jp/ir/stock/benefit.html",
+    "code": "2533",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "オエノンホールディングス",
+    "record_months": [
+      12
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 1000,
+        "description": "1,500円相当の株主限定オリジナル商品",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 1000,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.yomeishu.co.jp/company/ir/stock/benefit.html",
+    "code": "2540",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "養命酒製造",
+    "record_months": [
+      9
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "1,500円相当の自社商品詰め合わせ",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.suntory.co.jp/softdrink/ir/stock/benefit.html",
+    "code": "2587",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "サントリー食品インターナショナル",
+    "record_months": [
+      12
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "1,000円相当の自社商品",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.itoen.co.jp/ir/stock/benefit/",
+    "code": "2593",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "伊藤園",
+    "record_months": [
+      4
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "1,500円相当の自社製品詰め合わせ",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.cawachi.co.jp/ir/stockholder/benefit.html",
+    "code": "2664",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "カワチ薬品",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "5,000円分の優待券またはおこめ券5枚",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.geonet.co.jp/ir/stock/benefit/",
+    "code": "2681",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ゲオホールディングス",
+    "record_months": [
+      9
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "リユース店舗で使える2,000円分の割引券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.adastria.co.jp/ir/stock/benefit/",
+    "code": "2685",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "アダストリア",
+    "record_months": [
+      2
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "3,000円分の株主優待券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.kurasushi.co.jp/company/ir/stock/benefit.html",
+    "code": "2695",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "くら寿司",
+    "record_months": [
+      4
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "2,500円分の電子株主優待割引券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.colowide.co.jp/ir/stock_info/stockholder_qa/",
+    "code": "2705",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "大戸屋ホールディングス",
+    "record_months": [
+      3,
+      9
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間8,000円分の株主優待ポイント",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.palgroup.holdings/ir/stock/benefit/",
+    "code": "2726",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "パルグループホールディングス",
+    "record_months": [
+      2
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "宿泊施設・ECサイトで使える50%割引券2枚",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.e-dkt.co.jp/ir/stockholder.html",
+    "code": "2791",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "大黒天物産",
+    "record_months": [
+      5
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "2,000円相当の大粒ピオーネ",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.ajinomoto.co.jp/company/jp/ir/stock/benefit.html",
+    "code": "2802",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "半年以上継続保有が必要",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "味の素",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "500円相当の自社グループ商品",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.bulldog.co.jp/company/ir/stockholder.html",
+    "code": "2804",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ブルドックソース",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "1,000円相当の自社グループ商品",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.daisho.co.jp/corporate/ir/stock/benefit",
+    "code": "2816",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ダイショー",
+    "record_months": [
+      3,
+      9
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間2,000円相当の自社製品詰め合わせ",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.pietro.co.jp/company/ir/stockholder/",
+    "code": "2818",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ピエトロ",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "1,000円相当の自社商品",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.eat-and.jp/ir/stock/benefit/",
+    "code": "2882",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "イートアンドホールディングス",
+    "record_months": [
+      2
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "3,000円相当の自社製品または食事券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.shinobufoods.co.jp/ir/stockholder.html",
+    "code": "2903",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "シノブフーズ",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "500円分のQUOカード",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.kibun.co.jp/corporate/ir/stock/benefit/",
+    "code": "2933",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "紀文食品",
+    "record_months": [
+      9
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 300,
+        "description": "3,000円相当の自社商品詰め合わせ",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 300,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.katakura.co.jp/ir/stock/benefit/",
+    "code": "3001",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "片倉工業",
+    "record_months": [
+      12
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "1,000円相当の自社グループ商品または寄付",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.dcm-hldgs.co.jp/grp/ir/stock/benefit.html",
+    "code": "3050",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "3年以上で2,000円分に増額",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "DCMホールディングス",
+    "record_months": [
+      2
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "500円分の買物優待券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://ir.sanyodo.co.jp/stock/benefit/",
+    "code": "3058",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上継続保有が必要",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "三洋堂ホールディングス",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "株主優待カードと1,000円分の図書カード",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.choushimaru.co.jp/ir/stockholder/",
+    "code": "3075",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "銚子丸",
+    "record_months": [
+      5,
+      11
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間1,000円分の食事優待券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.bronco.co.jp/ir/stockholder/",
+    "code": "3091",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ブロンコビリー",
+    "record_months": [
+      6,
+      12
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間4,000円分の株主優待券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.imhds.co.jp/ja/ir/stockholder/preferential.html",
+    "code": "3099",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "三越伊勢丹ホールディングス",
+    "record_months": [
+      3,
+      9
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "利用限度額30万円の10%割引優待カード",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.createsdhd.co.jp/ir/stock/benefit.html",
+    "code": "3148",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "クリエイトSDホールディングス",
+    "record_months": [
+      5
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "1,500円分の買物券またはおこめ券3枚",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.yashimadenki.co.jp/ir/stock/benefit.html",
+    "code": "3153",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "八洲電機",
+    "record_months": [
+      9
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "500円分のジェフグルメカード",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.tealifeir.com/stock/benefit.html",
+    "code": "3172",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ティーライフ",
+    "record_months": [
+      7
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "1,000円分の株主優待券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://hotland.co.jp/ir/stock/benefit/",
+    "code": "3196",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ホットランドホールディングス",
+    "record_months": [
+      6,
+      12
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間3,000円分の株主優待券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.sfpdining.jp/ir/stock/benefit/",
+    "code": "3198",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "SFPホールディングス",
+    "record_months": [
+      2,
+      8
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間8,000円分の食事券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.nikke.co.jp/ir/stock/benefit/",
+    "code": "3201",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ニッケ",
+    "record_months": [
+      5
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "1,000円分のQUOカード",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://yossix.co.jp/ir/stockholder/",
+    "code": "3221",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ヨシックスホールディングス",
+    "record_months": [
+      3,
+      9
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間6,000円分の食事券と20%割引券20枚",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://holdings.sanco.co.jp/ir/stock/benefit/",
+    "code": "3232",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "三重交通グループホールディングス",
+    "record_months": [
+      3,
+      9
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "共通路線バス乗車券2枚など",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.tokyu-fudosan-hd.co.jp/ir/stockandbond/complimentary/",
+    "code": "3289",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "東急不動産ホールディングス",
+    "record_months": [
+      3,
+      9
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "宿泊・スポーツ・買物施設の優待券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.toridoll.com/ir/stock/benefit/",
+    "code": "3397",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "トリドールホールディングス",
+    "record_months": [
+      3,
+      9
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間6,000円分の株主優待カード入金",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.atsugi.co.jp/ir/stock/benefit.html",
+    "code": "3529",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "アツギ",
+    "record_months": [
+      3,
+      9
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "自社ECサイトで使える30%割引券3枚",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://corp.world.co.jp/ir/stock/benefit/",
+    "code": "3612",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "半年以上継続保有が必要",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ワールド",
+    "record_months": [
+      2,
+      8
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間3,000円分の株主優待券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.ags.co.jp/ir/stock/benefit/",
+    "code": "3648",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上継続保有が必要",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "AGS",
+    "record_months": [
+      3,
+      9
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間2,000円分のQUOカード",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.techmatrix.co.jp/ir/stock/benefit.html",
+    "code": "3762",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "テクマトリックス",
+    "record_months": [
+      9
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 500,
+        "description": "1,500円相当の商品または寄付から1点",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 500,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.sr-net.co.jp/ir/stock/benefit.html",
+    "code": "3771",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "システムリサーチ",
+    "record_months": [
+      9
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "1,000円分のQUOカード",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.odk.co.jp/ir/stock/benefit.html",
+    "code": "3839",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上継続保有が必要",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ODKソリューションズ",
+    "record_months": [
+      3,
+      9
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間1,000円分のQUOカード",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.aucnet.co.jp/ir/stock/benefit/",
+    "code": "3964",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "オークネット",
+    "record_months": [
+      12
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "1,000円分のQUOカード",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://corporate.pia.jp/ir/stock/benefit/",
+    "code": "4337",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ぴあ",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "2,500円分の図書カード・シネマギフトカード等",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.fantasy.co.jp/company/ir/stock/benefit.html",
+    "code": "4343",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "イオンファンタジー",
+    "record_months": [
+      2,
+      8
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間4,000円分の優待券と米3kg",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.zeria.co.jp/ir/stock/benefit.html",
+    "code": "4559",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ゼリア新薬工業",
+    "record_months": [
+      3,
+      9
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間20本のヘパリーゼWセット",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.meikonet.co.jp/ja/ir/stock/benefit.html",
+    "code": "4668",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "3年以上で1,500円分に増額",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "明光ネットワークジャパン",
+    "record_months": [
+      8
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "500円分のQUOカード",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.taya.co.jp/tww/ir/benefit/",
+    "code": "4679",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "田谷",
+    "record_months": [
+      3,
+      9
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間6,600円分の株主優待券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://corporate.wowow.co.jp/ir/stock/benefit/",
+    "code": "4839",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上継続保有が必要",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "WOWOW",
+    "record_months": [
+      9
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "視聴料3か月分無料または2,000円分のQUOカード",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://corporate.shinnihonseiyaku.co.jp/ir/stock/benefit/",
+    "code": "4931",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "半年以上で8,500円相当に増額",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "新日本製薬",
+    "record_months": [
+      9
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "4,000円相当の自社商品",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.nitta-gelatin.co.jp/ja/ir/stock/benefit.html",
+    "code": "4977",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "新田ゼラチン",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "1,000円相当の自社商品",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.lamick.co.jp/ir/stock/benefit/",
+    "code": "4994",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上継続保有が必要",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "大成ラミック",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "5,000円相当の自社関連商品",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.fukoku-rubber.co.jp/ir/stock/benefit.html",
+    "code": "5185",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "フコク",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "棚田米2kg",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.resol.jp/ir/stock/benefit/",
+    "code": "5261",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "リソルホールディングス",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "20,000円分のRESOLファミリー商品券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.tokaicarbon.co.jp/ir/stock/benefit.html",
+    "code": "5301",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上継続保有が必要",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "東海カーボン",
+    "record_months": [
+      12
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "2,000円相当のカタログギフト",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.maruichikokan.co.jp/ir/stock/benefit.html",
+    "code": "5463",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "丸一鋼管",
+    "record_months": [
+      3,
+      9
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間6枚の全国共通おこめ券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.unipres.co.jp/ir/stock/benefit/",
+    "code": "5949",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上継続保有が必要",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ユニプレス",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "1,000ポイントの株主優待ポイント",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.asante.co.jp/ir/stock/benefit.html",
+    "code": "6073",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "アサンテ",
+    "record_months": [
+      3,
+      9
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間2,000円分のギフトカード",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.rideonexpresshd.co.jp/ir/stock/benefit.html",
+    "code": "6082",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ライドオンエクスプレスホールディングス",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "2,500円分の優待券または米2kg",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.gamecard-joyco.co.jp/ir/stock/benefit.html",
+    "code": "6249",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ゲームカード・ジョイコホールディングス",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "2,000円相当の商品から1点",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.nisseijushi.co.jp/ir/stock/benefit.html",
+    "code": "6293",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "日精樹脂工業",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "1,500円相当の長野県坂城町特産品",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.sinto.co.jp/ir/stock/benefit/",
+    "code": "6339",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上継続保有が必要",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "新東工業",
+    "record_months": [
+      9
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "1,000円分のQUOカード",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.pillar.co.jp/ir/stock/benefit/",
+    "code": "6490",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "PILLAR",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "1,500円分のQUOカード",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.zenkoku.co.jp/ir/stock/benefit.html",
+    "code": "7164",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上で5,000円分に増額",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "全国保証",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "3,000円分のQUOカード",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://hirose-fx.co.jp/ir/stock/benefit/",
+    "code": "7185",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ヒロセ通商",
+    "record_months": [
+      9
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "10,000円相当の自社キャンペーン商品",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.exedy.com/ja/ir/stock/benefit/",
+    "code": "7278",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上継続保有が必要",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "エクセディ",
+    "record_months": [
+      9
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "3,000円相当のWEBカタログギフト",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.tstech.co.jp/ir/stock/benefit.html",
+    "code": "7313",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上継続保有が必要",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "テイ・エス テック",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 200,
+        "description": "3,000ポイントの株主優待ポイント",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 200,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.haruyama.co.jp/ir/stock/benefit/",
+    "code": "7416",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "はるやまホールディングス",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "ワイシャツ等贈呈券1枚と15%割引券2枚",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.kondotec.co.jp/ir/stock/benefit.html",
+    "code": "7438",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "コンドーテック",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 1000,
+        "description": "全国共通おこめ券2枚",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 1000,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.matsuda-sangyo.co.jp/ja/ir/stock/benefit.html",
+    "code": "7456",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上継続保有が必要",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "松田産業",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "2,000円分のQUOカード",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.shimojima.co.jp/ir/stock/benefit.html",
+    "code": "7482",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "シモジマ",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "1,000円分のQUOカード",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.kohsoku.com/ir/stock/benefit/",
+    "code": "7504",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "高速",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "500円分のQUOカード",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.takebishi.co.jp/ir/stock/benefit.html",
+    "code": "7510",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "たけびし",
+    "record_months": [
+      3,
+      9
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間2,000円分のQUOカード",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.kojima.net/corporation/ir/stockholder.html",
+    "code": "7513",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "コジマ",
+    "record_months": [
+      2,
+      8
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間3,000円分の買物優待券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.hc-kohnan.com/corporate/ir/stock/benefit/",
+    "code": "7516",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "コーナン商事",
+    "record_months": [
+      2
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "1,000円分の自社商品券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.eco-s.co.jp/ir/stock/benefit/",
+    "code": "7520",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "エコス",
+    "record_months": [
+      2,
+      8
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間6,000円分の買物券または米4kg",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://ppih.co.jp/ir/stock/benefit/",
+    "code": "7532",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "パン・パシフィック・インターナショナルホールディングス",
+    "record_months": [
+      6,
+      12
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間4,000円分のmajicaポイント",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.happinet.co.jp/ir/stock/benefit.html",
+    "code": "7552",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ハピネット",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "カタログから玩具・ゲーム等1点",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://hidakaya.hiday.co.jp/ir/stock/benefit.html",
+    "code": "7611",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ハイデイ日高",
+    "record_months": [
+      2,
+      8
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間2,000円分の優待券またはおこめ券2kg分",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.takaratomy.co.jp/company/ir/stock/benefit.html",
+    "code": "7867",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "3年以上で割引率40%",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "タカラトミー",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "自社商品割引券と株主限定トミカ2台",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.lecinc.co.jp/ir/stock/benefit.html",
+    "code": "7874",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "レック",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "2,000円相当の自社新製品詰め合わせ",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.pronexus.co.jp/home/ir/stock/benefit.html",
+    "code": "7893",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "保有年数に応じて優待額増額",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "プロネクサス",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "500円分のQUOカード",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.look-holdings.jp/ir/stock/benefit.html",
+    "code": "8029",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ルックホールディングス",
+    "record_months": [
+      12
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "2,000円分のオンラインショップ優待券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.astena-hd.com/ir/stock/benefit.html",
+    "code": "8095",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上継続保有が必要",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "アステナホールディングス",
+    "record_months": [
+      11
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "3,000円相当の自社商品",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.mos.co.jp/company/ir/stockholder/",
+    "code": "8153",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "モスフードサービス",
+    "record_months": [
+      3,
+      9
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間2,000円分の株主優待券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.senshukai.co.jp/main/top/ir/stock/benefit.html",
+    "code": "8165",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "千趣会",
+    "record_months": [
+      6,
+      12
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間2,000円分のベルメゾンお買い物券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.h2o-retailing.co.jp/ja/ir/stock/benefit.html",
+    "code": "8242",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "エイチ・ツー・オー リテイリング",
+    "record_months": [
+      3,
+      9
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "10%割引株主優待券5枚",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.axial-r.com/ir/stock/benefit/",
+    "code": "8255",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "アクシアル リテイリング",
+    "record_months": [
+      3,
+      9
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間2,000円分のQUOカードまたは買物券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.izumi.co.jp/corp/ir/stock/benefit/",
+    "code": "8273",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "イズミ",
+    "record_months": [
+      2,
+      8
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間4,000円分の優待券または1,000円分のギフト券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.xebio.co.jp/ja/ir/stock/benefit.html",
+    "code": "8281",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "ゼビオホールディングス",
+    "record_months": [
+      3,
+      9
+    ],
+    "annual_occurrences": 2,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "年間2枚の20%割引券と8枚の10%割引券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.r-lease.co.jp/ir/stock/benefit.html",
+    "code": "8566",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上で4,000円分に増額",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "リコーリース",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "2,000円分のQUOカード",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.necap.co.jp/ir/stock/benefit.html",
+    "code": "8793",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上で3,000円相当に増額",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "NECキャピタルソリューション",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "2,000円相当のオンラインカタログギフト",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.eslead.co.jp/ir/stock/benefit.html",
+    "code": "8877",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "エスリード",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "3,000円相当の季節のフリーチョイスギフト",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.toseicorp.co.jp/ir/stock/benefit/",
+    "code": "8923",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "1年以上でQUOカードを追加",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "トーセイ",
+    "record_months": [
+      11
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "自社ホテル宿泊料金3,000円割引券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
+    "annual_value_yen": null
+  },
+  {
+    "data_confidence": "official_confirmed",
+    "official_source_url": "https://www.jrkyushu.co.jp/company/ir/stock/shareholder/",
+    "code": "9142",
+    "category": "",
+    "market": "",
+    "change_or_abolition_note": "",
+    "industry": "",
+    "last_record_date": null,
+    "long_term_condition": "なし",
+    "benefit_status": "official_confirmed",
+    "abolished_at": null,
+    "official_verified_at": "2026-07-30",
+    "name": "九州旅客鉄道",
+    "record_months": [
+      3
+    ],
+    "annual_occurrences": 1,
+    "benefit_tiers": [
+      {
+        "shares": 100,
+        "description": "鉄道優待券1枚と2,500円分のグループ優待券",
+        "annual_value_yen": null
+      }
+    ],
+    "confidence_score": 95,
+    "minimum_shares": 100,
     "annual_value_yen": null
   }
 ]
