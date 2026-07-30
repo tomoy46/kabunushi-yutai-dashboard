@@ -870,11 +870,33 @@ class OpenAIDiscoveryTests(unittest.TestCase):
         self.assertTrue(all(item.get("full_scan_fallback") for item in selected))
         self.assertEqual(discovery.LAST_SELECTION_COUNTS["full_scan_selected"], 5)
 
-    def test_zero_selected_is_a_fatal_production_outcome(self):
+    def test_existing_official_candidate_selected_when_exchange_counts_are_zero(self):
+        companies = [{"code": str(1000 + i), "name": f"company{i}", "market": "プライム"}
+                     for i in range(8)]
+        args = type("Args", (), {"security_codes": "", "auto_select": True,
+            "retry_research_log": False, "retry_failed": False, "companies_per_run": 5})()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "benefit-candidates.json").write_text(json.dumps([{
+                "security_code": "1003", "candidate_source": "official_pdf",
+                "candidate_url": "https://example.jp/ir/kabunushi-yutai.pdf",
+                "candidate_title": "株主優待制度", "candidate_date": "2026-07-30",
+                "priority": "medium", "verification_status": "pending",
+            }]), encoding="utf-8")
+            (root / "unresolved.json").write_text("[]", encoding="utf-8")
+            with patch.object(discovery, "DATA", root):
+                selected = discovery.choose(companies, args, {}, [])
+        self.assertEqual([item["code"] for item in selected], ["1003"])
+        self.assertEqual(discovery.LAST_SELECTION_COUNTS["candidate_selected_count"], 1)
+        self.assertEqual(discovery.LAST_SELECTION_COUNTS["fallback_selected_count"], 0)
+        self.assertEqual(discovery.LAST_SELECTION_COUNTS["tdnet_discovered"], 0)
+        self.assertEqual(discovery.LAST_SELECTION_COUNTS["jpx_discovered"], 0)
+
+    def test_zero_selected_is_not_a_structural_failure(self):
         partial, fatal, exit_code = discovery.production_outcome({}, 0)
         self.assertFalse(partial)
-        self.assertTrue(fatal)
-        self.assertEqual(exit_code, 1)
+        self.assertFalse(fatal)
+        self.assertEqual(exit_code, 0)
 
     def test_free_priority_uses_official_titles_paths_and_disclosure_titles(self):
         companies = [{"code": str(1000 + i), "name": f"company{i}"} for i in range(30)]
@@ -1017,14 +1039,21 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                     )
 
     def test_nine_company_failures_with_one_confirmed_is_partial_success(self):
-        totals = {"successes": 1, "research_log_saved": 9, "unresolved": 0,
-                  "failures": 9}
+        totals = {"successes": 1, "processed_count": 10, "persisted_outcome_count": 10}
         self.assertEqual(discovery.production_outcome(totals, 10), (True, False, 0))
 
-    def test_all_companies_failed_without_saved_result_is_failure(self):
-        totals = {"successes": 0, "research_log_saved": 0, "unresolved": 0,
-                  "failures": 9}
-        self.assertEqual(discovery.production_outcome(totals, 9), (False, False, 1))
+    def test_five_unresolved_without_confirmed_is_nonfatal_partial_success(self):
+        totals = {"successes": 0, "processed_count": 5, "persisted_outcome_count": 5}
+        self.assertEqual(discovery.production_outcome(totals, 5), (True, False, 0))
+
+    def test_four_unresolved_and_one_failed_is_nonfatal_partial_success(self):
+        totals = {"successes": 0, "unresolved": 4, "failures": 1,
+                  "processed_count": 5, "persisted_outcome_count": 5}
+        self.assertEqual(discovery.production_outcome(totals, 5), (True, False, 0))
+
+    def test_missing_persisted_company_is_fatal(self):
+        totals = {"successes": 0, "processed_count": 5, "persisted_outcome_count": 4}
+        self.assertEqual(discovery.production_outcome(totals, 5), (False, True, 1))
 
     def test_broken_benefits_csv_is_a_structural_error(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -237,7 +237,10 @@ test('free selection diagnostic stops before every OpenAI prerequisite', () => {
 test('workflow summary exposes the complete free-selection funnel', () => {
   const report = stepNamed('Report workflow outcome');
   for (const metric of ['TDnet取得件数', 'JPX取得件数', '既存research-log候補件数',
-    '未調査全社キュー件数', '重複除外後件数', '最終selected件数']) {
+    '未調査全社キュー件数', '重複除外後件数', '最終selected件数',
+    'candidate_selected_count', 'fallback_selected_count', 'processed_count',
+    'persisted_outcome_count', 'unpersisted_count', 'fatal_error_reason',
+    'source_not_implemented', 'http_status=', 'duplicates_excluded=']) {
     assert.ok(report.run.includes(metric));
   }
 });

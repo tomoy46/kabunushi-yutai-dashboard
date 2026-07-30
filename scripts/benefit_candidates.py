@@ -33,7 +33,13 @@ def source_kind(url, declared=""):
 
 def candidate_from_record(record, companies):
     title = str(record.get("candidate_title") or record.get("title") or "").strip()
-    keyword = next((word for word in KEYWORDS if word in title), None)
+    url = str(record.get("candidate_url") or record.get("official_source_url") or
+              record.get("pdf_url") or record.get("source_url") or
+              record.get("url") or record.get("link") or "").strip()
+    searchable = " ".join(str(record.get(field) or "") for field in (
+        "candidate_title", "title", "reason", "result", "notes", "matched_keyword",
+    )) + " " + url
+    keyword = next((word for word in KEYWORDS if word in searchable), None)
     if not keyword:
         return None
     raw = str(record.get("security_code") or record.get("code") or "")
@@ -41,8 +47,6 @@ def candidate_from_record(record, companies):
     code = code_match.group(1) if code_match else ""
     if code not in companies:
         return None
-    url = str(record.get("candidate_url") or record.get("pdf_url") or
-              record.get("url") or record.get("link") or "").strip()
     kind = source_kind(url, record.get("candidate_source") or record.get("source"))
     priority = "high" if kind in ("tdnet", "jpx") else (
         "medium" if kind in ("official_ir", "official_pdf") else "low")
@@ -89,9 +93,30 @@ def is_new_disclosure(candidate, unresolved):
     return any(candidate_date and candidate_date > str(x.get("checked_at") or "")[:10] for x in prior)
 
 
-def select_candidates(candidates, unresolved, limit=25):
+def official_discovery_cooldown(candidate, unresolved, now=None):
+    """Suppress a failed issuer for 30 days unless a newer official lead exists."""
+    now = now or dt.datetime.now(dt.timezone.utc)
+    for item in unresolved:
+        if str(item.get("code")) != candidate["security_code"]:
+            continue
+        reasons = item.get("reasons") or [item.get("result")]
+        checked = str(item.get("checked_at") or "")
+        if "official_site_discovery_failed" not in reasons:
+            continue
+        try:
+            checked_at = dt.datetime.fromisoformat(checked.replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        if now - checked_at < dt.timedelta(days=30):
+            candidate_date = str(candidate.get("candidate_date") or "")
+            return bool(candidate_date and candidate_date > checked[:10])
+    return True
+
+
+def select_candidates(candidates, unresolved, limit=25, now=None):
     pending = [x for x in candidates if x.get("verification_status", "pending") == "pending"
-               and is_new_disclosure(x, unresolved)]
+               and is_new_disclosure(x, unresolved)
+               and official_discovery_cooldown(x, unresolved, now)]
     high = [x for x in pending if x.get("priority") == "high"][:min(20, limit)]
     medium = [x for x in pending if x.get("priority") == "medium"][:min(5, limit-len(high))]
     return high + medium
@@ -107,4 +132,3 @@ def disclosure_action(text):
 def weekly_fallback_allowed(now=None):
     """The exhaustive queue runs only on Monday (UTC/JST are both Monday most of the day)."""
     return (now or dt.datetime.now(dt.timezone.utc)).weekday() == 0
-

@@ -25,6 +25,7 @@ for attempt in 1 2 3; do
   npm test
   git add data/benefits.csv data/benefits.json data/benefit-candidates.json data/verification-queue.json data/discovery-progress.json data/research-log.json data/openai-api-usage.json data/official-benefit-sources.json data/unresolved.json data/blocked-official-urls.json
   if git diff --cached --quiet; then
+    echo "Commit skipped: no durable confirmed, research-log, unresolved, failed, or progress changes were captured"
     echo "committed=no" >> "${GITHUB_OUTPUT:-/dev/null}"
     exit 0
   fi

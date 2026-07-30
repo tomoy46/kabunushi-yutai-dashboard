@@ -21,8 +21,10 @@ def main():
     data = Path(args.data_dir)
     companies = {str(x["code"]): x for x in load(data / "listed-companies.json", [])}
     records = []
-    for path in args.input or [data / "review-queue.json", data / "research-log.json",
-                               data / "unresolved.json", data / "official-benefit-sources.json"]:
+    default_inputs = [data / "official-benefit-sources.json", data / "research-log.json",
+                      data / "unresolved.json", data / "discovery-progress.json",
+                      data / "benefit-candidates.json", data / "review-queue.json"]
+    for path in args.input or default_inputs:
         value = load(path, [])
         if isinstance(value, dict):
             value = [dict(item if isinstance(item, dict) else {}, code=code)
@@ -41,6 +43,12 @@ def main():
                    if record.get("candidate_title") or record.get("title"))
     print(f"CANDIDATE DISCOVERY: new={added} tdnet={sources['tdnet']} jpx={sources['jpx']} "
           f"research_log={research} high={counts['high']} medium={counts['medium']} low={counts['low']}")
+    # No network collector is wired into this workflow yet.  Say so explicitly
+    # instead of making a zero look like a successfully queried empty period.
+    for source in ("tdnet", "jpx"):
+        print(f"SOURCE DIAGNOSTIC: source={source} executed=false status=source_not_implemented "
+              "period=not_applicable http_status=not_applicable files=0 disclosures=0 "
+              f"keyword_matches={sources[source]} duplicates_excluded=0")
     if os.environ.get("GITHUB_OUTPUT"):
         with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as stream:
             stream.write(f"new_candidates={added}\n")
@@ -49,6 +57,8 @@ def main():
             stream.write(f"tdnet_discovered={sources['tdnet']}\n")
             stream.write(f"jpx_discovered={sources['jpx']}\n")
             stream.write(f"research_log_candidates={research}\n")
+            for source in ("tdnet", "jpx"):
+                stream.write(f"{source}_source_status=source_not_implemented\n")
 
 
 if __name__ == "__main__": main()

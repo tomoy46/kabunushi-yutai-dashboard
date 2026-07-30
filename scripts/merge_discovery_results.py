@@ -13,6 +13,7 @@ DATA_FILES = (
     "benefits.json", "benefits.csv", "verification-queue.json",
     "discovery-progress.json", "research-log.json", "openai-api-usage.json",
     "official-benefit-sources.json", "unresolved.json", "blocked-official-urls.json",
+    "benefit-candidates.json",
 )
 
 
@@ -67,8 +68,11 @@ def capture(bundle, metadata=None):
             after = keyed(list(csv.DictReader(current.open(encoding="utf-8"))))
             file_changes = [{"key": list(key), "before": before.get(key), "after": after.get(key)}
                             for key in sorted(before.keys() | after.keys()) if before.get(key) != after.get(key)]
-        elif name in ("benefits.json", "verification-queue.json", "unresolved.json"):
-            before, after = keyed(json.loads(content)), keyed(load_json(current))
+        elif name in ("benefits.json", "verification-queue.json", "unresolved.json",
+                     "benefit-candidates.json"):
+            keys = (("security_code", "candidate_url", "candidate_title")
+                    if name == "benefit-candidates.json" else ("code",))
+            before, after = keyed(json.loads(content), keys), keyed(load_json(current), keys)
             file_changes = [{"key": list(key), "before": before.get(key), "after": after.get(key)}
                             for key in sorted(before.keys() | after.keys()) if before.get(key) != after.get(key)]
         elif name == "research-log.json":
@@ -90,7 +94,7 @@ def capture(bundle, metadata=None):
         if file_changes:
             changes[name] = file_changes
             write_json(bundle / name.replace(".csv", ".json"), file_changes)
-        if isinstance(file_changes, list) and name in ("benefits.json", "benefits.csv", "research-log.json", "verification-queue.json", "unresolved.json"):
+        if isinstance(file_changes, list) and name in ("benefits.json", "benefits.csv", "research-log.json", "verification-queue.json", "unresolved.json", "benefit-candidates.json"):
             changed_codes.update(change["key"][0] for change in file_changes if change["key"])
     manifest = {
         "version": 2, "created_at": datetime.now(timezone.utc).isoformat(),
@@ -112,6 +116,8 @@ def apply(bundle):
             if name == "research-log.json": keys = ("code", "checked_at")
             elif name == "blocked-official-urls.json": keys = ("url", "blocked_at")
             elif name == "openai-api-usage.json": keys = ("executed_at",)
+            elif name == "benefit-candidates.json":
+                keys = ("security_code", "candidate_url", "candidate_title")
             if name == "benefits.csv":
                 with target.open(encoding="utf-8", newline="") as stream:
                     reader = csv.DictReader(stream); rows, fields = list(reader), reader.fieldnames
