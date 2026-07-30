@@ -29,15 +29,26 @@ def main():
                      for code, item in value.items()]
         records.extend(value)
     output = data / "benefit-candidates.json"
-    merged, added = merge_candidates(load(output, []), records, companies)
+    existing = load(output, [])
+    if not existing:
+        print("CANDIDATE DISCOVERY START: benefit-candidates.json is missing or empty")
+    merged, added = merge_candidates(existing, records, companies)
     output.write_text(json.dumps(merged, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     counts = {name: sum(x["priority"] == name for x in merged) for name in ("high", "medium", "low")}
-    print(f"CANDIDATE DISCOVERY: new={added} high={counts['high']} medium={counts['medium']} low={counts['low']}")
+    sources = {name: sum(x.get("candidate_source") == name for x in merged)
+               for name in ("tdnet", "jpx")}
+    research = sum(1 for record in load(data / "research-log.json", [])
+                   if record.get("candidate_title") or record.get("title"))
+    print(f"CANDIDATE DISCOVERY: new={added} tdnet={sources['tdnet']} jpx={sources['jpx']} "
+          f"research_log={research} high={counts['high']} medium={counts['medium']} low={counts['low']}")
     if os.environ.get("GITHUB_OUTPUT"):
         with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as stream:
             stream.write(f"new_candidates={added}\n")
             stream.write(f"high_candidates={counts['high']}\n")
             stream.write(f"medium_candidates={counts['medium']}\n")
+            stream.write(f"tdnet_discovered={sources['tdnet']}\n")
+            stream.write(f"jpx_discovered={sources['jpx']}\n")
+            stream.write(f"research_log_candidates={research}\n")
 
 
 if __name__ == "__main__": main()

@@ -859,6 +859,23 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                 selected = discovery.choose(companies, args, {}, [], now=now)
         self.assertEqual([item["code"] for item in selected], ["1000"])
 
+    def test_auto_selection_always_replenishes_five_from_real_master_queue(self):
+        companies = [{"code": str(1000 + i), "name": f"company{i}", "market": "プライム"}
+                     for i in range(12)]
+        args = type("Args", (), {"security_codes": "", "auto_select": True,
+            "retry_research_log": False, "retry_failed": False, "companies_per_run": 5})()
+        with tempfile.TemporaryDirectory() as directory, patch.object(discovery, "DATA", Path(directory)):
+            selected = discovery.choose(companies, args, {}, [])
+        self.assertEqual(len(selected), 5)
+        self.assertTrue(all(item.get("full_scan_fallback") for item in selected))
+        self.assertEqual(discovery.LAST_SELECTION_COUNTS["full_scan_selected"], 5)
+
+    def test_zero_selected_is_a_fatal_production_outcome(self):
+        partial, fatal, exit_code = discovery.production_outcome({}, 0)
+        self.assertFalse(partial)
+        self.assertTrue(fatal)
+        self.assertEqual(exit_code, 1)
+
     def test_free_priority_uses_official_titles_paths_and_disclosure_titles(self):
         companies = [{"code": str(1000 + i), "name": f"company{i}"} for i in range(30)]
         companies[20]["page_title"] = "株主様ご優待制度"

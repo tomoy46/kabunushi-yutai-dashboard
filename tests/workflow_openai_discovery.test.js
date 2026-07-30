@@ -21,7 +21,7 @@ test('production workflow commits verified results after a partial failure', () 
   assert.equal(dispatchInputs.diagnostic_mode.default, false);
   assert.equal(
     stepNamed('Commit verified results').if,
-    '${{ success() && inputs.diagnostic_mode != true }}',
+    '${{ success() && inputs.diagnostic_mode != true && inputs.selection_diagnostic != true }}',
   );
 });
 
@@ -103,7 +103,7 @@ test('tests run before discovery and a failed test blocks API use and commit', (
   assert.ok(install.includes('sudo apt-get update'));
   assert.ok(install.includes('sudo apt-get install -y poppler-utils'));
   assert.ok(install.includes('pdftotext -v'));
-  assert.equal(stepNamed('Commit verified results').if, '${{ success() && inputs.diagnostic_mode != true }}');
+  assert.equal(stepNamed('Commit verified results').if, '${{ success() && inputs.diagnostic_mode != true && inputs.selection_diagnostic != true }}');
 });
 
 test('live source verification allows one stale issuer before production discovery', () => {
@@ -222,4 +222,22 @@ test('deprecated security-code range inputs cannot trigger indiscriminate discov
   const command = stepNamed('Discover from official sources').run;
   assert.ok(!command.includes('--start-code'));
   assert.ok(!command.includes('--end-code'));
+});
+
+test('free selection diagnostic stops before every OpenAI prerequisite', () => {
+  assert.equal(dispatchInputs.selection_diagnostic.default, false);
+  assert.equal(stepNamed('Validate OpenAI configuration without calling the API').if,
+    '${{ inputs.selection_diagnostic != true }}');
+  assert.equal(stepNamed('Verify maintained official sources over real HTTP').if,
+    '${{ inputs.selection_diagnostic != true }}');
+  assert.ok(stepNamed('Discover from official sources').run.includes('--selection-diagnostic'));
+  assert.ok(stepNamed('Commit verified results').if.includes('inputs.selection_diagnostic != true'));
+});
+
+test('workflow summary exposes the complete free-selection funnel', () => {
+  const report = stepNamed('Report workflow outcome');
+  for (const metric of ['TDnet取得件数', 'JPX取得件数', '既存research-log候補件数',
+    '未調査全社キュー件数', '重複除外後件数', '最終selected件数']) {
+    assert.ok(report.run.includes(metric));
+  }
 });

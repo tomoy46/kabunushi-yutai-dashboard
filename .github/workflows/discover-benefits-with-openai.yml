@@ -12,6 +12,7 @@ on:
       retry_failed: {description: 'Retry failed companies', default: false, type: boolean}
       official_only: {description: 'Only register fully official results', default: true, type: boolean}
       diagnostic_mode: {description: 'Diagnose code 1301 without changing data', default: false, type: boolean}
+      selection_diagnostic: {description: 'Select at least 5 real companies and stop before OpenAI (free)', default: false, type: boolean}
 permissions: {contents: write, pages: write, id-token: write}
 concurrency: {group: shareholder-data-main, cancel-in-progress: false}
 jobs:
@@ -51,6 +52,7 @@ jobs:
       - name: Log workflow inputs
         env:
           DIAGNOSTIC_MODE: ${{ inputs.diagnostic_mode }}
+          SELECTION_DIAGNOSTIC: ${{ inputs.selection_diagnostic }}
           SECURITY_CODES: ${{ inputs.security_codes }}
           COMPANIES_PER_RUN: ${{ inputs.companies_per_run }}
           MAX_OPENAI_CALLS_PER_DAY: ${{ inputs.max_openai_calls_per_day }}
@@ -60,6 +62,7 @@ jobs:
           RETRY_RESEARCH_LOG: ${{ inputs.retry_research_log }}
         run: |
           echo "diagnostic_mode=${DIAGNOSTIC_MODE}"
+          echo "selection_diagnostic=${SELECTION_DIAGNOSTIC}"
           echo "security_codes=${SECURITY_CODES}"
           echo "companies_per_run=${COMPANIES_PER_RUN}"
           echo "max_openai_calls_per_day=${MAX_OPENAI_CALLS_PER_DAY}"
@@ -73,6 +76,7 @@ jobs:
         id: candidates
         run: python scripts/discover_benefit_candidates.py
       - name: Validate OpenAI configuration without calling the API
+        if: ${{ inputs.selection_diagnostic != true }}
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
@@ -86,6 +90,7 @@ jobs:
           echo "OpenAI host: api.openai.com"
           echo "OpenAI model: ${OPENAI_MODEL:-gpt-5.4-nano}"
       - name: Verify maintained official sources over real HTTP
+        if: ${{ inputs.selection_diagnostic != true }}
         env:
           RUN_LIVE_OFFICIAL_SOURCES: '1'
         run: python -m unittest discover -s tests -p 'test_live_official_sources.py' -v
@@ -106,6 +111,7 @@ jobs:
           ${{ inputs.retry_failed == true && '--retry-failed' || '' }}
           ${{ inputs.official_only == true && '--official-only' || '' }}
           ${{ inputs.diagnostic_mode == true && '--diagnostic-mode' || '' }}
+          ${{ inputs.selection_diagnostic == true && '--selection-diagnostic' || '' }}
       - name: Finalize recovery bundle
         if: ${{ always() }}
         env:
@@ -128,7 +134,7 @@ jobs:
         # Per-company research failures are recorded without failing discovery,
         # so confirmed results still reach this step. A failed test or structural
         # discovery failure blocks the step via success().
-        if: ${{ success() && inputs.diagnostic_mode != true }}
+        if: ${{ success() && inputs.diagnostic_mode != true && inputs.selection_diagnostic != true }}
         env:
           USE_EXISTING_DISCOVERY_BUNDLE: 'true'
           DISCOVERY_RESULTS_BUNDLE: recovery-results
@@ -262,6 +268,12 @@ jobs:
           ABOLISHED_COUNT: ${{ steps.discovery.outputs.abolished }}
           UPDATED_CANDIDATES: ${{ steps.discovery.outputs.updated_candidates }}
           FULL_SCAN_PROCESSED: ${{ steps.discovery.outputs.full_scan_processed }}
+          TDNET_DISCOVERED: ${{ steps.candidates.outputs.tdnet_discovered }}
+          JPX_DISCOVERED: ${{ steps.candidates.outputs.jpx_discovered }}
+          RESEARCH_LOG_CANDIDATES: ${{ steps.candidates.outputs.research_log_candidates }}
+          FULL_SCAN_QUEUE: ${{ steps.discovery.outputs.full_scan_queue }}
+          DEDUPLICATED_CANDIDATES: ${{ steps.discovery.outputs.deduplicated_candidates }}
+          SELECTED_COUNT: ${{ steps.discovery.outputs.selected }}
         run: |
           committed="${COMMITTED:-no}"
           committed_confirmed_count=0
@@ -299,6 +311,12 @@ jobs:
             echo "- medium候補数: ${MEDIUM_COUNT:-0}"
             echo "- TDnet候補数: ${TDNET_CANDIDATES:-0}"
             echo "- JPX候補数: ${JPX_CANDIDATES:-0}"
+            echo "- TDnet取得件数: ${TDNET_DISCOVERED:-0}"
+            echo "- JPX取得件数: ${JPX_DISCOVERED:-0}"
+            echo "- 既存research-log候補件数: ${RESEARCH_LOG_CANDIDATES:-0}"
+            echo "- 未調査全社キュー件数: ${FULL_SCAN_QUEUE:-0}"
+            echo "- 重複除外後件数: ${DEDUPLICATED_CANDIDATES:-0}"
+            echo "- 最終selected件数: ${SELECTED_COUNT:-0}"
             echo "- low候補数: ${LOW_COUNT:-0}"
             echo "- 無料抽出成功数: ${FREE_EXTRACTION_SUCCESS:-0}"
             echo "- 公式ドメイン発見数: ${OFFICIAL_DOMAINS_FOUND:-0}"
