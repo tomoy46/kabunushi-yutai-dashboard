@@ -2,7 +2,9 @@
 
 ## 優待データ収集
 
-日次調査は全上場会社の総当たりではなく、`data/benefit-candidates.json` の候補を起点にします。
+初期データは `data/import-benefits.csv` から一括投入し、その後は新設・変更・廃止を追跡します。
+自動探索は定期実行せず、比較・検証用の手動実行機能としてのみ残します。
+手動探索では `data/benefit-candidates.json` の候補を起点にします。
 TDnet・JPXの優待関連開示を high、企業公式IR/PDFを medium、その他の無料情報を low として保存し、
 1回につき high 最大20社、medium 最大5社を公式資料で確認します。自動選択では候補ファイルの有無にかかわらず、
 未調査の全社キューから最低5社を毎回補充します。検索結果は候補発見専用であり、登録根拠にはしません。
@@ -66,16 +68,23 @@ npm run serve
 | ファイル | 用途 |
 |---|---|
 | `data/benefits.csv` / `.json` | 手動確認済みの優待マスター |
+| `data/import-benefits.csv` | 初期データ一括投入用テンプレート |
 | `data/update-status.json` | 更新処理の結果 |
 | `data/review-queue.json` | TDnetから検出した人手確認待ち候補 |
 | `data/research-log.json` | 公式確認できなかった調査結果（ダッシュボード件数の対象外） |
 
 ```bash
 python scripts/csv_to_json.py
+python scripts/import_benefits.py
 python scripts/fetch_tdnet.py --feed-url 'TDnetのRSS/XML URL'
 ```
 
-TDnet処理はタイトルを指定キーワードで抽出し、URL重複を除いてレビューキューに追加するだけで、優待マスターを変更しません。優待データ更新の定期処理は平日09:15 JST（00:15 UTC）です。
+一括取込ではテンプレートの列、証券コード、ステータス、日付、入力内重複を先に検証します。許可する
+`status` は `confirmed`、`abolished`、`verification_queue` のみです。既存コードは追加せず、内容が異なる場合は
+更新候補として報告します。既存の確認済みデータも上書きしません。`verification_queue` は公式URLが空でも登録できます。
+Actions の **Import shareholder benefits CSV** からも手動実行でき、この処理はOpenAI APIを使用しません。
+
+TDnet処理はタイトルを指定キーワードで抽出し、URL重複を除いてレビューキューに追加するだけで、優待マスターを変更しません。
 
 ### 証券コードから調査対象を追加する
 
