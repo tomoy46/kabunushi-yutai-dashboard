@@ -1,0 +1,106 @@
+name: Import and deploy shareholder benefits
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: import-and-deploy-shareholder-benefits
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  import-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip
+
+      - name: Validate import CSV
+        run: python scripts/import_benefits.py --validate-only
+
+      - name: Run regression tests
+        run: npm test
+
+      - name: Import shareholder benefits
+        run: python scripts/import_benefits.py --result-file import-result.json
+
+      - name: Collect changes
+        id: changes
+        shell: bash
+        run: |
+          changed=false
+          git diff --quiet -- data/benefits.csv data/benefits.json || changed=true
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          r=json.load(open('import-result.json'))
+          print('## 取込結果\n')
+          labels=[('CSV入力件数','input'),('新規追加数','added'),('更新数','updated'),
+                  ('変更なし件数','unchanged'),('重複除外数','duplicates'),('エラー数','errors'),
+                  ('取込前の公式確認済み件数','before_confirmed'),
+                  ('取込後の公式確認済み件数','after_confirmed'),('廃止済み件数','abolished')]
+          for label,key in labels: print(f'- {label}: **{r[key]}**')
+          PY
+
+      - name: Commit and safely push main
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git fetch origin main
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add data/benefits.csv data/benefits.json
+          git commit -m "chore: import and deploy shareholder benefits"
+          bash scripts/push_import_with_retry.sh
+          echo '- Gitコミットの有無: **あり**' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Record unchanged result
+        if: steps.changes.outputs.changed != 'true'
+        run: |
+          echo '- Gitコミットの有無: **なし（データ変更なし）**' >> "$GITHUB_STEP_SUMMARY"
+          git fetch origin main
+          git reset --hard origin/main
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      # Keep the same publication root as the legacy Pages workflow.
+      - name: Create GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Record deployment
+        run: echo '- デプロイ結果: **成功**' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify published benefits
+        run: |
+          python scripts/verify_pages_deployment.py \
+            --url 'https://tomoy46.github.io/kabunushi-yutai-dashboard/data/benefits.json'
+          count=$(python -c "import json; print(json.load(open('pages-verification.json'))['published_count'])")
+          echo "- 公開後の公式確認済み件数: **${count}**" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Record failed deployment
+        if: failure()
+        run: echo '- デプロイ結果: **失敗（ログを確認してください）**' >> "$GITHUB_STEP_SUMMARY"

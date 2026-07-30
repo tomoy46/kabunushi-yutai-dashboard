@@ -1,4 +1,4 @@
-name: Deploy GitHub Pages
+name: Legacy - Deploy GitHub Pages (旧・個別実行用)
 on:
   push: {branches: [main]}
   workflow_dispatch:
