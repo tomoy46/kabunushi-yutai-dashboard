@@ -321,7 +321,7 @@
       "official_domain_not_identified"
     ],
     "explored_urls": [],
-    "checked_at": "2026-07-30T04:09:22.594513+00:00"
+    "checked_at": "2026-07-30T07:00:04.787192+00:00"
   },
   {
     "code": "1946",
@@ -339,10 +339,10 @@
     "result": "official_site_discovery_failed",
     "reasons": [
       "official_site_discovery_failed",
-      "official_domain_not_identified"
+      "access_blocked"
     ],
     "explored_urls": [],
-    "checked_at": "2026-07-30T04:09:22.245938+00:00"
+    "checked_at": "2026-07-30T07:00:04.574360+00:00"
   },
   {
     "code": "1952",
@@ -423,7 +423,7 @@
       "official_domain_not_identified"
     ],
     "explored_urls": [],
-    "checked_at": "2026-07-30T04:09:22.947504+00:00"
+    "checked_at": "2026-07-30T07:00:05.039907+00:00"
   },
   {
     "code": "1972",
@@ -434,17 +434,18 @@
       "official_domain_not_identified"
     ],
     "explored_urls": [],
-    "checked_at": "2026-07-30T04:09:23.478452+00:00"
+    "checked_at": "2026-07-30T07:00:05.259872+00:00"
   },
   {
     "code": "1975",
     "name": "朝日工業社",
     "result": "official_site_discovery_failed",
     "reasons": [
-      "official_site_discovery_failed"
+      "official_site_discovery_failed",
+      "official_domain_not_identified"
     ],
     "explored_urls": [],
-    "checked_at": "2026-07-29T15:31:38.686023+00:00"
+    "checked_at": "2026-07-30T07:00:05.469165+00:00"
   },
   {
     "code": "1976",
