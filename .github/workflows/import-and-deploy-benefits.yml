@@ -92,7 +92,8 @@ jobs:
         uses: actions/deploy-pages@v4
 
       - name: Record deployment
-        run: echo '- デプロイ結果: **成功**' >> "$GITHUB_STEP_SUMMARY"
+        run: |
+          echo '- デプロイ結果: **成功**' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Verify published benefits
         run: |
@@ -103,4 +104,5 @@ jobs:
 
       - name: Record failed deployment
         if: failure()
-        run: echo '- デプロイ結果: **失敗（ログを確認してください）**' >> "$GITHUB_STEP_SUMMARY"
+        run: |
+          echo '- デプロイ結果: **失敗（ログを確認してください）**' >> "$GITHUB_STEP_SUMMARY"
