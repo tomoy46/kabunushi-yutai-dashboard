@@ -256,6 +256,35 @@ class OpenAIDiscoveryTests(unittest.TestCase):
                 self.assertEqual(discovery.official_url_decision(url, self.company),
                                  (False, "rejected_non_official"))
 
+    def test_official_search_uses_all_required_queries_and_audits_rejections(self):
+        requested = []
+        class Response:
+            def __init__(self, url): self.url = url
+            def read(self, _limit):
+                requested.append(self.url)
+                return b'<a href="https://ja.wikipedia.org/wiki/test">result</a>'
+            def __enter__(self): return self
+            def __exit__(self, *_args): pass
+        audit, decisions = [], []
+        result = discovery.free_search_official_source(
+            self.company, opener=lambda request, timeout: Response(request.full_url),
+            audit_out=audit, decisions_out=decisions)
+        self.assertEqual(result, (None, ""))
+        decoded = " ".join(discovery.unescape(url) for url in requested)
+        for term in ("公式", "IR", "株主優待", "投資家情報", "1301"):
+            self.assertIn(term, discovery.unquote_plus(decoded))
+        self.assertTrue(any(item["reason"] == "rejected_non_official" for item in audit))
+
+    def test_discovery_failure_stage_is_specific(self):
+        self.assertEqual(discovery.discovery_failure_reason([]), "company_name_search_failed")
+        self.assertEqual(discovery.discovery_failure_reason([
+            {"stage": "candidate", "reason": "identity_mismatch"}]),
+            "official_domain_not_identified")
+        self.assertEqual(discovery.discovery_failure_reason([
+            {"stage": "fetch", "reason": "access_blocked"}]), "access_blocked")
+        self.assertEqual(discovery.discovery_failure_reason([], "example.co.jp"),
+                         "ir_page_not_found")
+
     def test_corporate_homepage_is_accepted_without_benefit_word(self):
         html = """<html><title>株式会社極洋 公式サイト</title>
         <body><nav>企業情報 IR 投資家情報</nav><p>証券コード 1301</p></body></html>"""

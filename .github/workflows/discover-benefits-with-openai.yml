@@ -13,6 +13,7 @@ on:
       official_only: {description: 'Only register fully official results', default: true, type: boolean}
       diagnostic_mode: {description: 'Diagnose code 1301 without changing data', default: false, type: boolean}
       selection_diagnostic: {description: 'Select at least 5 real companies and stop before OpenAI (free)', default: false, type: boolean}
+      retest_last_five: {description: 'Re-run the latest five official-site discovery failures', default: false, type: boolean}
 permissions: {contents: write, pages: write, id-token: write}
 concurrency: {group: shareholder-data-main, cancel-in-progress: false}
 jobs:
@@ -112,6 +113,7 @@ jobs:
           ${{ inputs.official_only == true && '--official-only' || '' }}
           ${{ inputs.diagnostic_mode == true && '--diagnostic-mode' || '' }}
           ${{ inputs.selection_diagnostic == true && '--selection-diagnostic' || '' }}
+          ${{ inputs.retest_last_five == true && '--retest-last-five' || '' }}
       - name: Finalize recovery bundle
         if: ${{ always() }}
         env:

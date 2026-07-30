@@ -25,7 +25,7 @@ import unicodedata
 import zlib
 from pathlib import Path
 from urllib.error import HTTPError, URLError
-from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
+from urllib.parse import parse_qsl, unquote_plus, urlencode, urljoin, urlparse, urlunparse
 from urllib.request import Request, urlopen
 from html import unescape
 
@@ -46,6 +46,9 @@ BLOCKED_HOSTS = (
     "rakuten-sec.co.jp",
     "sbisec.co.jp", "monex.co.jp", "note.com", "x.com", "facebook.com",
     "instagram.com", "youtube.com", "yutai-guide.daiwair.co.jp",
+    "wikipedia.org", "ja.wikipedia.org", "linkedin.com", "indeed.com",
+    "openwork.jp", "wantedly.com", "en-gage.net", "doda.jp", "reuters.com",
+    "bloomberg.co.jp", "prtimes.jp",
 )
 FIELDS = {
     "code": {"type": "string"}, "name": {"type": "string"},
@@ -101,7 +104,9 @@ DISCOVERY_TERMS = re.compile(
 )
 IR_TERMS = re.compile(r"IR|投資家情報|株式情報|株主情報|investor|shareholder|stock", re.I)
 CORPORATE_STRUCTURE_TERMS = re.compile(
-    r"会社概要|企業情報|corporate|company|profile|about|IR|investor", re.I)
+    r"会社概要|企業情報|IR情報|投資家情報|株主優待|ニュースリリース|"
+    r"corporate|company|profile|about|IR|investor|news.?release", re.I)
+OFFICIAL_SEARCH_SUFFIXES = ("公式", "IR", "株主優待", "投資家情報")
 
 
 class OfficialSourceNotFound(Exception):
@@ -1092,6 +1097,7 @@ def discover_corporate_candidates(company, fetcher=None, max_pages=24):
     seeds = [canonical_url(f"https://{domains[0]}{path}") for path in
              ("/", "/ir/", "/ir/stock/", "/ir/shareholder/", "/company/ir/",
               "/company/", "/company/profile/", "/corporate/profile/", "/stock/",
+              "/investor/", "/individual/", "/news/", "/newsrelease/",
               "/sitemap.xml", "/robots.txt")]
     queue, seen, relevant = [url for url in seeds if url], set(), []
     while queue and len(seen) < max_pages:
@@ -1114,12 +1120,15 @@ def discover_corporate_candidates(company, fetcher=None, max_pages=24):
             relevant.append(final)
         for link in links:
             path = safe_text(urlparse(link).path).lower()
-            label_relevant = DISCOVERY_TERMS.search(link) or re.search(r"(?:^|/)(?:ir|investor|stock|shareholder)(?:/|$)", path)
+            label_relevant = DISCOVERY_TERMS.search(link) or re.search(
+                r"(?:^|/)(?:ir|investor|stock|shareholder|individual|news|newsrelease)(?:/|$)", path)
             if path.endswith(".pdf"):
                 relevant.append(link)
             elif link not in seen and not re.search(
                     r"\.(?:css|js|png|jpe?g|gif|svg|ico|woff2?|ttf|mp4|webm)$", path):
-                queue.append(link)
+                # Visit investor/news/benefit navigation before generic corporate links,
+                # so a large global menu cannot consume the bounded crawl first.
+                (queue.insert(0, link) if label_relevant else queue.append(link))
     unique = list(dict.fromkeys(relevant))
     # Required global order: corporate HTML before corporate PDF.
     return sorted(unique, key=lambda url: (
@@ -1204,8 +1213,42 @@ def discover_verified_official_source(company, registered=None, review_items=Non
     return None, ""
 
 
+def discovery_failure_reason(audit, official_domain=None, material_urls=()):
+    """Classify the deepest issuer-discovery stage reached for durable diagnostics."""
+    errors = [safe_text(item.get("reason")) for item in audit if isinstance(item, dict)]
+    if any(reason in ("access_blocked", "official_site_forbidden", "official_host_cooldown")
+           for reason in errors):
+        return "access_blocked"
+    if not official_domain and (not audit or all(
+            item.get("stage") == "search" and item.get("reason") == "search_failed" for item in audit)):
+        return "company_name_search_failed"
+    if not official_domain:
+        return "official_domain_not_identified"
+    if material_urls and not any(urlparse(url).path.lower().endswith(".pdf") for url in material_urls):
+        return "official_pdf_not_found"
+    if material_urls:
+        return "benefit_page_not_found"
+    return "ir_page_not_found"
+
+
+def log_discovery_audit(company, audit, final_reason):
+    """Print one complete, grep-friendly issuer discovery trace."""
+    for item in audit:
+        print("Official discovery audit: " + " | ".join((
+            f"security_code={safe_message(company.get('code'))}",
+            f"company_name={safe_message(company.get('name'))}",
+            f"stage={safe_message(item.get('stage'))}",
+            f"search_query={safe_message(item.get('query'))}",
+            f"tried_url={safe_message(item.get('url'))}",
+            f"exclusion_reason={safe_message(item.get('reason'))}")))
+    print("Official discovery failure: " + " | ".join((
+        f"security_code={safe_message(company.get('code'))}",
+        f"company_name={safe_message(company.get('name'))}",
+        f"final_failure_reason={final_reason}")))
+
+
 def free_search_official_source(company, opener=None, decisions_out=None, previously_rejected=(),
-                                document_fetcher=None):
+                                document_fetcher=None, audit_out=None):
     """Use a free HTML search result only to locate and verify an issuer page.
 
     Search snippets are never evidence.  Every returned URL is downloaded and
@@ -1214,21 +1257,33 @@ def free_search_official_source(company, opener=None, decisions_out=None, previo
     opener = opener or urlopen
     # Search for the issuer first, not only a benefit page.  A verified homepage
     # becomes the trusted seed from which IR and benefit material is crawled.
-    query = urlencode({"q": f'{company["code"]} {company["name"]} 公式 会社概要 IR'})
-    request = Request(f"https://html.duckduckgo.com/html/?{query}", headers={"User-Agent": BROWSER_USER_AGENT})
-    try:
-        with opener(request, timeout=20) as response:
-            html = safe_text(response.read(1_000_000))
-    except (HTTPError, URLError, socket.timeout, TimeoutError, ValueError):
-        return None, ""
-    links = re.findall(r'''(?is)href=["']([^"']+)["']''', html)
-    for raw in links[:30]:
+    audit = audit_out if audit_out is not None else []
+    queries = [f'{company["name"]} {suffix}' for suffix in OFFICIAL_SEARCH_SUFFIXES]
+    queries.append(f'{company["code"]} {company["name"]}')
+    search_results = []
+    for search_query in queries:
+        query = urlencode({"q": search_query})
+        request = Request(f"https://html.duckduckgo.com/html/?{query}", headers={"User-Agent": BROWSER_USER_AGENT})
+        try:
+            with opener(request, timeout=20) as response:
+                html = safe_text(response.read(1_000_000))
+        except (HTTPError, URLError, socket.timeout, TimeoutError, ValueError) as error:
+            reason = "access_blocked" if isinstance(error, HTTPError) and error.code in (403, 429) else "search_failed"
+            audit.append({"stage": "search", "query": search_query, "url": request.full_url, "reason": reason})
+            continue
+        links = re.findall(r'''(?is)href=["']([^"']+)["']''', html)
+        audit.append({"stage": "search", "query": search_query, "url": request.full_url,
+                      "reason": "results_found" if links else "no_results"})
+        search_results.extend((search_query, raw) for raw in links[:30])
+    for search_query, raw in search_results:
         parsed = urlparse(unescape(raw))
         target = dict(parse_qsl(parsed.query)).get("uddg") if "duckduckgo.com" in (parsed.hostname or "") else raw
         url = canonical_url(target)
         host = normalized_host(url)
         if url_identity(url) in {url_identity(value) for value in previously_rejected}:
             log_url_decision(company, url, False, "rejected_non_official", "durable_rejection_cache")
+            audit.append({"stage": "candidate", "query": search_query, "url": url,
+                          "reason": "durable_rejection_cache"})
             continue
         # Unknown search hosts may be identity-probed, but are not evidence and
         # are never sent to OpenAI unless both issuer name and security code are
@@ -1238,6 +1293,8 @@ def free_search_official_source(company, opener=None, decisions_out=None, previo
             if decisions_out is not None:
                 decisions_out.append((url, False, "rejected_non_official"))
             log_url_decision(company, url, False, "rejected_non_official", "search_result")
+            audit.append({"stage": "candidate", "query": search_query, "url": url,
+                          "reason": "rejected_non_official"})
             continue
         candidate = dict(company, official_domain=host, official_domains=[host])
         try:
@@ -1247,12 +1304,20 @@ def free_search_official_source(company, opener=None, decisions_out=None, previo
                 if decisions_out is not None:
                     decisions_out.append((url, False, "rejected_non_official"))
                 log_url_decision(company, url, False, "rejected_non_official", "identity_mismatch")
+                audit.append({"stage": "identity", "query": search_query, "url": url,
+                              "reason": "identity_mismatch"})
                 continue
             log_url_decision(company, url, True, "official_company_domain", "identity_verified_search_result")
             if decisions_out is not None:
                 decisions_out.append((url, True, "official_company_domain"))
+            audit.append({"stage": "identity", "query": search_query, "url": final,
+                          "reason": "official_company_domain"})
             return final, page_text(body, content_type)
-        except (OfficialSourceNotFound, OfficialSourceFetchError, ValueError, TypeError):
+        except (OfficialSourceNotFound, OfficialSourceFetchError, ValueError, TypeError) as error:
+            reason = ("access_blocked" if isinstance(error, OfficialSourceFetchError) and
+                      error.reason in ("official_site_forbidden", "official_host_cooldown")
+                      else getattr(error, "reason", type(error).__name__))
+            audit.append({"stage": "fetch", "query": search_query, "url": url, "reason": reason})
             continue
     return None, ""
 
@@ -1715,6 +1780,11 @@ def choose(companies, args, progress, benefits, queue=None, now=None):
     global LAST_SELECTION_COUNTS
     immutable = {x["code"] for x in benefits if x.get("benefit_status") in ("official_confirmed", "abolished")}
     manual = parse_security_codes(getattr(args, "security_codes", ""))
+    if getattr(args, "retest_last_five", False):
+        failed = [str(item.get("code")) for item in load(DATA / "unresolved.json", [])
+                  if item.get("result") == "official_site_discovery_failed"]
+        manual = list(dict.fromkeys(reversed(failed)))[:5][::-1]
+        print("FIXED RETEST TARGETS: " + ", ".join(manual))
     by_code = {str(company["code"]): company for company in companies}
     auto = getattr(args, "auto_select", None)
     if manual:
@@ -2168,7 +2238,8 @@ def run(args):
                    "stopped_openai_after_403": False, "affected_security_codes": []})
     totals.update({"official_homepages_found": 0, "official_ir_pages_found": 0,
                    "benefit_pages_found": 0, "benefit_page_not_found": 0,
-                   "official_domains_saved": 0})
+                   "official_domains_saved": 0, "benefit_or_official_pdf_reached": 0,
+                   "discovery_failure_stages": {}})
     totals.update({"abolished": 0, "updated_candidates": 0,
                    "tdnet_candidates": sum(c.get("benefit_candidate", {}).get("candidate_source") == "tdnet" for c in selected),
                    "jpx_candidates": sum(c.get("benefit_candidate", {}).get("candidate_source") == "jpx" for c in selected),
@@ -2246,13 +2317,15 @@ def run(args):
             else:
                 final_url, official_text = discover_verified_official_source(
                     company, registered, review_items, explored_out=explored_urls)
+            discovery_audit = []
             if not final_url and not registered and not fixture:
                 search_decisions = []
                 rejection_path = DATA / "rejected-official-candidates.json"
                 rejection_cache = load(rejection_path, {})
                 prior_rejections = rejection_cache.get(str(company["code"]), [])
                 final_url, official_text = free_search_official_source(
-                    company, decisions_out=search_decisions, previously_rejected=prior_rejections)
+                    company, decisions_out=search_decisions, previously_rejected=prior_rejections,
+                    audit_out=discovery_audit)
                 totals["non_official_urls_excluded"] += sum(
                     not accepted for _url, accepted, _reason in search_decisions)
                 rejected_now = [url for url, accepted, _reason in search_decisions if not accepted and url]
@@ -2330,6 +2403,9 @@ def run(args):
                     totals["non_official_urls_excluded"] += 1
             explored_urls = accepted_urls
             totals["official_company_url_candidates"] += len(explored_urls)
+            if any(DISCOVERY_TERMS.search(url) or urlparse(url).path.lower().endswith(".pdf")
+                   for url in explored_urls):
+                totals["benefit_or_official_pdf_reached"] += 1
             _score, fetched_priority = priority_diagnostic(
                 company, final_url, official_text, load(DATA / "review-queue.json", []))
             totals[fetched_priority] += 1
@@ -2338,18 +2414,27 @@ def run(args):
                 any(IR_TERMS.search(url) or urlparse(url).path.lower().endswith(".pdf")
                     for url in explored_urls)))
             if not company.get("official_domain"):
+                failure_reason = discovery_failure_reason(discovery_audit)
+                log_discovery_audit(company, discovery_audit, failure_reason)
+                totals["discovery_failure_stages"][failure_reason] = (
+                    totals["discovery_failure_stages"].get(failure_reason, 0) + 1)
                 totals["processed_companies"] += 1
                 totals["verification_required"] += 1
                 totals["pre_openai_excluded"] += 1
                 totals["unresolved"] += 1
                 totals["research_reasons"]["official_site_discovery_failed"] += 1
                 if not args.diagnostic_mode:
-                    append_unresolved(company, ["official_site_discovery_failed"], explored_urls)
+                    append_unresolved(company, ["official_site_discovery_failed", failure_reason], explored_urls)
                     persist_production_state(benefits, queue, progress)
                 print(f'{"FIXTURE RESULT" if fixture else "PRODUCTION RESULT"} '
                       f'{company["code"]} {company["name"]}: unresolved')
                 continue
             if not has_analysis_material:
+                failure_reason = discovery_failure_reason(
+                    discovery_audit, company.get("official_domain"), explored_urls)
+                log_discovery_audit(company, discovery_audit, failure_reason)
+                totals["discovery_failure_stages"][failure_reason] = (
+                    totals["discovery_failure_stages"].get(failure_reason, 0) + 1)
                 totals["processed_companies"] += 1
                 totals["verification_required"] += 1
                 totals["pre_openai_excluded"] += 1
@@ -2357,7 +2442,7 @@ def run(args):
                 totals["benefit_page_not_found"] += 1
                 totals["research_reasons"]["benefit_page_not_found"] += 1
                 if not args.diagnostic_mode:
-                    append_unresolved(company, ["benefit_page_not_found"], explored_urls)
+                    append_unresolved(company, ["benefit_page_not_found", failure_reason], explored_urls)
                     persist_production_state(benefits, queue, progress)
                 print(f'{"FIXTURE RESULT" if fixture else "PRODUCTION RESULT"} '
                       f'{company["code"]} {company["name"]}: unresolved (benefit_page_not_found)')
@@ -2666,9 +2751,15 @@ def run(args):
               f"official_homepages_found={totals['official_homepages_found']} "
               f"official_ir_pages_found={totals['official_ir_pages_found']} "
               f"benefit_pages_found={totals['benefit_pages_found']} "
+              f"benefit_or_official_pdf_reached={totals['benefit_or_official_pdf_reached']} "
               f"benefit_page_not_found={totals['benefit_page_not_found']} "
               f"official_domains_saved={totals['official_domains_saved']} "
               f"pre_openai_excluded={totals['pre_openai_excluded']} unresolved={totals['unresolved']}")
+        print("OFFICIAL DISCOVERY RESULT: "
+              f"official_sites={totals['official_homepages_found']}/{len(selected)} "
+              f"ir_pages={totals['official_ir_pages_found']}/{len(selected)} "
+              f"benefit_or_pdf={totals['benefit_or_official_pdf_reached']}/{len(selected)} "
+              "failure_stages=" + json.dumps(totals["discovery_failure_stages"], ensure_ascii=False, sort_keys=True))
         print("RESEARCH-LOG REASONS: " + " ".join(
             f"{reason}={totals['research_reasons'][reason]}" for reason in RESEARCH_REASONS))
         print(f"API USAGE: input_tokens={totals['input_tokens']} output_tokens={totals['output_tokens']} "
@@ -2748,6 +2839,8 @@ def parser():
     result.add_argument("--diagnostic-mode", action="store_true")
     result.add_argument("--selection-diagnostic", action="store_true",
                         help="select at least five real master rows and stop before OpenAI")
+    result.add_argument("--retest-last-five", action="store_true",
+                        help="re-run the latest five official-site discovery failures")
     return result
 
 
