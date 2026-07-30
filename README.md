@@ -79,6 +79,14 @@ python scripts/import_benefits.py
 python scripts/fetch_tdnet.py --feed-url 'TDnetのRSS/XML URL'
 ```
 
+GitHubへ接続できない環境では、チェックアウト済みブランチが最新の `main` ではない可能性を記録したうえで、
+ローカルの取込CSVとマスターを基準に日付単位の新規バッチを検証できます。次の例は2026-07-30に確認した
+200社について、CSV内重複、既存証券コードとの重複、マスターへの反映漏れを検査します。
+
+```bash
+python scripts/verify_import_batch.py --batch-date 2026-07-30 --expected 200
+```
+
 一括取込ではテンプレートの列、証券コード、ステータス、日付、入力内重複を先に検証します。許可する
 `status` は `confirmed`、`abolished` のみです。既存コードは追加せず、内容が異なる場合は更新候補として
 報告します。既存の確認済みデータも上書きしません。
