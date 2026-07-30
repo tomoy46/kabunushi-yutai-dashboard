@@ -1760,7 +1760,9 @@ def choose(companies, args, progress, benefits, queue=None, now=None):
         # An automatic dispatch is defined to do useful free work even when its
         # requested batch is accidentally below the production safety floor.
         companies_per_run = max(5, companies_per_run)
-        fallback = full_scan_available[:5]
+        # Exhaustive master scanning is only a safety net when durable official
+        # artifacts produced no actual candidates.
+        fallback = full_scan_available[:5] if not candidates else []
         if fallback:
             # Reserve room for the safety floor instead of allowing stale
             # disclosure candidates to consume the entire batch.
@@ -1777,6 +1779,8 @@ def choose(companies, args, progress, benefits, queue=None, now=None):
         "full_scan_queue": len(full_scan_available),
         "deduplicated_candidates": len(unique_codes),
         "full_scan_selected": sum(bool(c.get("full_scan_fallback")) for c in candidates),
+        "candidate_selected_count": sum(not c.get("full_scan_fallback") for c in candidates),
+        "fallback_selected_count": sum(bool(c.get("full_scan_fallback")) for c in candidates),
     }
     if manual or auto is not True:
         return candidates[:companies_per_run]
@@ -2027,7 +2031,9 @@ def publish_workflow_counts(totals):
                      "pre_openai_three_facts", "pre_openai_two_facts",
                      "pre_openai_one_or_zero_skipped", "official_403_fallback_companies",
                      "fallback_confirmed", "abolished", "updated_candidates", "tdnet_candidates",
-                     "jpx_candidates", "full_scan_processed"):
+                     "jpx_candidates", "full_scan_processed", "candidate_selected_count",
+                     "fallback_selected_count", "processed_count", "persisted_outcome_count",
+                     "unpersisted_count"):
             stream.write(f"{name}={totals.get(name, 0)}\n")
         for name in ("tdnet_discovered", "jpx_discovered", "research_log_candidates",
                      "full_scan_queue", "deduplicated_candidates", "selected"):
@@ -2044,6 +2050,7 @@ def publish_workflow_counts(totals):
         stream.write(f"zero_confirmed_cause={cause}\n")
         stream.write(f"partial_success={'true' if totals.get('partial_success') else 'false'}\n")
         stream.write(f"fatal_error={'true' if totals.get('fatal_error') else 'false'}\n")
+        stream.write(f"fatal_error_reason={totals.get('fatal_error_reason') or 'none'}\n")
 
 
 def production_outcome(totals, selected_count, fatal_error=False):
@@ -2053,13 +2060,14 @@ def production_outcome(totals, selected_count, fatal_error=False):
     saved to benefits, research-log, or unresolved.  Authentication failures and
     structural/persistence failures are workflow-scoped and remain fatal.
     """
-    saved = (totals.get("successes", 0) + totals.get("research_log_saved", 0) +
-             totals.get("unresolved", 0))
-    failures = totals.get("failures", 0)
-    partial_success = failures > 0 and saved > 0
-    all_failed = selected_count > 0 and failures == selected_count and saved == 0
-    no_work = selected_count == 0
-    return partial_success, bool(fatal_error or no_work), 1 if fatal_error or all_failed or no_work else 0
+    processed = totals.get("processed_count", selected_count)
+    persisted = totals.get("persisted_outcome_count",
+                           totals.get("successes", 0) + totals.get("research_log_saved", 0) +
+                           totals.get("unresolved", 0) + totals.get("failures", 0))
+    missing = max(0, processed - persisted)
+    is_fatal = bool(fatal_error or missing)
+    partial_success = processed > 0 and persisted == processed and totals.get("successes", 0) < processed
+    return partial_success, is_fatal, 1 if is_fatal else 0
 
 
 def diagnostic_outcome(totals, failed_stage):
@@ -2566,6 +2574,7 @@ def run(args):
             print(f"OpenAI failure classification: {classification}; model={model}")
             for line in safe_error_lines(error, key):
                 print(line)
+            totals["processed_companies"] += 1
             totals["failures"] += 1; errors.append({"code": company["code"], "status": error.status,
                                                      "error": error.message, "classification": classification})
             if error.status in (401, 403):
@@ -2602,6 +2611,7 @@ def run(args):
             if args.diagnostic_mode and not failure_logged:
                 failed_stage = failed_stage or active_failed_stage
                 diagnostic_stage(active_label, "failure", error, key)
+            totals["processed_companies"] += 1
             totals["failures"] += 1; errors.append({"code": company["code"], "error": str(error)[:300]})
             if not args.diagnostic_mode:
                 reasons = classified_reasons([safe_message(error)], facts)
@@ -2682,13 +2692,24 @@ def run(args):
             print(f"ZERO CONFIRMED: OpenAI API calls={totals['responses_api_calls']} "
                   f"input_tokens={totals['input_tokens']} output_tokens={totals['output_tokens']} "
                   f"cause={totals['zero_confirmed_cause']}")
-        accounting_error = accounted + budget_deferred != len(selected)
+        totals["processed_count"] = totals["processed_companies"]
+        # Each processed branch writes exactly one durable company outcome.  A
+        # failed atomic write raises and is therefore a workflow exception, not
+        # a falsely reported persisted result.
+        totals["persisted_outcome_count"] = accounted
+        totals["unpersisted_count"] = max(0, len(selected) - accounted - budget_deferred)
+        accounting_error = totals["unpersisted_count"] != 0
         partial_success, fatal_error, exit_code = production_outcome(
             totals, len(selected), fatal_error=abort_openai or accounting_error)
         totals["partial_success"] = partial_success
         totals["fatal_error"] = fatal_error
+        totals["fatal_error_reason"] = (
+            "authentication_or_workflow_start_failed" if abort_openai else
+            "selected_outcome_missing" if accounting_error else "none")
         print(f"WORKFLOW OUTCOME: partial_success={str(partial_success).lower()} "
-              f"fatal_error={str(fatal_error).lower()}")
+              f"fatal_error={str(fatal_error).lower()} reason={totals['fatal_error_reason']} "
+              f"processed={totals['processed_count']} persisted={totals['persisted_outcome_count']} "
+              f"unpersisted={totals['unpersisted_count']}")
         publish_workflow_counts(totals)
         if accounting_error:
             print(f"ERROR: selected {len(selected)} companies but persisted outcomes for {accounted}", file=sys.stderr)

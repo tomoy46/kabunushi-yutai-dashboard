@@ -274,6 +274,14 @@ jobs:
           FULL_SCAN_QUEUE: ${{ steps.discovery.outputs.full_scan_queue }}
           DEDUPLICATED_CANDIDATES: ${{ steps.discovery.outputs.deduplicated_candidates }}
           SELECTED_COUNT: ${{ steps.discovery.outputs.selected }}
+          CANDIDATE_SELECTED_COUNT: ${{ steps.discovery.outputs.candidate_selected_count }}
+          FALLBACK_SELECTED_COUNT: ${{ steps.discovery.outputs.fallback_selected_count }}
+          PROCESSED_COUNT: ${{ steps.discovery.outputs.processed_count }}
+          PERSISTED_OUTCOME_COUNT: ${{ steps.discovery.outputs.persisted_outcome_count }}
+          UNPERSISTED_COUNT: ${{ steps.discovery.outputs.unpersisted_count }}
+          FATAL_ERROR_REASON: ${{ steps.discovery.outputs.fatal_error_reason }}
+          TDNET_SOURCE_STATUS: ${{ steps.candidates.outputs.tdnet_source_status }}
+          JPX_SOURCE_STATUS: ${{ steps.candidates.outputs.jpx_source_status }}
         run: |
           committed="${COMMITTED:-no}"
           committed_confirmed_count=0
@@ -303,6 +311,7 @@ jobs:
             echo "- failed: ${FAILED_COUNT:-0}"
             echo "- partial_success: ${PARTIAL_SUCCESS:-false}"
             echo "- fatal_error: ${FATAL_ERROR:-false}"
+            echo "- fatal_error_reason: ${FATAL_ERROR_REASON:-none}"
             echo "- committed_confirmed_count: ${committed_confirmed_count}"
             echo "- committed_research_log_count: ${committed_research_log_count}"
             echo "- committed_failed_count: ${committed_failed_count}"
@@ -313,10 +322,17 @@ jobs:
             echo "- JPX候補数: ${JPX_CANDIDATES:-0}"
             echo "- TDnet取得件数: ${TDNET_DISCOVERED:-0}"
             echo "- JPX取得件数: ${JPX_DISCOVERED:-0}"
+            echo "- TDnet取得診断: executed=false period=not_applicable http_status=not_applicable files=0 disclosures=0 keyword_matches=${TDNET_DISCOVERED:-0} duplicates_excluded=0 status=${TDNET_SOURCE_STATUS:-source_not_implemented}"
+            echo "- JPX取得診断: executed=false period=not_applicable http_status=not_applicable files=0 disclosures=0 keyword_matches=${JPX_DISCOVERED:-0} duplicates_excluded=0 status=${JPX_SOURCE_STATUS:-source_not_implemented}"
             echo "- 既存research-log候補件数: ${RESEARCH_LOG_CANDIDATES:-0}"
             echo "- 未調査全社キュー件数: ${FULL_SCAN_QUEUE:-0}"
             echo "- 重複除外後件数: ${DEDUPLICATED_CANDIDATES:-0}"
             echo "- 最終selected件数: ${SELECTED_COUNT:-0}"
+            echo "- candidate_selected_count: ${CANDIDATE_SELECTED_COUNT:-0}"
+            echo "- fallback_selected_count: ${FALLBACK_SELECTED_COUNT:-0}"
+            echo "- processed_count: ${PROCESSED_COUNT:-0}"
+            echo "- persisted_outcome_count: ${PERSISTED_OUTCOME_COUNT:-0}"
+            echo "- unpersisted_count: ${UNPERSISTED_COUNT:-0}"
             echo "- low候補数: ${LOW_COUNT:-0}"
             echo "- 無料抽出成功数: ${FREE_EXTRACTION_SUCCESS:-0}"
             echo "- 公式ドメイン発見数: ${OFFICIAL_DOMAINS_FOUND:-0}"
