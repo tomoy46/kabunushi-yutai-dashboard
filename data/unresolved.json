@@ -239,7 +239,7 @@
       "official_site_discovery_failed"
     ],
     "explored_urls": [],
-    "checked_at": "2026-07-29T15:30:56.847402+00:00"
+    "checked_at": "2026-07-30T01:06:37.809710+00:00"
   },
   {
     "code": "1930",
@@ -314,14 +314,12 @@
   {
     "code": "1950",
     "name": "日本電設工業",
-    "result": "official_site_forbidden",
+    "result": "official_site_discovery_failed",
     "reasons": [
-      "official_site_forbidden"
+      "official_site_discovery_failed"
     ],
-    "explored_urls": [
-      "https://www.densetsuko.co.jp/company/ir/irlibrary/"
-    ],
-    "checked_at": "2026-07-29T15:31:29.030501+00:00"
+    "explored_urls": [],
+    "checked_at": "2026-07-30T01:06:38.653103+00:00"
   },
   {
     "code": "1946",
@@ -341,7 +339,7 @@
       "official_site_discovery_failed"
     ],
     "explored_urls": [],
-    "checked_at": "2026-07-29T15:31:00.022536+00:00"
+    "checked_at": "2026-07-30T01:06:38.528431+00:00"
   },
   {
     "code": "1952",
@@ -421,7 +419,7 @@
       "official_site_discovery_failed"
     ],
     "explored_urls": [],
-    "checked_at": "2026-07-29T15:31:34.940799+00:00"
+    "checked_at": "2026-07-30T01:06:38.780353+00:00"
   },
   {
     "code": "1972",
@@ -431,7 +429,7 @@
       "official_site_discovery_failed"
     ],
     "explored_urls": [],
-    "checked_at": "2026-07-29T15:31:38.565407+00:00"
+    "checked_at": "2026-07-30T01:06:39.003076+00:00"
   },
   {
     "code": "1975",
