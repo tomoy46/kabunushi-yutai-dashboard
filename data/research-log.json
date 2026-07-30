@@ -1885,5 +1885,14 @@
       "confidence_low"
     ],
     "checked_at": "2026-07-29T15:31:38.434147+00:00"
+  },
+  {
+    "code": "1938",
+    "name": "日本リーテック",
+    "result": "not_officially_verified",
+    "reasons": [
+      "confidence_low"
+    ],
+    "checked_at": "2026-07-30T04:09:21.744862+00:00"
   }
 ]
