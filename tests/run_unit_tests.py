@@ -13,6 +13,7 @@ UNIT_TEST_FILES = (
     "test_add_companies.py",
     "test_openai_discovery.py",
     "test_merge_discovery_results.py",
+    "test_import_benefits.py",
     "test_scripts.py",
 )
 
