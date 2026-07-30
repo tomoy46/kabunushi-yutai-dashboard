@@ -1701,8 +1701,18 @@ def openai_eligible(priority, official_candidates, extracted_fact_count=0, low_s
     return True
 
 
+LAST_SELECTION_COUNTS = {}
+
+
 def choose(companies, args, progress, benefits, queue=None, now=None):
-    """Choose manual targets, then high/medium discoveries, then a weekly fallback."""
+    """Choose explicit/free-discovery targets and always replenish automatic runs.
+
+    Automatic production runs must never depend on a pre-populated candidate JSON.
+    Five previously unresearched master rows are therefore included on every run,
+    rather than only on Mondays.  This is also the guard against a blocked official
+    site causing the next run to have no work.
+    """
+    global LAST_SELECTION_COUNTS
     immutable = {x["code"] for x in benefits if x.get("benefit_status") in ("official_confirmed", "abolished")}
     manual = parse_security_codes(getattr(args, "security_codes", ""))
     by_code = {str(company["code"]): company for company in companies}
@@ -1740,17 +1750,34 @@ def choose(companies, args, progress, benefits, queue=None, now=None):
     if not getattr(args, "retry_failed", False):
         candidates = [c for c in candidates if str(c["code"]) not in recent_failed]
     companies_per_run = max(0, getattr(args, "companies_per_run", getattr(args, "batch_size", 25)))
+    full_scan_available = []
     if not manual and auto is True:
         candidate_codes = [str(c["code"]) for c in candidates]
         excluded_codes = set(candidate_codes) | recent_research | recent_failed
-        if (weekly_fallback_allowed(now) or is_test_fixture()) and len(candidate_codes) < companies_per_run:
-            fallback = [str(c["code"]) for c in companies
-                        if str(c["code"]) not in excluded_codes
-                        and str(c["code"]) not in immutable and not excluded_security(c)
-                        ][:min(5, companies_per_run-len(candidate_codes))]
+        full_scan_available = [str(c["code"]) for c in companies
+                               if str(c["code"]) not in excluded_codes
+                               and str(c["code"]) not in immutable and not excluded_security(c)]
+        # An automatic dispatch is defined to do useful free work even when its
+        # requested batch is accidentally below the production safety floor.
+        companies_per_run = max(5, companies_per_run)
+        fallback = full_scan_available[:5]
+        if fallback:
+            # Reserve room for the safety floor instead of allowing stale
+            # disclosure candidates to consume the entire batch.
+            candidates = candidates[:max(0, companies_per_run - len(fallback))]
             for code in fallback:
                 by_code[code]["full_scan_fallback"] = True
             candidates.extend(by_code[code] for code in fallback)
+    candidate_rows_for_counts = [c.get("benefit_candidate", {}) for c in candidates]
+    unique_codes = {str(c["code"]) for c in candidates}
+    LAST_SELECTION_COUNTS = {
+        "tdnet_discovered": sum(row.get("candidate_source") == "tdnet" for row in candidate_rows_for_counts),
+        "jpx_discovered": sum(row.get("candidate_source") == "jpx" for row in candidate_rows_for_counts),
+        "research_log_candidates": len(recent_research),
+        "full_scan_queue": len(full_scan_available),
+        "deduplicated_candidates": len(unique_codes),
+        "full_scan_selected": sum(bool(c.get("full_scan_fallback")) for c in candidates),
+    }
     if manual or auto is not True:
         return candidates[:companies_per_run]
     review = load(DATA / "review-queue.json", [])
@@ -1764,7 +1791,11 @@ def choose(companies, args, progress, benefits, queue=None, now=None):
     if getattr(args, "retry_research_log", False) and retry:
         keep = max(0, companies_per_run - min(5, len(retry)))
         ordered = ordered[:keep] + quota_order(retry, min(5, len(retry)), review, sources, universe)
-    return ordered[:companies_per_run]
+    result = ordered[:companies_per_run]
+    LAST_SELECTION_COUNTS["selected"] = len(result)
+    print("SELECTION SOURCES: " + " ".join(
+        f"{name}={value}" for name, value in LAST_SELECTION_COUNTS.items()))
+    return result
 
 
 def calls_today(records, now=None):
@@ -1998,6 +2029,9 @@ def publish_workflow_counts(totals):
                      "fallback_confirmed", "abolished", "updated_candidates", "tdnet_candidates",
                      "jpx_candidates", "full_scan_processed"):
             stream.write(f"{name}={totals.get(name, 0)}\n")
+        for name in ("tdnet_discovered", "jpx_discovered", "research_log_candidates",
+                     "full_scan_queue", "deduplicated_candidates", "selected"):
+            stream.write(f"{name}={totals.get(name, 0)}\n")
         for name in ("official_site_403_count", "official_pdf_403_count", "openai_403_count"):
             stream.write(f"{name}={totals.get(name, 0)}\n")
         stream.write("403_hosts=" + json.dumps(totals.get("403_hosts", []), ensure_ascii=False) + "\n")
@@ -2024,7 +2058,8 @@ def production_outcome(totals, selected_count, fatal_error=False):
     failures = totals.get("failures", 0)
     partial_success = failures > 0 and saved > 0
     all_failed = selected_count > 0 and failures == selected_count and saved == 0
-    return partial_success, bool(fatal_error), 1 if fatal_error or all_failed else 0
+    no_work = selected_count == 0
+    return partial_success, bool(fatal_error or no_work), 1 if fatal_error or all_failed or no_work else 0
 
 
 def diagnostic_outcome(totals, failed_stage):
@@ -2042,14 +2077,15 @@ def run(args):
     if fixture:
         print("TEST FIXTURE")
     key = os.environ.get("OPENAI_API_KEY")
-    if not key:
+    selection_diagnostic = getattr(args, "selection_diagnostic", False)
+    if not key and not selection_diagnostic:
         if args.diagnostic_mode:
             diagnostic_stage("API key check", "start")
             diagnostic_stage("API key check", "failure", ValueError("OPENAI_API_KEY is not set"))
             print("Diagnostic result: failure\nFailed stage: plain\nResponses API calls: 0\nWeb-search Responses requests: 0\nWeb-search output items: 0\nUnique web-search call IDs: 0\nWeb-search action types: none\nInput tokens: 0\nOutput tokens: 0")
             return 1
         print("OPENAI_API_KEY is required", file=sys.stderr); return 2
-    if not fixture and not pdf_extractor_available():
+    if not fixture and not selection_diagnostic and not pdf_extractor_available():
         print("PDF PREFLIGHT FAILED: pdftotext is unavailable; OpenAI API calls: 0", file=sys.stderr)
         publish_workflow_counts({"successes": 0, "research_log_saved": 0, "failures": 1,
                                  "responses_api_calls": 0,
@@ -2082,6 +2118,20 @@ def run(args):
         validate_benefits_csv(DATA / "benefits.csv")
     progress = load(DATA / "discovery-progress.json", {"next_index": 0, "processed_codes": [], "failed_codes": []})
     selected = companies if args.diagnostic_mode else choose(companies, args, progress, benefits, queue)
+    if selection_diagnostic:
+        counts = dict(LAST_SELECTION_COUNTS)
+        counts.setdefault("selected", len(selected))
+        counts.update({"successes": 0, "research_log_saved": 0, "failures": 0,
+                       "responses_api_calls": 0, "full_scan_processed":
+                       sum(bool(c.get("full_scan_fallback")) for c in selected),
+                       "zero_confirmed_cause": "selection_diagnostic_no_openai"})
+        publish_workflow_counts(counts)
+        print(f"SELECTION DIAGNOSTIC: selected={len(selected)} "
+              f"full_scan_selected={counts['full_scan_processed']} openai_calls=0")
+        if len(selected) < 5:
+            print("ERROR: automatic selection produced fewer than five companies", file=sys.stderr)
+            return 1
+        return 0
     previous_usage = load(DATA / "openai-api-usage.json", [])
     prior_daily_calls = calls_today(previous_usage)
     prior_daily_cost_jpy = cost_today(previous_usage, pricing=pricing)
@@ -2115,6 +2165,7 @@ def run(args):
                    "tdnet_candidates": sum(c.get("benefit_candidate", {}).get("candidate_source") == "tdnet" for c in selected),
                    "jpx_candidates": sum(c.get("benefit_candidate", {}).get("candidate_source") == "jpx" for c in selected),
                    "full_scan_processed": sum(bool(c.get("full_scan_fallback")) for c in selected)})
+    totals.update(LAST_SELECTION_COUNTS)
     company_usage = []
     budget_deferred = 0
     low_sent = 0
@@ -2672,7 +2723,11 @@ def parser():
     result.add_argument("--auto-select", action=argparse.BooleanOptionalAction, default=True)
     result.add_argument("--retry-research-log", action="store_true")
     result.add_argument("--retry-failed", action="store_true")
-    result.add_argument("--official-only", action="store_true"); result.add_argument("--diagnostic-mode", action="store_true"); return result
+    result.add_argument("--official-only", action="store_true")
+    result.add_argument("--diagnostic-mode", action="store_true")
+    result.add_argument("--selection-diagnostic", action="store_true",
+                        help="select at least five real master rows and stop before OpenAI")
+    return result
 
 
 def main():
