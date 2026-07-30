@@ -7,6 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "scripts"))
 from import_benefits import IMPORT_COLUMNS, ImportValidationError, import_benefits
+from verify_pages_deployment import compare_data
 
 
 class ImportBenefitsTests(unittest.TestCase):
@@ -54,8 +55,8 @@ class ImportBenefitsTests(unittest.TestCase):
     def test_adds_valid_row_to_both_outputs(self):
         self.write_import([self.row()])
         result = import_benefits(self.source, self.master_csv, self.master_json)
-        self.assertEqual(result, {"added": 1, "update_candidates": 0,
-                                  "duplicates": 0, "errors": 0})
+        self.assertEqual(result["added"], 1)
+        self.assertEqual(result["after_confirmed"], 2)
         items = json.loads(self.master_json.read_text(encoding="utf-8"))
         added = next(item for item in items if item["code"] == "2222")
         self.assertEqual(added["benefit_status"], "official_confirmed")
@@ -73,13 +74,29 @@ class ImportBenefitsTests(unittest.TestCase):
         self.assertNotIn("変更内容", self.master_csv.read_text(encoding="utf-8"))
         self.assertEqual(before, self.master_csv.read_text(encoding="utf-8"))
 
-    def test_verification_queue_accepts_empty_official_url(self):
-        self.write_import([self.row(status="verification_queue", url="")])
+    def test_second_import_is_idempotent(self):
+        self.write_import([self.row()])
+        import_benefits(self.source, self.master_csv, self.master_json)
+        before = self.master_csv.read_text(encoding="utf-8")
+        result = import_benefits(self.source, self.master_csv, self.master_json)
+        self.assertEqual(result["added"], 0)
+        self.assertEqual(result["duplicates"], 1)
+        self.assertEqual(self.master_csv.read_text(encoding="utf-8"), before)
+
+    def test_abolished_is_preserved(self):
+        self.write_import([self.row(status="abolished")])
         import_benefits(self.source, self.master_csv, self.master_json)
         item = next(item for item in json.loads(self.master_json.read_text())
                     if item["code"] == "2222")
-        self.assertEqual(item["benefit_status"], "unverified")
-        self.assertIsNone(item["official_source_url"])
+        self.assertEqual(item["benefit_status"], "abolished")
+
+    def test_public_comparison_detects_count_and_code_mismatch(self):
+        expected = [{"code": "1111", "benefit_status": "official_confirmed"}]
+        actual = [{"code": "2222", "benefit_status": "abolished"}]
+        result = compare_data(expected, actual)
+        self.assertFalse(result["matches"])
+        self.assertEqual(result["missing_codes"], ["1111"])
+        self.assertEqual(result["extra_codes"], ["2222"])
 
     def test_rejects_invalid_rows_before_changing_outputs(self):
         invalid = self.row(code="12")
@@ -99,7 +116,7 @@ class ImportBenefitsTests(unittest.TestCase):
 
     def test_manual_workflow_has_no_api_or_schedule(self):
         workflow = (Path(__file__).parents[1] / ".github/workflows/import-benefits.yml").read_text()
-        self.assertIn("name: Import shareholder benefits CSV", workflow)
+        self.assertIn("Import shareholder benefits CSV", workflow)
         self.assertIn("workflow_dispatch:", workflow)
         self.assertNotIn("schedule:", workflow)
         self.assertNotIn("OPENAI", workflow.upper())
@@ -109,6 +126,20 @@ class ImportBenefitsTests(unittest.TestCase):
             discovery = (workflow_directory / name).read_text()
             self.assertIn("workflow_dispatch:", discovery)
             self.assertNotIn("schedule:", discovery)
+
+    def test_integrated_workflow_orders_import_deploy_and_verification(self):
+        root = Path(__file__).parents[1]
+        workflow = (root / ".github/workflows/import-and-deploy-benefits.yml").read_text()
+        expected = ["Validate import CSV", "Run regression tests", "Import shareholder benefits",
+                    "Collect changes", "Commit and safely push main",
+                    "Create GitHub Pages artifact", "Deploy GitHub Pages",
+                    "Verify published benefits"]
+        positions = [workflow.index(name) for name in expected]
+        self.assertEqual(positions, sorted(positions))
+        self.assertIn("cancel-in-progress: false", workflow)
+        self.assertIn("path: .", workflow)
+        self.assertNotIn("OPENAI", workflow.upper())
+        self.assertIn("for attempt in 1 2 3", (root / "scripts/push_import_with_retry.sh").read_text())
 
 
 if __name__ == "__main__":

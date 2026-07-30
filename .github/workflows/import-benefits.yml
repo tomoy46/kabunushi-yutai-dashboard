@@ -1,4 +1,4 @@
-name: Import shareholder benefits CSV
+name: Legacy - Import shareholder benefits CSV (旧・個別実行用)
 on:
   workflow_dispatch:
 permissions: {contents: write}

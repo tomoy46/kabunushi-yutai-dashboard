@@ -22,7 +22,7 @@ MASTER_COLUMNS = [
     "data_confidence", "annual_occurrences", "change_or_abolition_note",
     "benefit_tiers_json",
 ]
-ALLOWED_STATUSES = {"confirmed", "abolished", "verification_queue"}
+ALLOWED_STATUSES = {"confirmed", "abolished"}
 CODE_PATTERN = re.compile(r"(?:\d{4}|\d{3}[A-Z])")
 
 
@@ -36,7 +36,13 @@ class ImportValidationError(ValueError):
 
 def read_and_validate(path: Path):
     errors = []
-    with path.open(encoding="utf-8-sig", newline="") as source:
+    try:
+        source = path.open(encoding="utf-8-sig", newline="")
+        source.read()
+        source.seek(0)
+    except (UnicodeDecodeError, OSError) as error:
+        raise ImportValidationError([f"CSVをUTF-8として読み込めません: {error}"]) from error
+    with source:
         reader = csv.DictReader(source)
         if reader.fieldnames != IMPORT_COLUMNS:
             raise ImportValidationError([
@@ -45,7 +51,9 @@ def read_and_validate(path: Path):
         rows = []
         seen = set()
         for line, raw in enumerate(reader, 2):
-            row = {key: (value or "").strip() for key, value in raw.items()}
+            if None in raw:
+                errors.append(f"{line}行目: 列数が多すぎます（引用符またはカンマを確認してください）")
+            row = {key: (value or "").strip() for key, value in raw.items() if key is not None}
             prefix = f"{line}行目"
             required_values = ("security_code", "company_name", "benefit_summary",
                                "required_shares", "record_month", "status",
@@ -78,12 +86,9 @@ def read_and_validate(path: Path):
                 dt.date.fromisoformat(row["source_checked_date"])
             except ValueError:
                 errors.append(f"{prefix}: source_checked_dateはYYYY-MM-DD形式で指定してください")
-            if row["official_url"]:
-                url = urlparse(row["official_url"])
-                if url.scheme != "https" or not url.netloc:
-                    errors.append(f"{prefix}: official_urlはHTTPS URLで指定してください")
-            elif row["status"] != "verification_queue":
-                errors.append(f"{prefix}: confirmed/abolishedにはofficial_urlが必要です")
+            url = urlparse(row["official_url"])
+            if url.scheme not in {"http", "https"} or not url.netloc:
+                errors.append(f"{prefix}: official_urlはHTTPまたはHTTPS URLで指定してください")
             rows.append(row)
     if errors:
         raise ImportValidationError(errors)
@@ -123,7 +128,16 @@ def import_benefits(source: Path, master_csv: Path, master_json: Path):
     rows = read_and_validate(source)
     with master_csv.open(encoding="utf-8-sig", newline="") as current:
         existing = list(csv.DictReader(current))
+    existing_codes = [row.get("code", "").strip().upper() for row in existing]
+    duplicate_master_codes = sorted({code for code in existing_codes
+                                     if existing_codes.count(code) > 1})
+    if duplicate_master_codes:
+        raise ImportValidationError([
+            "既存データに証券コードの重複があります: " + ", ".join(duplicate_master_codes)
+        ])
     by_code = {row["code"]: row for row in existing}
+    before_confirmed = sum(row.get("benefit_status") == "official_confirmed"
+                           for row in existing)
     added, update_candidates, duplicates = [], 0, 0
     for row in rows:
         old = by_code.get(row["security_code"])
@@ -143,8 +157,13 @@ def import_benefits(source: Path, master_csv: Path, master_json: Path):
         added.append(converted)
 
     if not added:
-        return {"added": 0, "update_candidates": update_candidates,
-                "duplicates": duplicates, "errors": 0}
+        return {"input": len(rows), "added": 0, "updated": 0,
+                "unchanged": duplicates + update_candidates,
+                "update_candidates": update_candidates, "duplicates": duplicates,
+                "errors": 0, "before_confirmed": before_confirmed,
+                "after_confirmed": before_confirmed,
+                "abolished": sum(row.get("benefit_status") == "abolished"
+                                  for row in existing)}
 
     buffer = tempfile.SpooledTemporaryFile(mode="w+", encoding="utf-8", newline="")
     writer = csv.DictWriter(buffer, fieldnames=MASTER_COLUMNS, lineterminator="\n")
@@ -163,8 +182,14 @@ def import_benefits(source: Path, master_csv: Path, master_json: Path):
         converted_items = convert(staged_csv, staged_json)
     write_atomic(master_csv, csv_content)
     write_atomic(master_json, json.dumps(converted_items, ensure_ascii=False, indent=2) + "\n")
-    return {"added": len(added), "update_candidates": update_candidates,
-            "duplicates": duplicates, "errors": 0}
+    return {"input": len(rows), "added": len(added), "updated": 0,
+            "unchanged": duplicates + update_candidates,
+            "update_candidates": update_candidates, "duplicates": duplicates,
+            "errors": 0, "before_confirmed": before_confirmed,
+            "after_confirmed": before_confirmed + sum(
+                row["benefit_status"] == "official_confirmed" for row in added),
+            "abolished": sum(row.get("benefit_status") == "abolished"
+                              for row in existing)}
 
 
 def main():
@@ -172,15 +197,25 @@ def main():
     parser.add_argument("--input", default="data/import-benefits.csv")
     parser.add_argument("--csv-output", default="data/benefits.csv")
     parser.add_argument("--json-output", default="data/benefits.json")
+    parser.add_argument("--result-file", help="取込集計をJSONで保存するパス")
+    parser.add_argument("--validate-only", action="store_true")
     args = parser.parse_args()
     try:
+        if args.validate_only:
+            rows = read_and_validate(Path(args.input))
+            print(f"CSV検証成功: {len(rows)}件")
+            return
         result = import_benefits(Path(args.input), Path(args.csv_output), Path(args.json_output))
     except ImportValidationError as error:
         for message in error.errors:
             print(f"ERROR: {message}")
         print(f"新規追加数: 0\n更新候補数: 0\n重複除外数: 0\nエラー数: {len(error.errors)}")
         raise SystemExit(1)
-    print(f"新規追加数: {result['added']}\n更新候補数: {result['update_candidates']}")
+    if args.result_file:
+        Path(args.result_file).write_text(json.dumps(result, ensure_ascii=False) + "\n",
+                                         encoding="utf-8")
+    print(f"CSV入力件数: {result['input']}\n新規追加数: {result['added']}\n更新数: {result['updated']}")
+    print(f"変更なし件数: {result['unchanged']}\n更新候補数: {result['update_candidates']}")
     print(f"重複除外数: {result['duplicates']}\nエラー数: {result['errors']}")
 
 

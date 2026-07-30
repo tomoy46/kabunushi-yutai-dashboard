@@ -42,7 +42,7 @@ OpenAI版は検索付きリクエストに `max_tool_calls=1` を指定します
 Usage画面と `responses_with_web_search` を使用してください。診断モードはこれらの件数と安全なaction種別だけを
 表示し、検索語、URL、検索結果本文は表示せず、データファイルも更新しません。
 
-日本株の株主優待について、優待内容・必要株数・権利月・長期保有条件・公式確認状態を比較する静的なPWAです。既存の株主優待データ13社（極洋を含む）を収録しています。株価情報は表示せず、投資判断には利用できません。
+日本株の株主優待について、優待内容・必要株数・権利月・長期保有条件・公式確認状態を比較する静的なPWAです。既存の株主優待データ130社（公式確認済み128社を含む）を収録しています。株価情報は表示せず、投資判断には利用できません。
 
 ## 機能
 
@@ -80,9 +80,21 @@ python scripts/fetch_tdnet.py --feed-url 'TDnetのRSS/XML URL'
 ```
 
 一括取込ではテンプレートの列、証券コード、ステータス、日付、入力内重複を先に検証します。許可する
-`status` は `confirmed`、`abolished`、`verification_queue` のみです。既存コードは追加せず、内容が異なる場合は
-更新候補として報告します。既存の確認済みデータも上書きしません。`verification_queue` は公式URLが空でも登録できます。
-Actions の **Import shareholder benefits CSV** からも手動実行でき、この処理はOpenAI APIを使用しません。
+`status` は `confirmed`、`abolished` のみです。既存コードは追加せず、内容が異なる場合は更新候補として
+報告します。既存の確認済みデータも上書きしません。
+### CSV取込からGitHub Pages公開まで
+
+今後の通常更新は次の1つのWorkflowで完了します。
+
+1. `data/import-benefits.csv` へ新しい優待銘柄を追加する
+2. 変更のPRをマージする
+3. Actionsから **Import and deploy shareholder benefits** を実行する
+4. Job summaryと公開サイトの件数を確認する
+
+このWorkflowはCSV検証、回帰テスト、冪等な取込、必要な場合のmainへのコミット、Pages公開、公開JSONの
+件数・証券コード照合を順番に実施します。**Import shareholder benefits CSV** と **Deploy GitHub Pages** を
+個別に実行する必要はありません。両Workflowは統合版の動作確認期間に備えた「旧・個別実行用」としてのみ残しています。
+統合WorkflowはOpenAI探索Workflow、OpenAI API、その他の有料APIを呼び出しません。
 
 TDnet処理はタイトルを指定キーワードで抽出し、URL重複を除いてレビューキューに追加するだけで、優待マスターを変更しません。
 
