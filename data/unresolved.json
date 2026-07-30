@@ -236,10 +236,11 @@
     "name": "日本リーテック",
     "result": "official_site_discovery_failed",
     "reasons": [
-      "official_site_discovery_failed"
+      "official_site_discovery_failed",
+      "official_domain_not_identified"
     ],
     "explored_urls": [],
-    "checked_at": "2026-07-30T01:06:37.809710+00:00"
+    "checked_at": "2026-07-30T02:50:02.434947+00:00"
   },
   {
     "code": "1930",
@@ -316,10 +317,11 @@
     "name": "日本電設工業",
     "result": "official_site_discovery_failed",
     "reasons": [
-      "official_site_discovery_failed"
+      "official_site_discovery_failed",
+      "official_domain_not_identified"
     ],
     "explored_urls": [],
-    "checked_at": "2026-07-30T01:06:38.653103+00:00"
+    "checked_at": "2026-07-30T02:50:03.134070+00:00"
   },
   {
     "code": "1946",
@@ -336,10 +338,11 @@
     "name": "関電工",
     "result": "official_site_discovery_failed",
     "reasons": [
-      "official_site_discovery_failed"
+      "official_site_discovery_failed",
+      "official_domain_not_identified"
     ],
     "explored_urls": [],
-    "checked_at": "2026-07-30T01:06:38.528431+00:00"
+    "checked_at": "2026-07-30T02:50:02.880206+00:00"
   },
   {
     "code": "1952",
@@ -416,20 +419,22 @@
     "name": "高砂熱学工業",
     "result": "official_site_discovery_failed",
     "reasons": [
-      "official_site_discovery_failed"
+      "official_site_discovery_failed",
+      "official_domain_not_identified"
     ],
     "explored_urls": [],
-    "checked_at": "2026-07-30T01:06:38.780353+00:00"
+    "checked_at": "2026-07-30T02:50:03.585771+00:00"
   },
   {
     "code": "1972",
     "name": "三晃金属工業",
     "result": "official_site_discovery_failed",
     "reasons": [
-      "official_site_discovery_failed"
+      "official_site_discovery_failed",
+      "official_domain_not_identified"
     ],
     "explored_urls": [],
-    "checked_at": "2026-07-30T01:06:39.003076+00:00"
+    "checked_at": "2026-07-30T02:50:03.899346+00:00"
   },
   {
     "code": "1975",
