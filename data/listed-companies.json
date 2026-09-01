@@ -344,7 +344,7 @@
   },
   {
     "code": "151A",
-    "name": "ダイブ",
+    "name": "ダイブグループ",
     "market": "グロース",
     "sector": "サービス業",
     "official_domain": null
@@ -2577,7 +2577,7 @@
   },
   {
     "code": "2501",
-    "name": "サッポロホールディングス",
+    "name": "サッポロビール",
     "market": "プライム",
     "sector": "食料品",
     "official_domain": null
@@ -3112,13 +3112,6 @@
     "name": "ＳＡＮＫＯ　ＭＡＲＫＥＴＩＮＧ　ＦＯＯＤＳ",
     "market": "スタンダード",
     "sector": "小売業",
-    "official_domain": null
-  },
-  {
-    "code": "2763",
-    "name": "エフティグループ",
-    "market": "スタンダード",
-    "sector": "卸売業",
     "official_domain": null
   },
   {
@@ -4572,7 +4565,7 @@
   },
   {
     "code": "3182",
-    "name": "オイシックス・ラ・大地",
+    "name": "オイシックス",
     "market": "プライム",
     "sector": "小売業",
     "official_domain": null
@@ -4855,13 +4848,6 @@
     "name": "フィル・カンパニー",
     "market": "スタンダード",
     "sector": "建設業",
-    "official_domain": null
-  },
-  {
-    "code": "3271",
-    "name": "ＴＨＥグローバル社",
-    "market": "スタンダード",
-    "sector": "不動産業",
     "official_domain": null
   },
   {
@@ -5972,7 +5958,7 @@
   },
   {
     "code": "3626",
-    "name": "ＴＩＳ",
+    "name": "ＴＩＳＩ",
     "market": "プライム",
     "sector": "情報・通信業",
     "official_domain": null
@@ -6265,13 +6251,6 @@
     "official_domain": null
   },
   {
-    "code": "3681",
-    "name": "ブイキューブ",
-    "market": "プライム",
-    "sector": "情報・通信業",
-    "official_domain": null
-  },
-  {
     "code": "3682",
     "name": "エンカレッジ・テクノロジ",
     "market": "スタンダード",
@@ -6301,7 +6280,7 @@
   },
   {
     "code": "368A",
-    "name": "北里コーポレーション",
+    "name": "北里",
     "market": "プライム",
     "sector": "精密機器",
     "official_domain": null
@@ -6462,7 +6441,7 @@
   },
   {
     "code": "3750",
-    "name": "ＡＤＲ１２０Ｓ",
+    "name": "ＡＤＲバイオメディカルホールディングス",
     "market": "スタンダード",
     "sector": "情報・通信業",
     "official_domain": null
@@ -8841,13 +8820,6 @@
     "official_domain": null
   },
   {
-    "code": "4367",
-    "name": "広栄化学",
-    "market": "スタンダード",
-    "sector": "化学",
-    "official_domain": null
-  },
-  {
     "code": "4368",
     "name": "扶桑化学工業",
     "market": "プライム",
@@ -9340,7 +9312,7 @@
   {
     "code": "4446",
     "name": "Ｌｉｎｋ－Ｕグループ",
-    "market": "プライム",
+    "market": "スタンダード",
     "sector": "情報・通信業",
     "official_domain": null
   },
@@ -13098,7 +13070,7 @@
   },
   {
     "code": "5891",
-    "name": "魁力屋",
+    "name": "ＳＡＫＩＧＡＫＥホールディングス",
     "market": "スタンダード",
     "sector": "小売業",
     "official_domain": null
@@ -13139,13 +13111,6 @@
     "official_domain": null
   },
   {
-    "code": "5903",
-    "name": "シンポ",
-    "market": "スタンダード",
-    "sector": "金属製品",
-    "official_domain": null
-  },
-  {
     "code": "5905",
     "name": "日本製罐",
     "market": "スタンダード",
@@ -13164,6 +13129,13 @@
     "name": "コロナ",
     "market": "スタンダード",
     "sector": "金属製品",
+    "official_domain": null
+  },
+  {
+    "code": "590A",
+    "name": "ギフティグループ",
+    "market": "プライム",
+    "sector": "情報・通信業",
     "official_domain": null
   },
   {
@@ -13262,6 +13234,13 @@
     "name": "大谷工業",
     "market": "スタンダード",
     "sector": "金属製品",
+    "official_domain": null
+  },
+  {
+    "code": "593A",
+    "name": "ティアフォー",
+    "market": "グロース",
+    "sector": "情報・通信業",
     "official_domain": null
   },
   {
@@ -13517,6 +13496,13 @@
     "official_domain": null
   },
   {
+    "code": "598A",
+    "name": "チャットプラス",
+    "market": "グロース",
+    "sector": "情報・通信業",
+    "official_domain": null
+  },
+  {
     "code": "5990",
     "name": "スーパーツール",
     "market": "スタンダード",
@@ -13678,6 +13664,13 @@
     "official_domain": null
   },
   {
+    "code": "603A",
+    "name": "アイ・グリッド・ソリューションズ",
+    "market": "グロース",
+    "sector": "電気・ガス業",
+    "official_domain": null
+  },
+  {
     "code": "6040",
     "name": "日本スキー場開発",
     "market": "グロース",
@@ -13724,6 +13717,13 @@
     "name": "イトクロ",
     "market": "グロース",
     "sector": "サービス業",
+    "official_domain": null
+  },
+  {
+    "code": "604A",
+    "name": "ビーエイブル",
+    "market": "スタンダード",
+    "sector": "建設業",
     "official_domain": null
   },
   {
@@ -13926,13 +13926,6 @@
     "code": "6094",
     "name": "フリークアウト・ホールディングス",
     "market": "グロース",
-    "sector": "サービス業",
-    "official_domain": null
-  },
-  {
-    "code": "6096",
-    "name": "レアジョブ",
-    "market": "スタンダード",
     "sector": "サービス業",
     "official_domain": null
   },
@@ -15205,7 +15198,7 @@
   },
   {
     "code": "6420",
-    "name": "ガリレイ",
+    "name": "ガリレイホールディングス",
     "market": "プライム",
     "sector": "機械",
     "official_domain": null
@@ -15317,7 +15310,7 @@
   },
   {
     "code": "6459",
-    "name": "大和冷機工業",
+    "name": "だいわ",
     "market": "プライム",
     "sector": "機械",
     "official_domain": null
@@ -18508,13 +18501,6 @@
     "official_domain": null
   },
   {
-    "code": "7317",
-    "name": "松屋アールアンドディ",
-    "market": "グロース",
-    "sector": "輸送用機器",
-    "official_domain": null
-  },
-  {
     "code": "7318",
     "name": "セレンディップ・ホールディングス",
     "market": "グロース",
@@ -19349,7 +19335,7 @@
   },
   {
     "code": "7561",
-    "name": "ハークスレイ",
+    "name": "ハークスレイホールディングス",
     "market": "スタンダード",
     "sector": "小売業",
     "official_domain": null
@@ -20696,13 +20682,6 @@
     "name": "研創",
     "market": "スタンダード",
     "sector": "その他製品",
-    "official_domain": null
-  },
-  {
-    "code": "7940",
-    "name": "ウェーブロックホールディングス",
-    "market": "スタンダード",
-    "sector": "化学",
     "official_domain": null
   },
   {
